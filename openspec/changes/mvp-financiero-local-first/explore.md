@@ -7,7 +7,8 @@ Este documento captura la exploración realizada durante la fase `sdd-explore` p
 **¿Qué es el proyecto?**  
 Una aplicación de escritorio local-first para diagnóstico financiero y gestión de presupuesto personal. Permite crear diagnósticos financieros, gestionar ingresos y gastos por categoría, y analizar la capacidad de ahorro usando las mismas fórmulas que la plantilla Excel de referencia.
 
-**¿Qué NO es el proyecto?**  
+**¿Qué NO es el proyecto?**
+
 - Aplicación con sincronización en la nube o multi-dispositivo
 - Herramienta colaborativa en tiempo real
 - Plataforma de inversión o trading
@@ -20,25 +21,25 @@ Una aplicación de escritorio local-first para diagnóstico financiero y gestió
 
 Las siguientes decisiones fueron tomadas por el usuario durante la fase de exploración y se consideran **bloqueadas** para las fases posteriores:
 
-| # | Decisión | Detalle |
-|---|----------|---------|
-| 1 | **Idioma de la UI** | Español neutro (latam sin voseo). Textos formales, "tú", sin modismos regionales. |
-| 2 | **Descuento Salario Personal Objetivo en FA2 inicial** | NO se descuenta al inicio. Se replica el comportamiento del Excel. El salario se configura cuando se activa el modo "Mejorado". Resultado: -$1,145,000. |
-| 3 | **Librería de gráficos** | Recharts. Justificación: balance entre peso y experiencia de desarrollo. |
-| 4 | **Validación de enums** | CHECK constraints en SQL a nivel de migraciones. Planificar schema migration plan para cuando se necesite modificar CHECKs. |
+| #   | Decisión                                               | Detalle                                                                                                                                                 |
+| --- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Idioma de la UI**                                    | Español neutro (latam sin voseo). Textos formales, "tú", sin modismos regionales.                                                                       |
+| 2   | **Descuento Salario Personal Objetivo en FA2 inicial** | NO se descuenta al inicio. Se replica el comportamiento del Excel. El salario se configura cuando se activa el modo "Mejorado". Resultado: -$1,145,000. |
+| 3   | **Librería de gráficos**                               | Recharts. Justificación: balance entre peso y experiencia de desarrollo.                                                                                |
+| 4   | **Validación de enums**                                | CHECK constraints en SQL a nivel de migraciones. Planificar schema migration plan para cuando se necesite modificar CHECKs.                             |
 
 ---
 
 ## 3. Stack Propuesto y Justificación
 
-| Capa | Tecnología | Justificación |
-|------|------------|---------------|
-| Frontend | React 18 + TypeScript + Vite + TailwindCSS + Zustand | Stack moderno, Zustand para estado reactivo local |
-| Backend | Tauri v2 (Rust) con tauri-plugin-sql | Local-first, rendimiento nativo, SQLite embebido |
-| Base de datos | SQLite (enteros centavos para columnas monetarias) | Evita problemas de punto flotante |
-| Matemáticas | decimal.js | Precisión para cálculos financieros |
-| Gráficos | Recharts | Integración nativa con React, buen DX, tamaño aceptable |
-| Tests | Vitest (frontend) + cargo test (backend) | Golden tests con fixtures del Excel |
+| Capa          | Tecnología                                           | Justificación                                           |
+| ------------- | ---------------------------------------------------- | ------------------------------------------------------- |
+| Frontend      | React 18 + TypeScript + Vite + TailwindCSS + Zustand | Stack moderno, Zustand para estado reactivo local       |
+| Backend       | Tauri v2 (Rust) con tauri-plugin-sql                 | Local-first, rendimiento nativo, SQLite embebido        |
+| Base de datos | SQLite (enteros centavos para columnas monetarias)   | Evita problemas de punto flotante                       |
+| Matemáticas   | decimal.js                                           | Precisión para cálculos financieros                     |
+| Gráficos      | Recharts                                             | Integración nativa con React, buen DX, tamaño aceptable |
+| Tests         | Vitest (frontend) + cargo test (backend)             | Golden tests con fixtures del Excel                     |
 
 **Flujo de datos**:  
 Entrada de usuario → Estado Zustand → Persistencia SQLite (debounced) → Lecturas normalizadas para UI → Cálculos con decimal.js → Renderizado con Recharts.
@@ -49,42 +50,42 @@ Entrada de usuario → Estado Zustand → Persistencia SQLite (debounced) → Le
 
 ### 4.1 Librería de Gráficos
 
-| Alternativa | Pros | Contras | Decisión |
-|-------------|------|----------|----------|
-| **Recharts** (elegida) | React-native, buen DX, documentación amplia | Bundle más pesado que alternativas mínimas | ✓ |
-| Chart.js | Maduro, muchos ejemplos | Más pesado, menos idiomático para React | No |
-| SVG puro | Bundle mínimo | Más esfuerzo de desarrollo | No |
-| ApexCharts | Buenos gráficos, buena API | Menos idiomático para React | No |
+| Alternativa            | Pros                                        | Contras                                    | Decisión |
+| ---------------------- | ------------------------------------------- | ------------------------------------------ | -------- |
+| **Recharts** (elegida) | React-native, buen DX, documentación amplia | Bundle más pesado que alternativas mínimas | ✓        |
+| Chart.js               | Maduro, muchos ejemplos                     | Más pesado, menos idiomático para React    | No       |
+| SVG puro               | Bundle mínimo                               | Más esfuerzo de desarrollo                 | No       |
+| ApexCharts             | Buenos gráficos, buena API                  | Menos idiomático para React                | No       |
 
 ### 4.2 Gestión de Estado
 
-| Alternativa | Pros | Contras | Decisión |
-|-------------|------|----------|----------|
-| **Zustand** (elegida) | Simple, TypeScript友好的, mínimo boilerplate | Comunidad más pequeña que Redux | ✓ |
-| Redux Toolkit | Ecosistema maduro | Overkill para MVP | No |
-| Jotai | Atomic, buena integración con React | Menos común, curva de aprendizaje | No |
+| Alternativa           | Pros                                         | Contras                           | Decisión |
+| --------------------- | -------------------------------------------- | --------------------------------- | -------- |
+| **Zustand** (elegida) | Simple, TypeScript友好的, mínimo boilerplate | Comunidad más pequeña que Redux   | ✓        |
+| Redux Toolkit         | Ecosistema maduro                            | Overkill para MVP                 | No       |
+| Jotai                 | Atomic, buena integración con React          | Menos común, curva de aprendizaje | No       |
 
 ### 4.3 Persistencia
 
-| Alternativa | Pros | Contras | Decisión |
-|-------------|------|----------|----------|
-| **tauri-plugin-sql + SQLite** (elegida) | Seguridad de tipos, poder SQL | Migration complexity | ✓ |
-| IndexedDB via Dexie.js | Más flexible, web-native | Más complejo, menos tipado | No |
+| Alternativa                             | Pros                          | Contras                    | Decisión |
+| --------------------------------------- | ----------------------------- | -------------------------- | -------- |
+| **tauri-plugin-sql + SQLite** (elegida) | Seguridad de tipos, poder SQL | Migration complexity       | ✓        |
+| IndexedDB via Dexie.js                  | Más flexible, web-native      | Más complejo, menos tipado | No       |
 
 ### 4.4 Matemáticas Financieras
 
-| Alternativa | Pros | Contras | Decisión |
-|-------------|------|----------|----------|
-| **decimal.js** (elegida) | Precisión completa, banyak configuración | Bundle adicional | ✓ |
-| Números nativos JS | Sin overhead | Riesgos de precisión | No |
-| Money.js | Específico para dinero | Menos features que decimal.js | No |
+| Alternativa              | Pros                                     | Contras                       | Decisión |
+| ------------------------ | ---------------------------------------- | ----------------------------- | -------- |
+| **decimal.js** (elegida) | Precisión completa, banyak configuración | Bundle adicional              | ✓        |
+| Números nativos JS       | Sin overhead                             | Riesgos de precisión          | No       |
+| Money.js                 | Específico para dinero                   | Menos features que decimal.js | No       |
 
 ### 4.5 Validación de Enums
 
-| Alternativa | Pros | Contras | Decisión |
-|-------------|------|----------|----------|
-| **CHECK constraints en SQL** (elegida) | Integridad en BD, validación real | Migration compleja en SQLite | ✓ |
-| Solo a nivel aplicación | Simple | Datos corruptos posibles | No |
+| Alternativa                            | Pros                              | Contras                      | Decisión |
+| -------------------------------------- | --------------------------------- | ---------------------------- | -------- |
+| **CHECK constraints en SQL** (elegida) | Integridad en BD, validación real | Migration compleja en SQLite | ✓        |
+| Solo a nivel aplicación                | Simple                            | Datos corruptos posibles     | No       |
 
 ---
 

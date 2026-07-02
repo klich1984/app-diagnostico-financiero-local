@@ -419,11 +419,11 @@ El sistema debe replicar exactamente los valores del Excel fuente para el datase
 
 ## Resumen de Cobertura
 
-| Tipo | Cantidad |
-|------|----------|
-| Requisitos funcionales | 14 |
-| Requisitos transversales | 5 |
-| Total requisitos | 19 |
-| Escenarios | 38 |
-| HUs cubiertas | 14/14 (100%) |
-| Decisiones de producto cubiertas | 6/6 (100%) |
+| Tipo                             | Cantidad     |
+| -------------------------------- | ------------ |
+| Requisitos funcionales           | 14           |
+| Requisitos transversales         | 5            |
+| Total requisitos                 | 19           |
+| Escenarios                       | 38           |
+| HUs cubiertas                    | 14/14 (100%) |
+| Decisiones de producto cubiertas | 6/6 (100%)   |

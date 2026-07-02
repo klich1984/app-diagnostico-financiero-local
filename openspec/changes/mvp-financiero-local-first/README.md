@@ -6,14 +6,14 @@ Este cambio implementa el MVP de la aplicación financiera local-first para gest
 
 ## Stack planificado
 
-| Capa | Tecnología |
-|------|-------------|
-| Frontend | React 18 + TypeScript + Vite + TailwindCSS + Zustand |
-| Backend | Tauri v2 (Rust) con tauri-plugin-sql |
-| Base de datos | SQLite (enteros centavos para columnas monetarias) |
-| Matemáticas | decimal.js (precisión decimal) |
-| Gráficos | Biblioteca ligera SVG/Canvas (pendiente de decisión) |
-| Tests | Vitest (frontend) + cargo test (backend) |
+| Capa          | Tecnología                                           |
+| ------------- | ---------------------------------------------------- |
+| Frontend      | React 18 + TypeScript + Vite + TailwindCSS + Zustand |
+| Backend       | Tauri v2 (Rust) con tauri-plugin-sql                 |
+| Base de datos | SQLite (enteros centavos para columnas monetarias)   |
+| Matemáticas   | decimal.js (precisión decimal)                       |
+| Gráficos      | Biblioteca ligera SVG/Canvas (pendiente de decisión) |
+| Tests         | Vitest (frontend) + cargo test (backend)             |
 
 ## Decisiones pendientes (resueltas)
 
@@ -25,6 +25,7 @@ Las siguientes decisiones fueron resueltas en la fase de exploración:
 4. ~~**CHECK constraint para naturaleza_necesidad**~~ → CHECK constraints en SQL
 
 Las preguntas abiertas para `sdd-propose` son:
+
 - Límite duro de transacciones
 - Soporte multi-usuario
 
@@ -38,16 +39,17 @@ Las preguntas abiertas para `sdd-propose` son:
 
 Las siguientes decisiones fueron tomadas en la fase de exploración (`sdd-explore`) y están confirmadas:
 
-| # | Decisión | Detalle |
-|---|----------|---------|
-| 1 | **Idioma de la UI** | Español neutro (latam sin voseo). Textos formales, "tú", sin modismos regionales. |
-| 2 | **Descuento Salario Personal Objetivo en FA2 inicial** | NO se descuenta al inicio. Se replica el comportamiento del Excel. El salario se configura cuando se activa el modo "Mejorado". Resultado: -$1,145,000. |
-| 3 | **Librería de gráficos** | Recharts. Justificación: balance entre peso y experiencia de desarrollo. |
-| 4 | **Validación de enums** | CHECK constraints en SQL a nivel de migraciones. Planificar schema migration plan para cuando se necesite modificar CHECKs. |
+| #   | Decisión                                               | Detalle                                                                                                                                                 |
+| --- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Idioma de la UI**                                    | Español neutro (latam sin voseo). Textos formales, "tú", sin modismos regionales.                                                                       |
+| 2   | **Descuento Salario Personal Objetivo en FA2 inicial** | NO se descuenta al inicio. Se replica el comportamiento del Excel. El salario se configura cuando se activa el modo "Mejorado". Resultado: -$1,145,000. |
+| 3   | **Librería de gráficos**                               | Recharts. Justificación: balance entre peso y experiencia de desarrollo.                                                                                |
+| 4   | **Validación de enums**                                | CHECK constraints en SQL a nivel de migraciones. Planificar schema migration plan para cuando se necesite modificar CHECKs.                             |
 
 ---
 
 Este archivo es un andamiaje inicial. Los artefactos reales serán creados por las fases subsiguientes del SDD:
+
 - `sdd-explore`: Exploración de requisitos
 - `sdd-propose`: Propuesta de cambio
 - `sdd-spec`: Especificación de requisitos

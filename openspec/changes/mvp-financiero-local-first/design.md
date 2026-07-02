@@ -97,12 +97,12 @@ Tauri v2 corre dos procesos en el mismo binario: el **proceso principal Rust** (
 
 **Eventos clave del ciclo de vida**:
 
-| Evento | Origen | Acción en backend | Acción en frontend |
-|--------|--------|-------------------|---------------------|
-| `tauri://ready` | Tauri | Carga DB, corre migraciones pendientes | Hidrata stores con datos del usuario activo |
-| `app:perfil-seleccionado` | Frontend | (ninguna) | Filtra todas las queries por `usuario_id` |
-| `tauri://close-requested` | Tauri (al cerrar ventana) | Drena `simulador_pending_queue` a SQLite | Limpia timers de debounce |
-| `window:beforeunload` | WebView | (ninguna directo) | Dispara `flushSimulador()` antes de salir |
+| Evento                    | Origen                    | Acción en backend                        | Acción en frontend                          |
+| ------------------------- | ------------------------- | ---------------------------------------- | ------------------------------------------- |
+| `tauri://ready`           | Tauri                     | Carga DB, corre migraciones pendientes   | Hidrata stores con datos del usuario activo |
+| `app:perfil-seleccionado` | Frontend                  | (ninguna)                                | Filtra todas las queries por `usuario_id`   |
+| `tauri://close-requested` | Tauri (al cerrar ventana) | Drena `simulador_pending_queue` a SQLite | Limpia timers de debounce                   |
+| `window:beforeunload`     | WebView                   | (ninguna directo)                        | Dispara `flushSimulador()` antes de salir   |
 
 **Canales IPC explícitos** (definidos en `src-tauri/capabilities/default.json`):
 
@@ -170,17 +170,17 @@ Formato obligatorio, scope y descripción en **español neutro**:
 
 **Tipos permitidos** (alineados al estándar):
 
-| Tipo | Cuándo |
-|------|--------|
-| `feat` | Nueva feature visible para el usuario |
-| `fix` | Bug fix |
-| `chore` | Mantenimiento, deps, build |
-| `docs` | Solo documentación |
-| `test` | Solo tests |
-| `refactor` | Cambio interno sin cambio funcional |
-| `perf` | Mejora de performance medible |
-| `build` | Cambios en sistema de build |
-| `ci` | Cambios en CI |
+| Tipo       | Cuándo                                |
+| ---------- | ------------------------------------- |
+| `feat`     | Nueva feature visible para el usuario |
+| `fix`      | Bug fix                               |
+| `chore`    | Mantenimiento, deps, build            |
+| `docs`     | Solo documentación                    |
+| `test`     | Solo tests                            |
+| `refactor` | Cambio interno sin cambio funcional   |
+| `perf`     | Mejora de performance medible         |
+| `build`    | Cambios en sistema de build           |
+| `ci`       | Cambios en CI                         |
 
 **Ejemplos válidos**:
 
@@ -622,22 +622,22 @@ src-tauri/src/
 
 La capa Tauri expone comandos con prefijo `cmd_`. La capa JS los invoca con `invoke<T>(nombre, args)`. Todos los nombres siguen la convención:
 
-| Comando | Firma (JS) | Descripción |
-|---------|------------|-------------|
-| `cmd_crear_usuario` | `(nombre: string): Promise<number>` | Inserta un usuario; devuelve id |
-| `cmd_listar_usuarios` | `(): Promise<Usuario[]>` | Lista todos los perfiles |
-| `cmd_obtener_usuario` | `(id: number): Promise<Usuario \| null>` | Carga un usuario por id |
-| `cmd_actualizar_usuario` | `(id: number, patch: Partial<UsuarioPatch>): Promise<void>` | Patch parcial (ej: salario objetivo) |
-| `cmd_set_modo_mejorado` | `(usuario_id: number, activo: boolean): Promise<void>` | Activa/desactiva modo |
-| `cmd_listar_categorias` | `(tipo_flujo?: 'Ingreso' \| 'Gasto'): Promise<Categoria[]>` | Lee el catálogo |
-| `cmd_insert_transaccion` | `(t: TransaccionInput): Promise<number>` | Inserta y devuelve id |
-| `cmd_update_transaccion` | `(id: number, patch: Partial<TransaccionInput>): Promise<void>` | Patch parcial |
-| `cmd_delete_transaccion` | `(id: number): Promise<void>` | Borra (con CHECK FK, ver §19) |
-| `cmd_listar_transacciones` | `(usuario_id: number): Promise<Transaccion[]>` | Lista del usuario activo |
-| `cmd_set_simulador` | `(transaccion_id: number, nuevo_valor: number): Promise<void>` | Upsert en Simulador |
-| `cmd_get_simulador` | `(usuario_id: number): Promise<SimuladorFila[]>` | Lee el Simulador del usuario |
-| `cmd_flush_simulador` | `(usuario_id: number, entries: SimuladorFila[]): Promise<void>` | Bulk-upsert al cerrar ventana |
-| `cmd_ejecutar_migraciones` | `(): Promise<void>` | Solo dev; no expuesto en release |
+| Comando                    | Firma (JS)                                                      | Descripción                          |
+| -------------------------- | --------------------------------------------------------------- | ------------------------------------ |
+| `cmd_crear_usuario`        | `(nombre: string): Promise<number>`                             | Inserta un usuario; devuelve id      |
+| `cmd_listar_usuarios`      | `(): Promise<Usuario[]>`                                        | Lista todos los perfiles             |
+| `cmd_obtener_usuario`      | `(id: number): Promise<Usuario \| null>`                        | Carga un usuario por id              |
+| `cmd_actualizar_usuario`   | `(id: number, patch: Partial<UsuarioPatch>): Promise<void>`     | Patch parcial (ej: salario objetivo) |
+| `cmd_set_modo_mejorado`    | `(usuario_id: number, activo: boolean): Promise<void>`          | Activa/desactiva modo                |
+| `cmd_listar_categorias`    | `(tipo_flujo?: 'Ingreso' \| 'Gasto'): Promise<Categoria[]>`     | Lee el catálogo                      |
+| `cmd_insert_transaccion`   | `(t: TransaccionInput): Promise<number>`                        | Inserta y devuelve id                |
+| `cmd_update_transaccion`   | `(id: number, patch: Partial<TransaccionInput>): Promise<void>` | Patch parcial                        |
+| `cmd_delete_transaccion`   | `(id: number): Promise<void>`                                   | Borra (con CHECK FK, ver §19)        |
+| `cmd_listar_transacciones` | `(usuario_id: number): Promise<Transaccion[]>`                  | Lista del usuario activo             |
+| `cmd_set_simulador`        | `(transaccion_id: number, nuevo_valor: number): Promise<void>`  | Upsert en Simulador                  |
+| `cmd_get_simulador`        | `(usuario_id: number): Promise<SimuladorFila[]>`                | Lee el Simulador del usuario         |
+| `cmd_flush_simulador`      | `(usuario_id: number, entries: SimuladorFila[]): Promise<void>` | Bulk-upsert al cerrar ventana        |
+| `cmd_ejecutar_migraciones` | `(): Promise<void>`                                             | Solo dev; no expuesto en release     |
 
 > Los comandos reciben objetos validados con `serde::Deserialize` y devuelven `Result<T, AppError>`. La app JS nunca recibe strings crudos de SQLite: Tauri los serializa por el canal IPC.
 
@@ -731,19 +731,19 @@ El frontend mantiene una cola `pendingQueue: Map<transaccionId, centavos>` en `u
 
 useEffect(() => {
   const handler = () => {
-    const pending = useSimuladorStore.getState().drainPending();
+    const pending = useSimuladorStore.getState().drainPending()
     if (pending.length > 0) {
       invoke('cmd_flush_simulador', {
         usuarioId: usePerfilStore.getState().activo!.id,
         entries: pending,
-      });
+      })
     }
-  };
-  window.addEventListener('beforeunload', handler);
+  }
+  window.addEventListener('beforeunload', handler)
   // Tauri emite tauri://close-requested antes de cerrar; el handler en main.rs
   // puede esperar a un ack del frontend si fuera necesario.
-  return () => window.removeEventListener('beforeunload', handler);
-}, []);
+  return () => window.removeEventListener('beforeunload', handler)
+}, [])
 ```
 
 > **Riesgo conocido** (ver §17): el evento `beforeunload` no es 100% confiable en WebViews. Se complementa con un handler en `src-tauri/src/lib.rs` que en `on_window_event` espera a que el frontend confirme `simulador:drained` antes de cerrar la ventana. Esa lógica se detalla en §10.
@@ -819,43 +819,43 @@ Forma del store central (interfaz TypeScript):
 ```ts
 // src/stores/useTransaccionesStore.ts
 
-import { create } from 'zustand';
+import { create } from 'zustand'
 
 export interface Transaccion {
-  id: number;
-  usuario_id: number;
-  tipo_flujo: 'Ingreso' | 'Gasto';
-  categoria_id: number;
-  concepto: string;
-  frecuencia: 'Mensual' | 'Bimensual' | 'Trimestral' | 'Semestral' | 'Anual';
-  comportamiento: 'Fijo' | 'Variable' | null;
-  naturaleza_necesidad: 'Necesario' | 'No tan necesario' | 'No necesario' | null;
-  valor_centavos: number;
-  notas: string | null;
-  created_at: number;
-  updated_at: number;
+  id: number
+  usuario_id: number
+  tipo_flujo: 'Ingreso' | 'Gasto'
+  categoria_id: number
+  concepto: string
+  frecuencia: 'Mensual' | 'Bimensual' | 'Trimestral' | 'Semestral' | 'Anual'
+  comportamiento: 'Fijo' | 'Variable' | null
+  naturaleza_necesidad: 'Necesario' | 'No tan necesario' | 'No necesario' | null
+  valor_centavos: number
+  notas: string | null
+  created_at: number
+  updated_at: number
 }
 
 export interface TransaccionInput {
-  tipo_flujo: 'Ingreso' | 'Gasto';
-  categoria_id: number;
-  concepto: string;
-  frecuencia: Transaccion['frecuencia'];
-  comportamiento: Transaccion['comportamiento'];
-  naturaleza_necesidad: Transaccion['naturaleza_necesidad'];
-  valor_centavos: number;
-  notas?: string | null;
+  tipo_flujo: 'Ingreso' | 'Gasto'
+  categoria_id: number
+  concepto: string
+  frecuencia: Transaccion['frecuencia']
+  comportamiento: Transaccion['comportamiento']
+  naturaleza_necesidad: Transaccion['naturaleza_necesidad']
+  valor_centavos: number
+  notas?: string | null
 }
 
 interface TransaccionesState {
-  porUsuario: Map<number, Transaccion[]>;
-  cargando: boolean;
-  error: AppErrorView | null;
+  porUsuario: Map<number, Transaccion[]>
+  cargando: boolean
+  error: AppErrorView | null
 
-  cargar: (usuarioId: number) => Promise<void>;
-  insertar: (usuarioId: number, input: TransaccionInput) => Promise<number>;
-  actualizar: (id: number, patch: Partial<TransaccionInput>) => Promise<void>;
-  eliminar: (id: number) => Promise<void>;
+  cargar: (usuarioId: number) => Promise<void>
+  insertar: (usuarioId: number, input: TransaccionInput) => Promise<number>
+  actualizar: (id: number, patch: Partial<TransaccionInput>) => Promise<void>
+  eliminar: (id: number) => Promise<void>
 }
 ```
 
@@ -863,19 +863,19 @@ interface TransaccionesState {
 // src/stores/useSimuladorStore.ts
 
 export interface SimuladorFila {
-  transaccion_id: number;
-  nuevo_valor_mensual_centavos: number;
+  transaccion_id: number
+  nuevo_valor_mensual_centavos: number
 }
 
 interface SimuladorState {
-  propuestas: Map<number, number>;   // transaccionId -> centavos propuesto
-  pendingQueue: Map<number, number>; // cambios aún no persistidos
-  cargando: boolean;
+  propuestas: Map<number, number> // transaccionId -> centavos propuesto
+  pendingQueue: Map<number, number> // cambios aún no persistidos
+  cargando: boolean
 
-  setPropuesta: (transaccionId: number, centavos: number) => void; // debounced write
-  cargar: (usuarioId: number) => Promise<void>;
-  limpiar: () => void;
-  drainPending: () => SimuladorFila[]; // usado por flush-on-close
+  setPropuesta: (transaccionId: number, centavos: number) => void // debounced write
+  cargar: (usuarioId: number) => Promise<void>
+  limpiar: () => void
+  drainPending: () => SimuladorFila[] // usado por flush-on-close
 }
 ```
 
@@ -883,22 +883,22 @@ interface SimuladorState {
 // src/stores/usePerfilStore.ts
 
 export interface PerfilActivo {
-  id: number;
-  nombre: string;
-  salario_personal_objetivo_centavos: number;
-  modo_mejorado_activo: boolean;
+  id: number
+  nombre: string
+  salario_personal_objetivo_centavos: number
+  modo_mejorado_activo: boolean
 }
 
 interface PerfilState {
-  disponibles: PerfilActivo[];
-  activo: PerfilActivo | null;
-  cargando: boolean;
+  disponibles: PerfilActivo[]
+  activo: PerfilActivo | null
+  cargando: boolean
 
-  listar: () => Promise<void>;
-  seleccionar: (id: number) => Promise<void>;
-  crear: (nombre: string) => Promise<number>;
-  activarModoMejorado: (activo: boolean) => Promise<void>;
-  setSalarioObjetivo: (centavos: number) => Promise<void>;
+  listar: () => Promise<void>
+  seleccionar: (id: number) => Promise<void>
+  crear: (nombre: string) => Promise<number>
+  activarModoMejorado: (activo: boolean) => Promise<void>
+  setSalarioObjetivo: (centavos: number) => Promise<void>
 }
 ```
 
@@ -907,23 +907,23 @@ interface PerfilState {
 
 interface PresupuestoState {
   // Se recalcula via useMemo desde useTransaccionesStore + useSimuladorStore
-  totalesPorCategoria: Map<number, number>;   // categoriaId -> centavos mensuales
-  totalesPorNaturaleza: Map<string, number>;  // 'Necesario' | ... -> centavos
-  totalIngresosMensual: number;
-  totalGastosMensual: number;
-  flujoCajaLibre: number;
+  totalesPorCategoria: Map<number, number> // categoriaId -> centavos mensuales
+  totalesPorNaturaleza: Map<string, number> // 'Necesario' | ... -> centavos
+  totalIngresosMensual: number
+  totalGastosMensual: number
+  flujoCajaLibre: number
 }
 ```
 
 ### 7.3. Hooks custom
 
-| Hook | Propósito |
-|------|-----------|
-| `useDebounce<T>(value, ms)` | Genérico; usado por inputs del Simulador |
-| `useFlushOnClose()` | Suscribe handler a `beforeunload` + `tauri://close-requested` |
-| `usePerfilActivo()` | Devuelve perfil activo; si es null, redirige al selector |
+| Hook                                 | Propósito                                                           |
+| ------------------------------------ | ------------------------------------------------------------------- |
+| `useDebounce<T>(value, ms)`          | Genérico; usado por inputs del Simulador                            |
+| `useFlushOnClose()`                  | Suscribe handler a `beforeunload` + `tauri://close-requested`       |
+| `usePerfilActivo()`                  | Devuelve perfil activo; si es null, redirige al selector            |
 | `useEquivalenteMensual(transaccion)` | `transaccion.valor_centavos / divisor[frecuencia]` con `decimal.js` |
-| `useKpis(presupuesto)` | Recalcula FA1, FA2, Cap.Inversión reactivo al presupuesto |
+| `useKpis(presupuesto)`               | Recalcula FA1, FA2, Cap.Inversión reactivo al presupuesto           |
 
 ### 7.4. Flujo de un cambio de input del Simulador
 
@@ -986,9 +986,9 @@ valor_anual_centavos = valor_mensual_centavos * 12
 
 ```ts
 // src/domain/precision/decimal.ts
-import Decimal from 'decimal.js';
+import Decimal from 'decimal.js'
 
-Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_EVEN });
+Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_EVEN })
 // ROUND_HALF_EVEN = redondeo bancario (mitad al par)
 // 28 dígitos: holgura para anualizar valores grandes sin perder precisión
 ```
@@ -1000,7 +1000,7 @@ Decimal.set({ precision: 28, rounding: Decimal.ROUND_HALF_EVEN });
 `src/domain/normalizacion/mensualizar.ts`:
 
 ```ts
-import Decimal from 'decimal.js';
+import Decimal from 'decimal.js'
 
 const FACTORES: Record<Frecuencia, number> = {
   Mensual: 1,
@@ -1008,14 +1008,14 @@ const FACTORES: Record<Frecuencia, number> = {
   Trimestral: 3,
   Semestral: 6,
   Anual: 12,
-};
+}
 
 export function mensualizar(valorCentavos: number, frecuencia: Frecuencia): Decimal {
-  return new Decimal(valorCentavos).div(FACTORES[frecuencia]);
+  return new Decimal(valorCentavos).div(FACTORES[frecuencia])
 }
 
 export function anualizar(valorCentavos: number, frecuencia: Frecuencia): Decimal {
-  return mensualizar(valorCentavos, frecuencia).mul(12);
+  return mensualizar(valorCentavos, frecuencia).mul(12)
 }
 ```
 
@@ -1030,10 +1030,10 @@ export function anualizar(valorCentavos: number, frecuencia: Frecuencia): Decima
 
 ```ts
 // Ejemplo de flujo: DB → memoria → cálculo → DB
-const t: Transaccion = await db.get(id);                          // valor_centavos = 350000000
-const mensual = mensualizar(t.valor_centavos, t.frecuencia);      // Decimal(116666666.66666666666666666666...)
-const totalAnual = mensual.mul(12);                                // Decimal(1399999999.99999999999999999992)
-const anualCentavos = totalAnual.toDecimalPlaces(0).toNumber();   // 1400000000 (redondeo bancario → par)
+const t: Transaccion = await db.get(id) // valor_centavos = 350000000
+const mensual = mensualizar(t.valor_centavos, t.frecuencia) // Decimal(116666666.66666666666666666666...)
+const totalAnual = mensual.mul(12) // Decimal(1399999999.99999999999999999992)
+const anualCentavos = totalAnual.toDecimalPlaces(0).toNumber() // 1400000000 (redondeo bancario → par)
 ```
 
 ### 8.5. Verificación de cierre al centavo
@@ -1041,12 +1041,12 @@ const anualCentavos = totalAnual.toDecimalPlaces(0).toNumber();   // 1400000000 
 Para validar contra el Excel:
 
 | Caso | valor_base | frecuencia | mensual exacto Excel | mensual nuestro |
-|------|------------|------------|----------------------|-----------------|
-| 1 | 1,200,000 | Mensual | 1,200,000.000 | 1,200,000.000 ✓ |
-| 2 | 300,000 | Bimensual | 150,000.000 | 150,000.000 ✓ |
-| 3 | 3,500,000 | Trimestral | 1,166,666.667 | 1,166,666.667 ✓ |
-| 4 | 6,000,000 | Semestral | 1,000,000.000 | 1,000,000.000 ✓ |
-| 5 | 12,000,000 | Anual | 1,000,000.000 | 1,000,000.000 ✓ |
+| ---- | ---------- | ---------- | -------------------- | --------------- |
+| 1    | 1,200,000  | Mensual    | 1,200,000.000        | 1,200,000.000 ✓ |
+| 2    | 300,000    | Bimensual  | 150,000.000          | 150,000.000 ✓   |
+| 3    | 3,500,000  | Trimestral | 1,166,666.667        | 1,166,666.667 ✓ |
+| 4    | 6,000,000  | Semestral  | 1,000,000.000        | 1,000,000.000 ✓ |
+| 5    | 12,000,000 | Anual      | 1,000,000.000        | 1,000,000.000 ✓ |
 
 > Caso 3: `3500000 / 3 = 1166666.6666...`. El Excel lo muestra con 3 decimales (`1,166,666.667`). Nuestro motor, sin redondear, tiene los 28 dígitos exactos. Al presentar, redondeamos a 0 decimales → `1,166,667`. El golden test compara el valor en centavos redondeado: `116666667`. Esto se valida en `src/tests/golden/32_transacciones.golden.test.ts`.
 
@@ -1075,19 +1075,13 @@ CAPACIDAD_INVERSION = FLUJO_DE_AHORRO_2 - (salario_personal_objetivo if modo_mej
 
 export function calcularFA1(transacciones: Transaccion[]): Decimal {
   return transacciones
-    .filter(t => t.tipo_flujo === 'Ingreso')
-    .reduce(
-      (acc, t) => acc.plus(mensualizar(t.valor_centavos, t.frecuencia)),
-      new Decimal(0),
-    )
+    .filter((t) => t.tipo_flujo === 'Ingreso')
+    .reduce((acc, t) => acc.plus(mensualizar(t.valor_centavos, t.frecuencia)), new Decimal(0))
     .minus(
       transacciones
-        .filter(t => t.tipo_flujo === 'Gasto' && t.naturaleza_necesidad === 'Necesario')
-        .reduce(
-          (acc, t) => acc.plus(mensualizar(t.valor_centavos, t.frecuencia)),
-          new Decimal(0),
-        ),
-    );
+        .filter((t) => t.tipo_flujo === 'Gasto' && t.naturaleza_necesidad === 'Necesario')
+        .reduce((acc, t) => acc.plus(mensualizar(t.valor_centavos, t.frecuencia)), new Decimal(0)),
+    )
 }
 ```
 
@@ -1097,16 +1091,14 @@ export function calcularFA1(transacciones: Transaccion[]): Decimal {
 export function calcularFA2(transacciones: Transaccion[]): Decimal {
   return calcularFA1(transacciones).minus(
     transacciones
-      .filter(t =>
-        t.tipo_flujo === 'Gasto' &&
-        (t.naturaleza_necesidad === 'No tan necesario' ||
-         t.naturaleza_necesidad === 'No necesario'),
+      .filter(
+        (t) =>
+          t.tipo_flujo === 'Gasto' &&
+          (t.naturaleza_necesidad === 'No tan necesario' ||
+            t.naturaleza_necesidad === 'No necesario'),
       )
-      .reduce(
-        (acc, t) => acc.plus(mensualizar(t.valor_centavos, t.frecuencia)),
-        new Decimal(0),
-      ),
-  );
+      .reduce((acc, t) => acc.plus(mensualizar(t.valor_centavos, t.frecuencia)), new Decimal(0)),
+  )
 }
 ```
 
@@ -1118,23 +1110,21 @@ export function calcularCapacidadInversion(
   salarioObjetivoCentavos: number,
   modoMejoradoActivo: boolean,
 ): Decimal {
-  return modoMejoradoActivo
-    ? fa2.minus(salarioObjetivoCentavos)
-    : fa2;
+  return modoMejoradoActivo ? fa2.minus(salarioObjetivoCentavos) : fa2
 }
 ```
 
 ### 9.3. Casos borde
 
-| Caso | Comportamiento esperado |
-|------|-------------------------|
-| Sin transacciones | FA1=0, FA2=0, Cap.Inversión=0 (no negativo) |
-| Solo ingresos, sin gastos | FA1 = FA2 = total ingresos, Cap.Inversión = FA2 (o FA2 - salario si modo mejorado) |
-| Solo gastos | FA1 = -gastos_necesarios (negativo) |
-| FA2 negativo y modo mejorado activo con salario > 0 | Cap.Inversión aún más negativo; se muestra en rojo |
-| `salario_objetivo` mayor que FA2 positivo | Cap.Inversión negativo; tooltip explica que el salario se come el ahorro |
-| Frecuencia = 0 → divisor inválido | Prevenido por CHECK (no se puede insertar) y por tipado TS |
-| `valor_centavos` negativo | Prevenido por CHECK `> 0` y por validaciones del frontend |
+| Caso                                                | Comportamiento esperado                                                            |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Sin transacciones                                   | FA1=0, FA2=0, Cap.Inversión=0 (no negativo)                                        |
+| Solo ingresos, sin gastos                           | FA1 = FA2 = total ingresos, Cap.Inversión = FA2 (o FA2 - salario si modo mejorado) |
+| Solo gastos                                         | FA1 = -gastos_necesarios (negativo)                                                |
+| FA2 negativo y modo mejorado activo con salario > 0 | Cap.Inversión aún más negativo; se muestra en rojo                                 |
+| `salario_objetivo` mayor que FA2 positivo           | Cap.Inversión negativo; tooltip explica que el salario se come el ahorro           |
+| Frecuencia = 0 → divisor inválido                   | Prevenido por CHECK (no se puede insertar) y por tipado TS                         |
+| `valor_centavos` negativo                           | Prevenido por CHECK `> 0` y por validaciones del frontend                          |
 
 ### 9.4. Verificación contra Excel
 
@@ -1160,13 +1150,15 @@ Query Reactiva: el componente `PanelSimulador` consume `useTransaccionesStore` y
 
 ```ts
 const gastosNoEsenciales = useMemo(
-  () => transacciones.filter(
-    t => t.tipo_flujo === 'Gasto' &&
-         (t.naturaleza_necesidad === 'No necesario' ||
+  () =>
+    transacciones.filter(
+      (t) =>
+        t.tipo_flujo === 'Gasto' &&
+        (t.naturaleza_necesidad === 'No necesario' ||
           t.naturaleza_necesidad === 'No tan necesario'),
-  ),
+    ),
   [transacciones],
-);
+)
 ```
 
 Para el dataset de 32 transacciones esto da 12 filas (las listadas en REQ-401 §del spec).
@@ -1176,22 +1168,18 @@ Para el dataset de 32 transacciones esto da 12 filas (las listadas en REQ-401 §
 ```ts
 // src/hooks/useDebounce.ts
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react'
 
-export function useDebouncedEffect(
-  fn: () => void,
-  deps: unknown[],
-  delayMs: number,
-): void {
-  const timer = useRef<number | null>(null);
+export function useDebouncedEffect(fn: () => void, deps: unknown[], delayMs: number): void {
+  const timer = useRef<number | null>(null)
   useEffect(() => {
-    if (timer.current !== null) clearTimeout(timer.current);
-    timer.current = window.setTimeout(fn, delayMs);
+    if (timer.current !== null) clearTimeout(timer.current)
+    timer.current = window.setTimeout(fn, delayMs)
     return () => {
-      if (timer.current !== null) clearTimeout(timer.current);
-    };
+      if (timer.current !== null) clearTimeout(timer.current)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, delayMs]);
+  }, [...deps, delayMs])
 }
 ```
 
@@ -1199,13 +1187,14 @@ Uso en `FilaSimulador`:
 
 ```ts
 useDebouncedEffect(
-  () => invoke('cmd_set_simulador', {
-    transaccionId: t.id,
-    nuevoValor: propuesto,
-  }),
+  () =>
+    invoke('cmd_set_simulador', {
+      transaccionId: t.id,
+      nuevoValor: propuesto,
+    }),
   [propuesto],
   300,
-);
+)
 ```
 
 ### 10.3. Flush-on-close
@@ -1248,17 +1237,19 @@ fn main() {
 
 useEffect(() => {
   const off1 = listen('simulador:drain-request', async () => {
-    const pending = useSimuladorStore.getState().drainPending();
+    const pending = useSimuladorStore.getState().drainPending()
     if (pending.length > 0) {
       await invoke('cmd_flush_simulador', {
         usuarioId: usePerfilStore.getState().activo!.id,
         entries: pending,
-      });
+      })
     }
-    emit('simulador:drained');
-  });
-  return () => { off1.then(fn => fn()); };
-}, []);
+    emit('simulador:drained')
+  })
+  return () => {
+    off1.then((fn) => fn())
+  }
+}, [])
 ```
 
 > **Ver §17 riesgo R-NUEVO-2**: el ciclo `prevent_close → request → drain → close` agrega latencia al cierre. Si el usuario hace click en la X múltiples veces, podría ver la ventana "pegada". La mitigación: timeout duro de 2 s en Rust; si no llega el ack, cerrar igual.
@@ -1272,18 +1263,17 @@ export function aplicarSimulador(
   transacciones: Transaccion[],
   propuestas: Map<number, number>,
 ): Transaccion[] {
-  return transacciones.map(t => {
-    const propuesta = propuestas.get(t.id);
+  return transacciones.map((t) => {
+    const propuesta = propuestas.get(t.id)
     if (
       propuesta === undefined ||
       t.tipo_flujo !== 'Gasto' ||
-      (t.naturaleza_necesidad !== 'No necesario' &&
-       t.naturaleza_necesidad !== 'No tan necesario')
+      (t.naturaleza_necesidad !== 'No necesario' && t.naturaleza_necesidad !== 'No tan necesario')
     ) {
-      return t; // inmutable
+      return t // inmutable
     }
-    return { ...t, valor_centavos: propuesta };
-  });
+    return { ...t, valor_centavos: propuesta }
+  })
 }
 ```
 
@@ -1373,21 +1363,21 @@ No hay rollback automático. Si una migración falla a mitad, la transacción se
 `src/tests/golden/32_transacciones.golden.test.ts`:
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import transacciones from '../../../scripts/fixtures/32_transacciones.json';
-import { calcularFA1, calcularFA2 } from '../../domain/kpis';
-import { Decimal } from 'decimal.js';
+import { describe, it, expect } from 'vitest'
+import transacciones from '../../../scripts/fixtures/32_transacciones.json'
+import { calcularFA1, calcularFA2 } from '../../domain/kpis'
+import { Decimal } from 'decimal.js'
 
 describe('Golden test: 32 transacciones del Excel', () => {
   it('replica FA1 = $2,140,000.00', () => {
-    const fa1 = calcularFA1(transacciones);
-    expect(fa1.toDecimalPlaces(0).toNumber()).toBe(214000000); // centavos
-  });
+    const fa1 = calcularFA1(transacciones)
+    expect(fa1.toDecimalPlaces(0).toNumber()).toBe(214000000) // centavos
+  })
   it('replica FA2 inicial = -$1,145,000.00', () => {
-    const fa2 = calcularFA2(transacciones);
-    expect(fa2.toDecimalPlaces(0).toNumber()).toBe(-114500000);
-  });
-});
+    const fa2 = calcularFA2(transacciones)
+    expect(fa2.toDecimalPlaces(0).toNumber()).toBe(-114500000)
+  })
+})
 ```
 
 ### 12.4. Tests backend (cargo test)
@@ -1448,15 +1438,15 @@ pnpm test -- --coverage
 
 ### 13.1. Budgets
 
-| Métrica | Objetivo | Cómo se mide |
-|---------|----------|--------------|
+| Métrica                   | Objetivo                              | Cómo se mide                                                                                                           |
+| ------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | Carga de 32 transacciones | < 100 ms (db.select → render inicial) | `performance.now()` en `useTransaccionesStore.cargar()` y en el `useEffect` que dispara el primer render del dashboard |
-| Instalador Windows (.msi) | < 50 MB | Tamaño de archivo en `src-tauri/target/release/bundle/msi/` |
-| RAM en reposo con 32 tx | < 200 MB | `Get-Process` en PowerShell tras 30 s de idle |
-| Debounce del Simulador | ≤ 300 ms | `performance.now()` entre `onChange` y `invoke('cmd_set_simulador')` |
-| Latencia de tipeo→render | < 50 ms | `performance.now()` en `FilaSimulador` |
-| Cambio de perfil | < 1000 ms | `performance.now()` entre `seleccionar()` y render de la primera transacción del nuevo perfil |
-| Migraciones | < 1 s en DB fresca | `cargo test` mide en `migraciones::ejecutar_pendientes` |
+| Instalador Windows (.msi) | < 50 MB                               | Tamaño de archivo en `src-tauri/target/release/bundle/msi/`                                                            |
+| RAM en reposo con 32 tx   | < 200 MB                              | `Get-Process` en PowerShell tras 30 s de idle                                                                          |
+| Debounce del Simulador    | ≤ 300 ms                              | `performance.now()` entre `onChange` y `invoke('cmd_set_simulador')`                                                   |
+| Latencia de tipeo→render  | < 50 ms                               | `performance.now()` en `FilaSimulador`                                                                                 |
+| Cambio de perfil          | < 1000 ms                             | `performance.now()` entre `seleccionar()` y render de la primera transacción del nuevo perfil                          |
+| Migraciones               | < 1 s en DB fresca                    | `cargo test` mide en `migraciones::ejecutar_pendientes`                                                                |
 
 ### 13.2. Cómo se mide cada uno
 
@@ -1519,12 +1509,10 @@ pnpm test -- --coverage
 await db.execute(
   'INSERT INTO Transacciones (usuario_id, tipo_flujo, concepto, valor_centavos) VALUES (?, ?, ?, ?)',
   [usuarioId, 'Gasto', concepto, valorCentavos],
-);
+)
 
 // PROHIBIDO
-await db.execute(
-  `INSERT INTO Transacciones (concepto) VALUES ('${concepto}')`,
-);
+await db.execute(`INSERT INTO Transacciones (concepto) VALUES ('${concepto}')`)
 ```
 
 > Riesgo cubierto: el plugin `tauri-plugin-sql` ya envía todo por el canal IPC tipado, pero igualmente la convención se aplica en cada repositorio por defensa en profundidad.
@@ -1586,13 +1574,13 @@ async seleccionar(id: number) {
 
 ### 16.1. Qué se loguea
 
-| Origen | Nivel | Contenido | Dónde |
-|--------|-------|-----------|-------|
-| Frontend | `error` | Excepciones JS no atrapadas, fallos de `invoke` | Consola del WebView (devtools) |
-| Frontend | `warn` | Validaciones de input fallidas, retries del debounce | Consola |
-| Backend | `info` | Inicio de la app, carga de DB, migraciones aplicadas, perfil activo | Archivo `logs/app.log` (Tauri) |
-| Backend | `error` | Errores de DB, fallos de IPC, CHECK constraint violations | `logs/app.log` |
-| Backend | `warn` | Migraciones con drift de sha256, queries lentas | `logs/app.log` |
+| Origen   | Nivel   | Contenido                                                           | Dónde                          |
+| -------- | ------- | ------------------------------------------------------------------- | ------------------------------ |
+| Frontend | `error` | Excepciones JS no atrapadas, fallos de `invoke`                     | Consola del WebView (devtools) |
+| Frontend | `warn`  | Validaciones de input fallidas, retries del debounce                | Consola                        |
+| Backend  | `info`  | Inicio de la app, carga de DB, migraciones aplicadas, perfil activo | Archivo `logs/app.log` (Tauri) |
+| Backend  | `error` | Errores de DB, fallos de IPC, CHECK constraint violations           | `logs/app.log`                 |
+| Backend  | `warn`  | Migraciones con drift de sha256, queries lentas                     | `logs/app.log`                 |
 
 ### 16.2. Formato
 
@@ -1619,25 +1607,25 @@ JSON lines (una línea por evento):
 
 ## 17. Riesgos de implementación
 
-| # | Riesgo | Probabilidad | Impacto | Mitigación |
-|---|--------|--------------|---------|------------|
-| 1 | Pérdida de cambios en el Simulador si se cierra la app durante el debounce | Media | Alto | `tauri://close-requested` + drain pattern (§10.3). Persistir también en `blur` del input. |
-| 2 | Drift en anualización `×12` cuando el equivalente mensual tiene fracciones de centavo | Alta | Medio | `decimal.js` con `ROUND_HALF_EVEN` y precisión 28. Tests de regresión contra el Excel. |
-| 3 | Migración futura a multi-moneda requiere alterar schema | Baja | Alto | Columna `moneda` ya reservada en v1 con CHECK `('LOCAL')`. Plan documentado. |
-| 4 | Cierre al centavo pero fixtures del Excel tienen 3 decimales | Alta | Medio | Golden tests comparan valor mensual **normalizado** (28 dígitos) y valor UI (0/2 decimales por separado). |
-| 5 | Persistencia del equivalente mensual: ¿recalcular o cachear? | Media | Medio | Recalcular siempre desde `Transacciones`. Ninguna columna calculada persiste. |
-| 6 | Compatibilidad cross-platform Tauri v2 | Baja | Bajo | Roadmap post-MVP. v1 es Windows. |
-| 7 | Migración de CHECK constraints en SQLite | Media | Alto | Patrón expand → migrate → contract documentado en §11.2. |
-| 8 | Contaminación cruzada por `naturaleza_necesidad` en Ingreso | Media | Alto | CHECK cruzado a nivel SQL. Validación adicional en la capa de aplicación. |
-| 9 | UX del modo "Mejorado" no comunica el cambio de comportamiento | Media | Medio | Tooltip + banner persistente cuando `modo_mejorado_activo = true`. |
-| **R-NUEVO-1** | `tauri-plugin-sql` puede cambiar de API entre versiones | Baja | Alto | Pin de versión exacta en `Cargo.toml` y `package.json`. Revisar CHANGELOG antes de actualizar. |
-| **R-NUEVO-2** | Ciclo `prevent_close → drain → close` agrega latencia perceptible al cierre | Media | Bajo | Timeout duro de 2 s en Rust. Si no llega `simulador:drained`, cerrar igual. |
-| **R-NUEVO-3** | Port futuro a SQLite-via-WASM (sql.js) podría perder transacciones si no se sincroniza | Baja | Alto | Documentado en ADR `0004-futuro-sqlite-wasm.md` (no creado en v1). El MVP es 100% nativo vía `tauri-plugin-sql`. |
-| **R-NUEVO-4** | Si el usuario edita `misfinanzas.db` externamente (borrando una categoría con FK), la próxima lectura falla | Baja | Medio | `PRAGMA foreign_keys = ON` + `ON DELETE RESTRICT` en `categoria_id`. Mensaje de error claro al usuario. |
-| **R-NUEVO-5** | `vitest` corre en jsdom, no en WebView; algunas APIs de Tauri no se pueden mockear fácilmente | Media | Medio | Separar tests de dominio (sin Tauri) de tests de integración (con `tauri-plugin-sql-mock` o similar). |
-| **R-NUEVO-6** | Conventional Commits exige scope y descripción en español; en la práctica cuesta mantenerlo | Baja | Bajo | Template de commit en `.gitmessage` o CONTRIBUTING. El linter (`commitlint`) lo enforza. |
-| **R-NUEVO-7** | Chained PRs: si una épica excede 400 líneas de diff, dividir y rebasear puede ser costoso | Media | Medio | Estrategia documentada en §13. Empezar la épica planeando slices. Forecast en `tasks.md`. |
-| **R-NUEVO-8** | Trigger de `updated_at` se rompe si SQLite no lo tiene habilitado (sí lo tiene, pero documentar) | Baja | Bajo | Test explícito en `migraciones::ejecutar_pendientes` que crea un trigger dummy y verifica que se dispara. |
+| #             | Riesgo                                                                                                      | Probabilidad | Impacto | Mitigación                                                                                                       |
+| ------------- | ----------------------------------------------------------------------------------------------------------- | ------------ | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| 1             | Pérdida de cambios en el Simulador si se cierra la app durante el debounce                                  | Media        | Alto    | `tauri://close-requested` + drain pattern (§10.3). Persistir también en `blur` del input.                        |
+| 2             | Drift en anualización `×12` cuando el equivalente mensual tiene fracciones de centavo                       | Alta         | Medio   | `decimal.js` con `ROUND_HALF_EVEN` y precisión 28. Tests de regresión contra el Excel.                           |
+| 3             | Migración futura a multi-moneda requiere alterar schema                                                     | Baja         | Alto    | Columna `moneda` ya reservada en v1 con CHECK `('LOCAL')`. Plan documentado.                                     |
+| 4             | Cierre al centavo pero fixtures del Excel tienen 3 decimales                                                | Alta         | Medio   | Golden tests comparan valor mensual **normalizado** (28 dígitos) y valor UI (0/2 decimales por separado).        |
+| 5             | Persistencia del equivalente mensual: ¿recalcular o cachear?                                                | Media        | Medio   | Recalcular siempre desde `Transacciones`. Ninguna columna calculada persiste.                                    |
+| 6             | Compatibilidad cross-platform Tauri v2                                                                      | Baja         | Bajo    | Roadmap post-MVP. v1 es Windows.                                                                                 |
+| 7             | Migración de CHECK constraints en SQLite                                                                    | Media        | Alto    | Patrón expand → migrate → contract documentado en §11.2.                                                         |
+| 8             | Contaminación cruzada por `naturaleza_necesidad` en Ingreso                                                 | Media        | Alto    | CHECK cruzado a nivel SQL. Validación adicional en la capa de aplicación.                                        |
+| 9             | UX del modo "Mejorado" no comunica el cambio de comportamiento                                              | Media        | Medio   | Tooltip + banner persistente cuando `modo_mejorado_activo = true`.                                               |
+| **R-NUEVO-1** | `tauri-plugin-sql` puede cambiar de API entre versiones                                                     | Baja         | Alto    | Pin de versión exacta en `Cargo.toml` y `package.json`. Revisar CHANGELOG antes de actualizar.                   |
+| **R-NUEVO-2** | Ciclo `prevent_close → drain → close` agrega latencia perceptible al cierre                                 | Media        | Bajo    | Timeout duro de 2 s en Rust. Si no llega `simulador:drained`, cerrar igual.                                      |
+| **R-NUEVO-3** | Port futuro a SQLite-via-WASM (sql.js) podría perder transacciones si no se sincroniza                      | Baja         | Alto    | Documentado en ADR `0004-futuro-sqlite-wasm.md` (no creado en v1). El MVP es 100% nativo vía `tauri-plugin-sql`. |
+| **R-NUEVO-4** | Si el usuario edita `misfinanzas.db` externamente (borrando una categoría con FK), la próxima lectura falla | Baja         | Medio   | `PRAGMA foreign_keys = ON` + `ON DELETE RESTRICT` en `categoria_id`. Mensaje de error claro al usuario.          |
+| **R-NUEVO-5** | `vitest` corre en jsdom, no en WebView; algunas APIs de Tauri no se pueden mockear fácilmente               | Media        | Medio   | Separar tests de dominio (sin Tauri) de tests de integración (con `tauri-plugin-sql-mock` o similar).            |
+| **R-NUEVO-6** | Conventional Commits exige scope y descripción en español; en la práctica cuesta mantenerlo                 | Baja         | Bajo    | Template de commit en `.gitmessage` o CONTRIBUTING. El linter (`commitlint`) lo enforza.                         |
+| **R-NUEVO-7** | Chained PRs: si una épica excede 400 líneas de diff, dividir y rebasear puede ser costoso                   | Media        | Medio   | Estrategia documentada en §13. Empezar la épica planeando slices. Forecast en `tasks.md`.                        |
+| **R-NUEVO-8** | Trigger de `updated_at` se rompe si SQLite no lo tiene habilitado (sí lo tiene, pero documentar)            | Baja         | Bajo    | Test explícito en `migraciones::ejecutar_pendientes` que crea un trigger dummy y verifica que se dispara.        |
 
 ---
 
@@ -1679,21 +1667,21 @@ Estas reglas fueron impuestas por el usuario y son **inmutables** a lo largo de 
 
 ## 20. Referencias cruzadas
 
-| Tema | Documento |
-|------|-----------|
-| Qué se construye (alcance) | `proposal.md` §5 |
-| Requisitos formales (escenarios) | `spec.md` (19 REQ, 38 escenarios) |
-| Análisis del Excel | `docs/analisis-plantilla-financiera.md` |
-| Decisiones de producto bloqueadas | `proposal.md` §3, `explore.md` §2 |
-| Riesgo y mitigaciones (de producto) | `proposal.md` §8 |
-| 32 transacciones como fixture | `scripts/fixtures/32_transacciones.json` (lo genera `scripts/generar_analisis_md.py`) |
-| KPIs esperados | `scripts/fixtures/kpis_esperados.json` (a crear en apply con valores del spec) |
-| Estructura final del proyecto | §4 de este design |
-| Branching + commits | §3 de este design |
-| Comandos IPC (firmas) | §6.2 de este design |
-| DDL completo | §5 de este design |
-| Pseudocódigo de KPIs | §9 de este design |
-| Política de redondeo | §8.2 de este design |
+| Tema                                | Documento                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------- |
+| Qué se construye (alcance)          | `proposal.md` §5                                                                      |
+| Requisitos formales (escenarios)    | `spec.md` (19 REQ, 38 escenarios)                                                     |
+| Análisis del Excel                  | `docs/analisis-plantilla-financiera.md`                                               |
+| Decisiones de producto bloqueadas   | `proposal.md` §3, `explore.md` §2                                                     |
+| Riesgo y mitigaciones (de producto) | `proposal.md` §8                                                                      |
+| 32 transacciones como fixture       | `scripts/fixtures/32_transacciones.json` (lo genera `scripts/generar_analisis_md.py`) |
+| KPIs esperados                      | `scripts/fixtures/kpis_esperados.json` (a crear en apply con valores del spec)        |
+| Estructura final del proyecto       | §4 de este design                                                                     |
+| Branching + commits                 | §3 de este design                                                                     |
+| Comandos IPC (firmas)               | §6.2 de este design                                                                   |
+| DDL completo                        | §5 de este design                                                                     |
+| Pseudocódigo de KPIs                | §9 de este design                                                                     |
+| Política de redondeo                | §8.2 de este design                                                                   |
 
 ---
 

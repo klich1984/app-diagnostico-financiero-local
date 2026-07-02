@@ -3,7 +3,5 @@
   "identifier": "default",
   "description": "Capacidades mínimas: solo core (ventana, eventos, app). No fs, no shell, no http. La DB se accede via tauri-plugin-sql, habilitado en su capability propia (Slice 2).",
   "windows": ["main"],
-  "permissions": [
-    "core:default"
-  ]
+  "permissions": ["core:default"]
 }
