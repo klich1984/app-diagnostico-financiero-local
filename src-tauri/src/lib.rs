@@ -1,6 +1,14 @@
 // MVP Financiero Local-First — librería del binario Tauri v2.
-// Por ahora sólo arranca la app. Los comandos IPC y la integración
-// con tauri-plugin-sql se agregan en slices posteriores (Épica 1 / Slice 2).
+//
+// Esta capa es delgada: su responsabilidad es montar el runtime de Tauri,
+// registrar plugins (SQL) y exponer comandos IPC. La lógica de negocio
+// vive en `src/domain/` (TypeScript) y la persistencia en los módulos
+// Rust de este crate (`path`, `plugin`, `migrations`, `seeds`).
+
+pub mod migrations;
+pub mod path;
+pub mod plugin;
+pub mod seeds;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
