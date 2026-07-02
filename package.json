@@ -1,5 +1,5 @@
 {
-  "name": "mvp-financiero-local-first",
+  "name": "app-diagnostico-financiero-local",
   "private": true,
   "version": "0.1.0",
   "description": "MVP Financiero Local-First: aplicación de escritorio Tauri v2 + React para gestión financiera personal.",

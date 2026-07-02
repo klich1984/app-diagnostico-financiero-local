@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    mvp_financiero_local_first_lib::run();
+    app_diagnostico_financiero_local_lib::run();
 }
