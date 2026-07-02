@@ -1,0 +1,27 @@
+# Build outputs
+dist/
+build/
+*.local
+
+# Dependencies
+node_modules/
+
+# Generated artifacts
+src-tauri/gen/
+src-tauri/target/
+
+# Lockfiles (formatted by their own tooling)
+pnpm-lock.yaml
+Cargo.lock
+
+# Logs
+*.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test outputs
+coverage/
