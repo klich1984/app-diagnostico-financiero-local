@@ -1,0 +1,29 @@
+# Auto-detect text files and normalize to LF on checkout
+* text=auto eol=lf
+
+# Force LF explicitly on common source files (defense in depth)
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.js   text eol=lf
+*.jsx  text eol=lf
+*.json text eol=lf
+*.css  text eol=lf
+*.html text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.rs   text eol=lf
+
+# Binary assets (Tauri icons, etc.)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.pdf binary
+
+# Lockfiles should not have EOL normalized
+pnpm-lock.yaml -text
+Cargo.lock linguist-generated
