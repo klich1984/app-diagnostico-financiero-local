@@ -1,0 +1,94 @@
+# =============================================================================
+# Node / pnpm
+# =============================================================================
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+
+# Build outputs (Vite)
+dist/
+dist-ssr/
+*.local
+
+# Tests / coverage
+coverage/
+.nyc_output/
+
+# =============================================================================
+# Rust / Cargo / Tauri
+# =============================================================================
+# Cargo build artifacts
+src-tauri/target/
+**/target/
+
+# Cargo lock if needed for libs (kept for binaries, ignored for workspace crates we don't own)
+# Keep Cargo.lock tracked for Tauri apps (recommended).
+
+# Generated artifacts
+**/*.rs.bk
+
+# Tauri generated icons / binaries
+src-tauri/gen/
+src-tauri/icons/*.icns
+src-tauri/icons/*.png
+
+# =============================================================================
+# Database / SQLite
+# =============================================================================
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# =============================================================================
+# Environment / Secrets
+# =============================================================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# =============================================================================
+# IDEs
+# =============================================================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# OS
+# =============================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+ehthumbs_vista.db
+
+# =============================================================================
+# opencode / agent transient state
+# =============================================================================
+.atl/
+
+# =============================================================================
+# Logs
+# =============================================================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+logs/
+
+# Tauri dev transient output (used by scripts/tauri-dev.cmd)
+tauri-dev.out
+tauri-dev.err
+tauri-dev.pid
