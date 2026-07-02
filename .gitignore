@@ -30,7 +30,10 @@ src-tauri/target/
 # Tauri generated icons / binaries
 src-tauri/gen/
 src-tauri/icons/*.icns
-src-tauri/icons/*.png
+# Las PNG e ICO de src-tauri/icons/ SI se versionan (referenciadas en tauri.conf.json).
+# Excepción explícita para que no caigan en la regla anterior:
+!src-tauri/icons/*.png
+!src-tauri/icons/*.ico
 
 # =============================================================================
 # Database / SQLite
