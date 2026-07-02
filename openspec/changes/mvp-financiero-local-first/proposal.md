@@ -28,30 +28,30 @@ La migración a una app local-first resuelve los tres: tipado estricto en las fr
 
 Estas 6 decisiones son **inmutables** para las fases de especificación, diseño, tareas e implementación. Cualquier reversión requiere reabrir la conversación con el orquestador.
 
-| # | Decisión | Detalle |
-|---|----------|---------|
-| 1 | **Idioma de la UI** | Español neutro LATAM sin voseo. Textos formales con "tú", sin modismos regionales. Sin selector de locale en v1. |
-| 2 | **Salario Personal Objetivo en FA2 inicial** | NO se descuenta al inicio. `D16` del Estado de Resultados Inicial queda vacío. Resultado: **-$1,145,000**. El salario se configura al activar el modo "Mejorado" y se deduce desde entonces. |
-| 3 | **Librería de gráficos** | Recharts. Peso objetivo ~100KB gzipped, integración React-native, suficiente para barras/torta/distribución porcentual que pide la HU-302. |
-| 4 | **Validación de enums** | CHECK constraints en SQL dentro de las migraciones de Tauri. Toda adición o modificación de un enum exige un plan de migración de schema documentado antes de ejecutar la migración. |
-| 5 | **Límite duro de transacciones** | Sin límite duro. SQLite aguanta el orden de magnitud esperado. La UI implementa scroll virtualizado y/o paginación cuando la lista crece más allá de un umbral de UX (definido en la fase de diseño). |
-| 6 | **Soporte multi-usuario** | Múltiples perfiles en la misma DB. Al abrir la app, un selector de perfil obligatorio en primera ejecución; el usuario activo filtra todas las consultas. Cambiar de perfil no es destructivo. |
+| #   | Decisión                                     | Detalle                                                                                                                                                                                               |
+| --- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Idioma de la UI**                          | Español neutro LATAM sin voseo. Textos formales con "tú", sin modismos regionales. Sin selector de locale en v1.                                                                                      |
+| 2   | **Salario Personal Objetivo en FA2 inicial** | NO se descuenta al inicio. `D16` del Estado de Resultados Inicial queda vacío. Resultado: **-$1,145,000**. El salario se configura al activar el modo "Mejorado" y se deduce desde entonces.          |
+| 3   | **Librería de gráficos**                     | Recharts. Peso objetivo ~100KB gzipped, integración React-native, suficiente para barras/torta/distribución porcentual que pide la HU-302.                                                            |
+| 4   | **Validación de enums**                      | CHECK constraints en SQL dentro de las migraciones de Tauri. Toda adición o modificación de un enum exige un plan de migración de schema documentado antes de ejecutar la migración.                  |
+| 5   | **Límite duro de transacciones**             | Sin límite duro. SQLite aguanta el orden de magnitud esperado. La UI implementa scroll virtualizado y/o paginación cuando la lista crece más allá de un umbral de UX (definido en la fase de diseño). |
+| 6   | **Soporte multi-usuario**                    | Múltiples perfiles en la misma DB. Al abrir la app, un selector de perfil obligatorio en primera ejecución; el usuario activo filtra todas las consultas. Cambiar de perfil no es destructivo.        |
 
 ## 4. Stack propuesto
 
-| Capa | Tecnología | Justificación corta |
-|------|------------|---------------------|
-| Contenedor | Tauri v2 (Rust) | ~58% menos RAM y ~96% menos bundle que Electron. IPC con sandboxing por capacidades. |
-| Frontend | React 18 + TypeScript + Vite | SPA tipada; Vite para DX rápida en `tauri dev`. |
-| Estilos | TailwindCSS | Utility-first, sin lock-in visual, coherente con el tono técnico del producto. |
-| Estado | Zustand | Bajo boilerplate, tipado fuerte, suficiente para el modelo reactivo del MVP. |
-| Backend (datos) | Tauri v2 + `tauri-plugin-sql` | Driver SQLite embebido, sin procesos externos, API JS tipada. |
-| Persistencia | SQLite | Archivo único en `BaseDirectory::App`, columnas monetarias como `INTEGER` (centavos Int64). |
-| Matemáticas | `decimal.js` | Operaciones con precisión arbitraria, redondeo bancario, sin IEEE 754 drift. |
-| Gráficos | Recharts | Decisión bloqueada #3. SVG-based, declarativo, compatible con paleta del dashboard. |
-| Migraciones | `MigrationKind::Up` en Rust | Sistema versionado nativo del plugin SQL. |
-| Tests frontend | Vitest + golden tests contra Excel | Cierre al centavo contra fixtures del archivo fuente. |
-| Tests backend | `cargo test` para migraciones y constraints | Garantiza que CHECK y migraciones aplican correctamente. |
+| Capa            | Tecnología                                  | Justificación corta                                                                         |
+| --------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Contenedor      | Tauri v2 (Rust)                             | ~58% menos RAM y ~96% menos bundle que Electron. IPC con sandboxing por capacidades.        |
+| Frontend        | React 18 + TypeScript + Vite                | SPA tipada; Vite para DX rápida en `tauri dev`.                                             |
+| Estilos         | TailwindCSS                                 | Utility-first, sin lock-in visual, coherente con el tono técnico del producto.              |
+| Estado          | Zustand                                     | Bajo boilerplate, tipado fuerte, suficiente para el modelo reactivo del MVP.                |
+| Backend (datos) | Tauri v2 + `tauri-plugin-sql`               | Driver SQLite embebido, sin procesos externos, API JS tipada.                               |
+| Persistencia    | SQLite                                      | Archivo único en `BaseDirectory::App`, columnas monetarias como `INTEGER` (centavos Int64). |
+| Matemáticas     | `decimal.js`                                | Operaciones con precisión arbitraria, redondeo bancario, sin IEEE 754 drift.                |
+| Gráficos        | Recharts                                    | Decisión bloqueada #3. SVG-based, declarativo, compatible con paleta del dashboard.         |
+| Migraciones     | `MigrationKind::Up` en Rust                 | Sistema versionado nativo del plugin SQL.                                                   |
+| Tests frontend  | Vitest + golden tests contra Excel          | Cierre al centavo contra fixtures del archivo fuente.                                       |
+| Tests backend   | `cargo test` para migraciones y constraints | Garantiza que CHECK y migraciones aplican correctamente.                                    |
 
 **Flujo de datos**: input del usuario → store Zustand → debounce de escritura → `db.execute` con bind values → SQLite. Lecturas: `db.select` → normalización temporal en memoria con `decimal.js` → estado derivado → render en React/Recharts.
 
@@ -138,17 +138,17 @@ Estas métricas son **medibles** y se verifican antes de cerrar el cambio.
 
 ## 8. Riesgos y mitigaciones
 
-| # | Riesgo | Probabilidad | Impacto | Mitigación |
-|---|--------|--------------|---------|------------|
-| 1 | Pérdida de cambios en el Simulador si se cierra la app durante el debounce | Media | Alto | Implementar flush on app close (`beforeunload` + handler en Tauri que drena el store antes de salir). Persistir también en eventos `blur` del input. |
-| 2 | Drift en anualización `× 12` cuando el equivalente mensual tiene fracciones de centavo (ej. `1,166,666.667`) | Alta | Medio | Usar `decimal.js` con `rounding: decimal.ROUND_HALF_EVEN` (banquero) y precisión ≥ 28 dígitos. Documentar la política de redondeo en el spec. |
-| 3 | Migración futura a multi-moneda requiere alterar el schema sin perder histórico | Baja | Alto | Reservar columna `moneda` (default `LOCAL`) desde v1 aunque el MVP no la use. Definir el plan de migración de CHECK cuando se abra el caso multi-moneda. |
-| 4 | El QA exige cierre al centavo pero los fixtures del Excel tienen precisión de 3 decimales (`1,166,666.667`) | Alta | Medio | Golden tests comparan valor mensual normalizado (sin redondear) y valor UI (con redondeo a 0 o 2 decimales). Documentar la política: backend preciso, UI presentación redondeada. |
-| 5 | Persistencia del equivalente mensual: ¿recalcular en cada render (correcto, costoso) o cachear en vista SQL (rápido, riesgo de drift)? | Media | Medio | Decisión: recalcular en cada lectura desde la tabla fuente. La tabla `Transacciones` es la única fuente de verdad. Ninguna columna calculada persiste. |
-| 6 | Compatibilidad cross-platform de Tauri v2 (Windows target en v1, macOS/Linux roadmap) | Baja | Bajo | Roadmap explícito post-MVP. La decisión no bloquea el alcance actual. |
-| 7 | Migración de CHECK constraints en SQLite requiere reescribir la tabla | Media | Alto | Documentar el patrón "expand → migrate → contract" desde la primera migración. Cualquier cambio futuro a un CHECK va por ese flujo y queda en `openspec/changes/`. |
-| 8 | Contaminación cruzada por `naturaleza_necesidad` mal aplicada a un Ingreso (riesgo detectado en el análisis del Excel) | Media | Alto | CHECK constraint `CHECK (tipo_flujo = 'Gasto' OR naturaleza_necesidad IS NULL)` a nivel SQL. Validación adicional en la capa de aplicación. |
-| 9 | UX del modo "Mejorado" no comunica claramente que cambia el comportamiento del FA2 | Media | Medio | Tooltip explícito al activar el modo. Banner persistente mientras esté activo. Documentación en el flujo de onboarding. |
+| #   | Riesgo                                                                                                                                 | Probabilidad | Impacto | Mitigación                                                                                                                                                                        |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Pérdida de cambios en el Simulador si se cierra la app durante el debounce                                                             | Media        | Alto    | Implementar flush on app close (`beforeunload` + handler en Tauri que drena el store antes de salir). Persistir también en eventos `blur` del input.                              |
+| 2   | Drift en anualización `× 12` cuando el equivalente mensual tiene fracciones de centavo (ej. `1,166,666.667`)                           | Alta         | Medio   | Usar `decimal.js` con `rounding: decimal.ROUND_HALF_EVEN` (banquero) y precisión ≥ 28 dígitos. Documentar la política de redondeo en el spec.                                     |
+| 3   | Migración futura a multi-moneda requiere alterar el schema sin perder histórico                                                        | Baja         | Alto    | Reservar columna `moneda` (default `LOCAL`) desde v1 aunque el MVP no la use. Definir el plan de migración de CHECK cuando se abra el caso multi-moneda.                          |
+| 4   | El QA exige cierre al centavo pero los fixtures del Excel tienen precisión de 3 decimales (`1,166,666.667`)                            | Alta         | Medio   | Golden tests comparan valor mensual normalizado (sin redondear) y valor UI (con redondeo a 0 o 2 decimales). Documentar la política: backend preciso, UI presentación redondeada. |
+| 5   | Persistencia del equivalente mensual: ¿recalcular en cada render (correcto, costoso) o cachear en vista SQL (rápido, riesgo de drift)? | Media        | Medio   | Decisión: recalcular en cada lectura desde la tabla fuente. La tabla `Transacciones` es la única fuente de verdad. Ninguna columna calculada persiste.                            |
+| 6   | Compatibilidad cross-platform de Tauri v2 (Windows target en v1, macOS/Linux roadmap)                                                  | Baja         | Bajo    | Roadmap explícito post-MVP. La decisión no bloquea el alcance actual.                                                                                                             |
+| 7   | Migración de CHECK constraints en SQLite requiere reescribir la tabla                                                                  | Media        | Alto    | Documentar el patrón "expand → migrate → contract" desde la primera migración. Cualquier cambio futuro a un CHECK va por ese flujo y queda en `openspec/changes/`.                |
+| 8   | Contaminación cruzada por `naturaleza_necesidad` mal aplicada a un Ingreso (riesgo detectado en el análisis del Excel)                 | Media        | Alto    | CHECK constraint `CHECK (tipo_flujo = 'Gasto' OR naturaleza_necesidad IS NULL)` a nivel SQL. Validación adicional en la capa de aplicación.                                       |
+| 9   | UX del modo "Mejorado" no comunica claramente que cambia el comportamiento del FA2                                                     | Media        | Medio   | Tooltip explícito al activar el modo. Banner persistente mientras esté activo. Documentación en el flujo de onboarding.                                                           |
 
 ## 9. Preguntas abiertas resueltas
 

@@ -9,14 +9,14 @@ Aplicación de escritorio para gestión financiera personal construida con **Tau
 
 ## Estado
 
-| Slice | PR | Tareas | Estado |
-|-------|----|--------|--------|
-| 1     | #1 | T-101 → T-103 (scaffolding + boot) | este PR |
-| 2     | #2 | T-104 → T-106 + T-201 (SQLite + comandos) | pendiente |
-| 3     | #3 | T-202 → T-205 (captura transaccional) | pendiente |
-| 4     | #4 | T-301 → T-304 (dashboard y presupuesto) | pendiente |
-| 5     | #5 | T-401 → T-405 (simulador) | pendiente |
-| 6     | #6 | T-501 → T-503 + T-X01 + T-X02 (KPIs y golden tests) | pendiente |
+| Slice | PR  | Tareas                                              | Estado    |
+| ----- | --- | --------------------------------------------------- | --------- |
+| 1     | #1  | T-101 → T-103 (scaffolding + boot)                  | este PR   |
+| 2     | #2  | T-104 → T-106 + T-201 (SQLite + comandos)           | pendiente |
+| 3     | #3  | T-202 → T-205 (captura transaccional)               | pendiente |
+| 4     | #4  | T-301 → T-304 (dashboard y presupuesto)             | pendiente |
+| 5     | #5  | T-401 → T-405 (simulador)                           | pendiente |
+| 6     | #6  | T-501 → T-503 + T-X01 + T-X02 (KPIs y golden tests) | pendiente |
 
 ---
 

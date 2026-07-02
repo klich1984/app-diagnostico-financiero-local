@@ -11,7 +11,7 @@ function App(): JSX.Element {
         </p>
       </section>
     </main>
-  );
+  )
 }
 
-export default App;
+export default App

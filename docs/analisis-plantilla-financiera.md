@@ -21,13 +21,13 @@
 
 ## 2. Inventario de hojas
 
-| # | Hoja | Rango usado | Celdas literales | Celdas con fórmula | Refs inter-hoja | Propósito inferido |
-|---|------|-------------|------------------|--------------------|------------------|--------------------|
-| 1 | MIS FINANZAS | B3:AZ103 | 174 | 971 | — | Hoja raíz: captura transaccional cruda (ingresos + gastos) y espejo de normalización temporal. |
-| 2 | PRESUPUESTO | B6:J55 | 65 | 154 | MIS FINANZAS | Agregación SUMIFS por categoría y naturaleza sobre MIS FINANZAS; calcula Flujo de Caja Libre inicial. |
-| 3 | OPORTUNIDADES DE MEJORA | B6:AQ118 | 126 | 1769 | MIS FINANZAS, PRESUPUESTO | Panel de simulación: para cada gasto no esencial, el usuario propone un nuevo monto mensual. |
-| 4 | ESTADO DE RESULTADOS | B2:H23 | 48 | 31 | MIS FINANZAS, PRESUPUESTO, PRESUPUESTO MEJORADO | Hoja resultado: estado financiero dual (Inicial vs Mejorado) con FA1, FA2 y Capacidad de Inversión. |
-| 5 | PRESUPUESTO MEJORADO | B5:AB200 | 223 | 1772 | MIS FINANZAS, OPORTUNIDADES DE MEJORA | Proyección mejorada: reemplaza el monto base por el propuesto en OPORTUNIDADES para los gastos 'No necesario' y 'No tan necesario'. |
+| #   | Hoja                    | Rango usado | Celdas literales | Celdas con fórmula | Refs inter-hoja                                 | Propósito inferido                                                                                                                  |
+| --- | ----------------------- | ----------- | ---------------- | ------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | MIS FINANZAS            | B3:AZ103    | 174              | 971                | —                                               | Hoja raíz: captura transaccional cruda (ingresos + gastos) y espejo de normalización temporal.                                      |
+| 2   | PRESUPUESTO             | B6:J55      | 65               | 154                | MIS FINANZAS                                    | Agregación SUMIFS por categoría y naturaleza sobre MIS FINANZAS; calcula Flujo de Caja Libre inicial.                               |
+| 3   | OPORTUNIDADES DE MEJORA | B6:AQ118    | 126              | 1769               | MIS FINANZAS, PRESUPUESTO                       | Panel de simulación: para cada gasto no esencial, el usuario propone un nuevo monto mensual.                                        |
+| 4   | ESTADO DE RESULTADOS    | B2:H23      | 48               | 31                 | MIS FINANZAS, PRESUPUESTO, PRESUPUESTO MEJORADO | Hoja resultado: estado financiero dual (Inicial vs Mejorado) con FA1, FA2 y Capacidad de Inversión.                                 |
+| 5   | PRESUPUESTO MEJORADO    | B5:AB200    | 223              | 1772               | MIS FINANZAS, OPORTUNIDADES DE MEJORA           | Proyección mejorada: reemplaza el monto base por el propuesto en OPORTUNIDADES para los gastos 'No necesario' y 'No tan necesario'. |
 
 ## 3. Hoja por hoja
 
@@ -36,6 +36,7 @@
 **Propósito inferido**: captura de las 32 transacciones reales (6 ingresos + 26 gastos) más una zona espejo (columnas AQ:AZ) que normaliza cada valor a un equivalente mensual aplicando el divisor que corresponde a la frecuencia declarada. La hoja es la **raíz del modelo**: ninguna otra fórmula agrega nada que no venga de aquí.
 
 **Encabezados**:
+
 - Fila 3: `B3` "Salario mensual objetivo" + `C3` = `500,000` (parámetro de usuario).
 - Fila 5: `B5` "INGRESOS" y `H5` "GASTOS" (bloques paralelos).
 - Fila 6: encabezados de la grilla de Ingresos (`B6`="Fuente de ingreso", `C6`="Fijo/Variable", `D6`="¿Cada cuanto?", `E6`="Categoría", `F6`="Valor") y de Gastos (`H6`="Concepto de gasto", `I6`="Tipo", `J6`="¿Cada cuanto?", `K6`="Categoría", `L6`="Valor").
@@ -44,45 +45,45 @@
 
 **Tabla de ingresos** (filas 7..12, 6 registros):
 
-| Fila | Concepto | Comportamiento | Frecuencia | Categoría | Valor declarado |
-|------|----------|----------------|------------|-----------|-----------------|
-| 7 | Salario | Fijo | Mensual | Salario | 4,000,000.00 |
-| 8 | Prima salario | Fijo | Semestral | Otros ingresos | 2,000,000.00 |
-| 9 | Proyectos asesorias | Variable | Trimestral | Negocio | 3,500,000.00 |
-| 10 | Dividendos inversiones | Variable | Anual | Inversión | 2,000,000.00 |
-| 11 | Bonos adicionales | Variable | Trimestral | Otros ingresos | 2,500,000.00 |
-| 12 | Otro | Variable | Mensual | Otros ingresos | 700,000.00 |
+| Fila | Concepto               | Comportamiento | Frecuencia | Categoría      | Valor declarado |
+| ---- | ---------------------- | -------------- | ---------- | -------------- | --------------- |
+| 7    | Salario                | Fijo           | Mensual    | Salario        | 4,000,000.00    |
+| 8    | Prima salario          | Fijo           | Semestral  | Otros ingresos | 2,000,000.00    |
+| 9    | Proyectos asesorias    | Variable       | Trimestral | Negocio        | 3,500,000.00    |
+| 10   | Dividendos inversiones | Variable       | Anual      | Inversión      | 2,000,000.00    |
+| 11   | Bonos adicionales      | Variable       | Trimestral | Otros ingresos | 2,500,000.00    |
+| 12   | Otro                   | Variable       | Mensual    | Otros ingresos | 700,000.00      |
 
 **Tabla de gastos** (filas 7..32, 26 registros):
 
-| Fila | Concepto | Naturaleza | Frecuencia | Categoría | Valor declarado |
-|------|----------|------------|------------|-----------|-----------------|
-| 7 | Arriendo | Necesario | Mensual | Hogar | 1,700,000.00 |
-| 8 | Administración | Necesario | Mensual | Hogar | 150,000.00 |
-| 9 | Mercado | Necesario | Mensual | Alimentación | 500,000.00 |
-| 10 | Agua | Necesario | Bimensual | Hogar | 150,000.00 |
-| 11 | Luz | Necesario | Mensual | Hogar | 120,000.00 |
-| 12 | Gas | Necesario | Mensual | Hogar | 40,000.00 |
-| 13 | Provisiones pagos | Necesario | Mensual | Provisiones | 200,000.00 |
-| 14 | Plan de datos | No tan necesario | Mensual | Otros gastos | 80,000.00 |
-| 15 | Gasolina | Necesario | Mensual | Transporte | 150,000.00 |
-| 16 | Mantenimiento carro | Necesario | Trimestral | Transporte | 500,000.00 |
-| 17 | Seguro carro | No tan necesario | Anual | Transporte | 1,000,000.00 |
-| 18 | Gimnasio | No tan necesario | Anual | Otros gastos | 900,000.00 |
-| 19 | Internet y telefono | No necesario | Mensual | Familia | 120,000.00 |
-| 20 | Streaming (Netflix, spotify…) | No tan necesario | Mensual | Familia | 120,000.00 |
-| 21 | Taxi/Uber/Bus | No tan necesario | Mensual | Transporte | 140,000.00 |
-| 22 | Crédito carro | Necesario | Mensual | Deudas entidades | 1,200,000.00 |
-| 23 | Viajes | No tan necesario | Semestral | Entretenimiento | 4,000,000.00 |
-| 24 | Restaurantes | No necesario | Mensual | Entretenimiento | 600,000.00 |
-| 25 | Peluqueria perritos | Necesario | Mensual | Familia | 150,000.00 |
-| 26 | Seguro médico | Necesario | Mensual | Familia | 400,000.00 |
-| 27 | Centro comercial | No necesario | Mensual | Entretenimiento | 450,000.00 |
-| 28 | Impuestos | Necesario | Anual | Impuestos | 1,300,000.00 |
-| 29 | Juguetes perritos | No necesario | Bimensual | Familia | 100,000.00 |
-| 30 | Peluquería | Necesario | Mensual | Otros gastos | 100,000.00 |
-| 31 | Domicilios | No necesario | Mensual | Alimentación | 400,000.00 |
-| 32 | Ropa | No tan necesario | Trimestral | Otros gastos | 1,500,000.00 |
+| Fila | Concepto                      | Naturaleza       | Frecuencia | Categoría        | Valor declarado |
+| ---- | ----------------------------- | ---------------- | ---------- | ---------------- | --------------- |
+| 7    | Arriendo                      | Necesario        | Mensual    | Hogar            | 1,700,000.00    |
+| 8    | Administración                | Necesario        | Mensual    | Hogar            | 150,000.00      |
+| 9    | Mercado                       | Necesario        | Mensual    | Alimentación     | 500,000.00      |
+| 10   | Agua                          | Necesario        | Bimensual  | Hogar            | 150,000.00      |
+| 11   | Luz                           | Necesario        | Mensual    | Hogar            | 120,000.00      |
+| 12   | Gas                           | Necesario        | Mensual    | Hogar            | 40,000.00       |
+| 13   | Provisiones pagos             | Necesario        | Mensual    | Provisiones      | 200,000.00      |
+| 14   | Plan de datos                 | No tan necesario | Mensual    | Otros gastos     | 80,000.00       |
+| 15   | Gasolina                      | Necesario        | Mensual    | Transporte       | 150,000.00      |
+| 16   | Mantenimiento carro           | Necesario        | Trimestral | Transporte       | 500,000.00      |
+| 17   | Seguro carro                  | No tan necesario | Anual      | Transporte       | 1,000,000.00    |
+| 18   | Gimnasio                      | No tan necesario | Anual      | Otros gastos     | 900,000.00      |
+| 19   | Internet y telefono           | No necesario     | Mensual    | Familia          | 120,000.00      |
+| 20   | Streaming (Netflix, spotify…) | No tan necesario | Mensual    | Familia          | 120,000.00      |
+| 21   | Taxi/Uber/Bus                 | No tan necesario | Mensual    | Transporte       | 140,000.00      |
+| 22   | Crédito carro                 | Necesario        | Mensual    | Deudas entidades | 1,200,000.00    |
+| 23   | Viajes                        | No tan necesario | Semestral  | Entretenimiento  | 4,000,000.00    |
+| 24   | Restaurantes                  | No necesario     | Mensual    | Entretenimiento  | 600,000.00      |
+| 25   | Peluqueria perritos           | Necesario        | Mensual    | Familia          | 150,000.00      |
+| 26   | Seguro médico                 | Necesario        | Mensual    | Familia          | 400,000.00      |
+| 27   | Centro comercial              | No necesario     | Mensual    | Entretenimiento  | 450,000.00      |
+| 28   | Impuestos                     | Necesario        | Anual      | Impuestos        | 1,300,000.00    |
+| 29   | Juguetes perritos             | No necesario     | Bimensual  | Familia          | 100,000.00      |
+| 30   | Peluquería                    | Necesario        | Mensual    | Otros gastos     | 100,000.00      |
+| 31   | Domicilios                    | No necesario     | Mensual    | Alimentación     | 400,000.00      |
+| 32   | Ropa                          | No tan necesario | Trimestral | Otros gastos     | 1,500,000.00    |
 
 **Fórmulas relevantes (inter-hoja o de agregación)**:
 
@@ -93,6 +94,7 @@
   ```
 
   Esto **confirma explícitamente** la fórmula de normalización del PRD: equivalencia mensual = Valor / {1, 2, 3, 6, 12} según frecuencia. La rama por defecto es `Mensual` y cualquier valor que no matchee cae a `""` (string vacío).
+
 - En la columna AW7 el cálculo es `=IF(D7="Mensual",F7,IF(D7="Bimensual",F7/2,IF(D7="Trimestral",F7/3,IF(D7="Semestral",F7/6,IF(D7="Anual",F7/12,"")))))` que abierto da `4000000` para `Salario` y `1166666.667` para `Proyectos asesorias` (3,500,000 trimestral).
 - Las columnas AQ:AT son índices y espejos (e.g. `=B7`, `=H7`) que se usan luego en PRESUPUESTO MEJORADO para hacer `VLOOKUP` con un contador en la columna AA.
 
@@ -103,6 +105,7 @@
 **Propósito inferido**: primera agregación analítica. Suma por categoría y por naturaleza y computa el Flujo de Caja Libre (ingresos consolidados − gastos consolidados). Sirve como base para el Estado de Resultados Inicial.
 
 **Encabezados**:
+
 - Fila 6: `C6` "MENSUAL" y `G6` "ANUAL".
 - Fila 7: sub-encabezados del bloque Ingresos (`B7`="INGRESOS", `C7`="Fijo", `D7`="Variable", `F7`="Total"; anuales en `G7`, `H7`, `J7`).
 - Fila 13: sub-encabezados del bloque Gastos (`B13`="GASTOS", `C13`="Necesario", `D13`="No tan necesario", `E13`="No necesario", `F13`="Total"; anuales en `G13:J13`).
@@ -111,40 +114,40 @@
 
 **Tabla de Ingresos (mensual, calculado)**:
 
-| Fila | Categoría | Fijo | Variable | Total |
-|------|-----------|------|----------|-------|
-| 8 | Salario | 4,000,000.00 | 0.00 | 4,000,000.00 |
-| 9 | Negocio | 0.00 | 1,166,666.67 | 1,166,666.67 |
-| 10 | Inversión | 0.00 | 166,666.67 | 166,666.67 |
-| 11 | Otros ingresos | 333,333.33 | 1,533,333.33 | 1,866,666.67 |
-| 12 | TOTAL INGRESOS | 4,333,333.33 | 2,866,666.67 | 7,200,000.00 |
+| Fila | Categoría      | Fijo         | Variable     | Total        |
+| ---- | -------------- | ------------ | ------------ | ------------ |
+| 8    | Salario        | 4,000,000.00 | 0.00         | 4,000,000.00 |
+| 9    | Negocio        | 0.00         | 1,166,666.67 | 1,166,666.67 |
+| 10   | Inversión      | 0.00         | 166,666.67   | 166,666.67   |
+| 11   | Otros ingresos | 333,333.33   | 1,533,333.33 | 1,866,666.67 |
+| 12   | TOTAL INGRESOS | 4,333,333.33 | 2,866,666.67 | 7,200,000.00 |
 
 **Tabla de Gastos (mensual, calculado)**:
 
-| Fila | Categoría | Necesario | No tan necesario | No necesario | Total |
-|------|-----------|-----------|-------------------|--------------|-------|
-| 14 | Hogar | 2,085,000.00 | 0.00 | 0.00 | 2,085,000.00 |
-| 15 | Alimentación | 500,000.00 | 0.00 | 400,000.00 | 900,000.00 |
-| 16 | Transporte | 316,666.67 | 223,333.33 | 0.00 | 540,000.00 |
-| 17 | Provisiones | 200,000.00 | 0.00 | 0.00 | 200,000.00 |
-| 18 | Deudas entidades | 1,200,000.00 | 0.00 | 0.00 | 1,200,000.00 |
-| 19 | Deudas conocidos | 0.00 | 0.00 | 0.00 | 0.00 |
-| 20 | Entretenimiento | 0.00 | 666,666.67 | 1,050,000.00 | 1,716,666.67 |
-| 21 | Familia | 550,000.00 | 120,000.00 | 170,000.00 | 840,000.00 |
-| 22 | Impuestos | 108,333.33 | 0.00 | 0.00 | 108,333.33 |
-| 23 | Otros gastos | 100,000.00 | 655,000.00 | 0.00 | 755,000.00 |
-| 24 | TOTAL GASTOS | 5,060,000.00 | 1,665,000.00 | 1,620,000.00 | 8,345,000.00 |
+| Fila | Categoría        | Necesario    | No tan necesario | No necesario | Total        |
+| ---- | ---------------- | ------------ | ---------------- | ------------ | ------------ |
+| 14   | Hogar            | 2,085,000.00 | 0.00             | 0.00         | 2,085,000.00 |
+| 15   | Alimentación     | 500,000.00   | 0.00             | 400,000.00   | 900,000.00   |
+| 16   | Transporte       | 316,666.67   | 223,333.33       | 0.00         | 540,000.00   |
+| 17   | Provisiones      | 200,000.00   | 0.00             | 0.00         | 200,000.00   |
+| 18   | Deudas entidades | 1,200,000.00 | 0.00             | 0.00         | 1,200,000.00 |
+| 19   | Deudas conocidos | 0.00         | 0.00             | 0.00         | 0.00         |
+| 20   | Entretenimiento  | 0.00         | 666,666.67       | 1,050,000.00 | 1,716,666.67 |
+| 21   | Familia          | 550,000.00   | 120,000.00       | 170,000.00   | 840,000.00   |
+| 22   | Impuestos        | 108,333.33   | 0.00             | 0.00         | 108,333.33   |
+| 23   | Otros gastos     | 100,000.00   | 655,000.00       | 0.00         | 755,000.00   |
+| 24   | TOTAL GASTOS     | 5,060,000.00 | 1,665,000.00     | 1,620,000.00 | 8,345,000.00 |
 
 **Flujo de Caja Libre (F27)**:
 
-| Columna | Significado | Valor mensual |
-|---------|-------------|---------------|
-| `C27` (Fijo) | Ingresos fijos − Gastos fijos = `4,333,333.33` − `5,060,000` (Necesario) = `-726,666.67` | -726,666.67 |
-| `D27` (Variable) | Ingresos variables − (No tan nec + No nec) = `2,866,666.67` − `3,285,000` = `-418,333.33` | -418,333.33 |
-| `F27` (Total) | `7,200,000` − `8,345,000` = **-1,145,000** | **-1,145,000** |
-| `G27` (Anual Fijo) | -8,720,000 | -8,720,000 |
-| `H27` (Anual Variable) | -5,020,000 | -5,020,000 |
-| `J27` (Anual Total) | -13,740,000 | -13,740,000 |
+| Columna                | Significado                                                                               | Valor mensual  |
+| ---------------------- | ----------------------------------------------------------------------------------------- | -------------- |
+| `C27` (Fijo)           | Ingresos fijos − Gastos fijos = `4,333,333.33` − `5,060,000` (Necesario) = `-726,666.67`  | -726,666.67    |
+| `D27` (Variable)       | Ingresos variables − (No tan nec + No nec) = `2,866,666.67` − `3,285,000` = `-418,333.33` | -418,333.33    |
+| `F27` (Total)          | `7,200,000` − `8,345,000` = **-1,145,000**                                                | **-1,145,000** |
+| `G27` (Anual Fijo)     | -8,720,000                                                                                | -8,720,000     |
+| `H27` (Anual Variable) | -5,020,000                                                                                | -5,020,000     |
+| `J27` (Anual Total)    | -13,740,000                                                                               | -13,740,000    |
 
 **Fórmulas relevantes**:
 
@@ -163,6 +166,7 @@
 **Propósito inferido**: panel de simulación. Para cada gasto marcado como "No necesario" o "No tan necesario" en MIS FINANZAS, el usuario puede proponer un nuevo monto mensual (columna E). Las filas se pueblan automáticamente con un filtro dinámico de Excel 365 sobre MIS FINANZAS.
 
 **Encabezados**:
+
 - Fila 6: `C6` "ACTUAL (MES)", `D6` "MEJORA (MES)".
 - Filas 7..9: subtotales por grupo (No necesarios, No tan necesarios, TOTAL GASTOS VARIABLES).
 - Fila 10: FLUJO DE CAJA LIBRE.
@@ -173,35 +177,35 @@
 
 **Subtotales calculados**:
 
-| Celda | Concepto | Valor (mes) |
-|-------|----------|-------------|
-| `C7` | No necesarios (actual) | 1,620,000.00 |
-| `D7` | No necesarios (mejorado) | 500,000.00 |
-| `C8` | No tan necesarios (actual) | 1,665,000.00 |
-| `D8` | No tan necesarios (mejorado) | 715,000.00 |
-| `C9` | TOTAL GASTOS VARIABLES (actual) | 3,285,000.00 |
-| `D9` | TOTAL GASTOS VARIABLES (mejorado) | 1,215,000.00 |
-| `C10` | FLUJO DE CAJA LIBRE inicial | -1,145,000.00 |
-| `D10` | FLUJO DE CAJA LIBRE mejorado | 925,000.00 |
-| `C13` | TOTAL AHORRO mensual | 2,070,000.00 |
-| `E13` | AHORRO AÑO | 24,840,000.00 |
+| Celda | Concepto                          | Valor (mes)   |
+| ----- | --------------------------------- | ------------- |
+| `C7`  | No necesarios (actual)            | 1,620,000.00  |
+| `D7`  | No necesarios (mejorado)          | 500,000.00    |
+| `C8`  | No tan necesarios (actual)        | 1,665,000.00  |
+| `D8`  | No tan necesarios (mejorado)      | 715,000.00    |
+| `C9`  | TOTAL GASTOS VARIABLES (actual)   | 3,285,000.00  |
+| `D9`  | TOTAL GASTOS VARIABLES (mejorado) | 1,215,000.00  |
+| `C10` | FLUJO DE CAJA LIBRE inicial       | -1,145,000.00 |
+| `D10` | FLUJO DE CAJA LIBRE mejorado      | 925,000.00    |
+| `C13` | TOTAL AHORRO mensual              | 2,070,000.00  |
+| `E13` | AHORRO AÑO                        | 24,840,000.00 |
 
 **Tabla de las 12 oportunidades reales (filas 17..28)**:
 
-| Fila | Concepto | Tipo | Gasto mensual actual | Nuevo gasto mensual |
-|------|----------|------|----------------------|---------------------|
-| 17 | Internet y telefono | No necesario | 120,000.00 | 50,000.00 |
-| 18 | Restaurantes | No necesario | 600,000.00 | 200,000.00 |
-| 19 | Centro comercial | No necesario | 450,000.00 | 150,000.00 |
-| 20 | Juguetes perritos | No necesario | 50,000.00 | 0.00 |
-| 21 | Domicilios | No necesario | 400,000.00 | 100,000.00 |
-| 22 | Plan de datos | No tan necesario | 80,000.00 | 80,000.00 |
-| 23 | Seguro carro | No tan necesario | 83,333.33 | 50,000.00 |
-| 24 | Gimnasio | No tan necesario | 75,000.00 | 30,000.00 |
-| 25 | Streaming (Netflix, spotify…) | No tan necesario | 120,000.00 | 40,000.00 |
-| 26 | Taxi/Uber/Bus | No tan necesario | 140,000.00 | 65,000.00 |
-| 27 | Viajes | No tan necesario | 666,666.67 | 300,000.00 |
-| 28 | Ropa | No tan necesario | 500,000.00 | 150,000.00 |
+| Fila | Concepto                      | Tipo             | Gasto mensual actual | Nuevo gasto mensual |
+| ---- | ----------------------------- | ---------------- | -------------------- | ------------------- |
+| 17   | Internet y telefono           | No necesario     | 120,000.00           | 50,000.00           |
+| 18   | Restaurantes                  | No necesario     | 600,000.00           | 200,000.00          |
+| 19   | Centro comercial              | No necesario     | 450,000.00           | 150,000.00          |
+| 20   | Juguetes perritos             | No necesario     | 50,000.00            | 0.00                |
+| 21   | Domicilios                    | No necesario     | 400,000.00           | 100,000.00          |
+| 22   | Plan de datos                 | No tan necesario | 80,000.00            | 80,000.00           |
+| 23   | Seguro carro                  | No tan necesario | 83,333.33            | 50,000.00           |
+| 24   | Gimnasio                      | No tan necesario | 75,000.00            | 30,000.00           |
+| 25   | Streaming (Netflix, spotify…) | No tan necesario | 120,000.00           | 40,000.00           |
+| 26   | Taxi/Uber/Bus                 | No tan necesario | 140,000.00           | 65,000.00           |
+| 27   | Viajes                        | No tan necesario | 666,666.67           | 300,000.00          |
+| 28   | Ropa                          | No tan necesario | 500,000.00           | 150,000.00          |
 
 **Fórmulas relevantes**:
 
@@ -225,24 +229,24 @@
 
 **Tabla del Estado de Resultados completo**:
 
-| Fila | Signo | Concepto | Inicial (D) | Mejorado (H) |
-|------|-------|----------|--------------|---------------|
-| 4 | (+) | INGRESOS MENSUALES | 7,200,000.00 | 7,200,000.00 |
-| 5 |  | Ingresos fijos | 4,333,333.33 | 4,333,333.33 |
-| 6 |  | Ingresos variables | 2,866,666.67 | 2,866,666.67 |
-| 7 | (-) | GASTOS FIJOS | 3,860,000.00 | 3,860,000.00 |
-| 8 |  | Gastos fijos necesarios | 3,660,000.00 | 3,660,000.00 |
-| 9 |  | Gastos fijos provisiones | 200,000.00 | 200,000.00 |
-| 10 | (-) | DEUDAS | 1,200,000.00 | 1,200,000.00 |
-| 11 |  | Cuota deudas entidades | 1,200,000.00 | 1,200,000.00 |
-| 12 |  | Cuota deudas conocidos | 0.00 | 0.00 |
-| 14 | (=) | FLUJO DE AHORRO 1 | 2,140,000.00 | 2,140,000.00 |
-| 16 | (-) | SALARIO PERSONAL | 0.00 | 500,000.00 |
-| 17 | (-) | GASTOS VARIABLES | 3,285,000.00 | 1,215,000.00 |
-| 18 |  | Gastos no tan necesarios | 1,665,000.00 | 715,000.00 |
-| 19 |  | Gastos no necesarios | 1,620,000.00 | 500,000.00 |
-| 21 | (=) | FLUJO DE AHORRO 2 | -1,145,000.00 | 425,000.00 |
-| 23 |  | Capacidad inversión | -1,145,000.00 | 925,000.00 |
+| Fila | Signo | Concepto                 | Inicial (D)   | Mejorado (H) |
+| ---- | ----- | ------------------------ | ------------- | ------------ |
+| 4    | (+)   | INGRESOS MENSUALES       | 7,200,000.00  | 7,200,000.00 |
+| 5    |       | Ingresos fijos           | 4,333,333.33  | 4,333,333.33 |
+| 6    |       | Ingresos variables       | 2,866,666.67  | 2,866,666.67 |
+| 7    | (-)   | GASTOS FIJOS             | 3,860,000.00  | 3,860,000.00 |
+| 8    |       | Gastos fijos necesarios  | 3,660,000.00  | 3,660,000.00 |
+| 9    |       | Gastos fijos provisiones | 200,000.00    | 200,000.00   |
+| 10   | (-)   | DEUDAS                   | 1,200,000.00  | 1,200,000.00 |
+| 11   |       | Cuota deudas entidades   | 1,200,000.00  | 1,200,000.00 |
+| 12   |       | Cuota deudas conocidos   | 0.00          | 0.00         |
+| 14   | (=)   | FLUJO DE AHORRO 1        | 2,140,000.00  | 2,140,000.00 |
+| 16   | (-)   | SALARIO PERSONAL         | 0.00          | 500,000.00   |
+| 17   | (-)   | GASTOS VARIABLES         | 3,285,000.00  | 1,215,000.00 |
+| 18   |       | Gastos no tan necesarios | 1,665,000.00  | 715,000.00   |
+| 19   |       | Gastos no necesarios     | 1,620,000.00  | 500,000.00   |
+| 21   | (=)   | FLUJO DE AHORRO 2        | -1,145,000.00 | 425,000.00   |
+| 23   |       | Capacidad inversión      | -1,145,000.00 | 925,000.00   |
 
 **Fórmulas relevantes (lado INICIAL)**:
 
@@ -281,67 +285,68 @@
 **Propósito inferido**: clona la lista de transacciones de MIS FINANZAS y reemplaza el valor de los gastos "No necesario" y "No tan necesario" por el nuevo monto propuesto en OPORTUNIDADES DE MEJORA. Es la fuente del lado "Mejorado" del Estado de Resultados.
 
 **Encabezados** (fila 6):
+
 - `B6`="Concepto", `C6`="Ingreso/Gasto", `D6`="Tipo", `E6`="Categoría", `F6`="Cada cuanto", `G6`="Valor", `H6`="MENSUAL", `I6`="ANUAL".
 - `K6`="CATEGORÍA", `L6`="PRESUPUESTO (MES)", `M6`="PRESUPUESTO (AÑO)" (panel agregado por categoría).
 
 **Tabla de las 32 transacciones mejoradas (filas 7..38)**:
 
-| Fila | Concepto | I/G | Tipo | Categoría | Frecuencia | Valor base | Valor mensual | Valor anual |
-|------|----------|-----|------|-----------|------------|------------|---------------|-------------|
-| 7 | Salario | Ingreso | Fijo | Salario | Mensual | 4,000,000.00 | 4,000,000.00 | 48,000,000.00 |
-| 8 | Prima salario | Ingreso | Fijo | Otros ingresos | Semestral | 2,000,000.00 | 333,333.33 | 4,000,000.00 |
-| 9 | Proyectos asesorias | Ingreso | Variable | Negocio | Trimestral | 3,500,000.00 | 1,166,666.67 | 14,000,000.00 |
-| 10 | Dividendos inversiones | Ingreso | Variable | Inversión | Anual | 2,000,000.00 | 166,666.67 | 2,000,000.00 |
-| 11 | Bonos adicionales | Ingreso | Variable | Otros ingresos | Trimestral | 2,500,000.00 | 833,333.33 | 10,000,000.00 |
-| 12 | Otro | Ingreso | Variable | Otros ingresos | Mensual | 700,000.00 | 700,000.00 | 8,400,000.00 |
-| 13 | Arriendo | Gasto | Necesario | Hogar | Mensual | 1,700,000.00 | 1,700,000.00 | 20,400,000.00 |
-| 14 | Administración | Gasto | Necesario | Hogar | Mensual | 150,000.00 | 150,000.00 | 1,800,000.00 |
-| 15 | Mercado | Gasto | Necesario | Alimentación | Mensual | 500,000.00 | 500,000.00 | 6,000,000.00 |
-| 16 | Agua | Gasto | Necesario | Hogar | Bimensual | 150,000.00 | 75,000.00 | 900,000.00 |
-| 17 | Luz | Gasto | Necesario | Hogar | Mensual | 120,000.00 | 120,000.00 | 1,440,000.00 |
-| 18 | Gas | Gasto | Necesario | Hogar | Mensual | 40,000.00 | 40,000.00 | 480,000.00 |
-| 19 | Provisiones pagos | Gasto | Necesario | Provisiones | Mensual | 200,000.00 | 200,000.00 | 2,400,000.00 |
-| 20 | Plan de datos | Gasto | No tan necesario | Otros gastos | Mensual | 80,000.00 | 80,000.00 | 960,000.00 |
-| 21 | Gasolina | Gasto | Necesario | Transporte | Mensual | 150,000.00 | 150,000.00 | 1,800,000.00 |
-| 22 | Mantenimiento carro | Gasto | Necesario | Transporte | Trimestral | 500,000.00 | 166,666.67 | 2,000,000.00 |
-| 23 | Seguro carro | Gasto | No tan necesario | Transporte | Anual | 1,000,000.00 | 50,000.00 | 600,000.00 |
-| 24 | Gimnasio | Gasto | No tan necesario | Otros gastos | Anual | 900,000.00 | 30,000.00 | 360,000.00 |
-| 25 | Internet y telefono | Gasto | No necesario | Familia | Mensual | 120,000.00 | 50,000.00 | 600,000.00 |
-| 26 | Streaming | Gasto | No tan necesario | Familia | Mensual | 120,000.00 | 40,000.00 | 480,000.00 |
-| 27 | Taxi/Uber/Bus | Gasto | No tan necesario | Transporte | Mensual | 140,000.00 | 65,000.00 | 780,000.00 |
-| 28 | Crédito carro | Gasto | Necesario | Deudas entidades | Mensual | 1,200,000.00 | 1,200,000.00 | 14,400,000.00 |
-| 29 | Viajes | Gasto | No tan necesario | Entretenimiento | Semestral | 4,000,000.00 | 300,000.00 | 3,600,000.00 |
-| 30 | Restaurantes | Gasto | No necesario | Entretenimiento | Mensual | 600,000.00 | 200,000.00 | 2,400,000.00 |
-| 31 | Peluqueria perritos | Gasto | Necesario | Familia | Mensual | 150,000.00 | 150,000.00 | 1,800,000.00 |
-| 32 | Seguro médico | Gasto | Necesario | Familia | Mensual | 400,000.00 | 400,000.00 | 4,800,000.00 |
-| 33 | Centro comercial | Gasto | No necesario | Entretenimiento | Mensual | 450,000.00 | 150,000.00 | 1,800,000.00 |
-| 34 | Impuestos | Gasto | Necesario | Impuestos | Anual | 1,300,000.00 | 108,333.33 | 1,300,000.00 |
-| 35 | Juguetes perritos | Gasto | No necesario | Familia | Bimensual | 100,000.00 | 0.00 | 0.00 |
-| 36 | Peluquería | Gasto | Necesario | Otros gastos | Mensual | 100,000.00 | 100,000.00 | 1,200,000.00 |
-| 37 | Domicilios | Gasto | No necesario | Alimentación | Mensual | 400,000.00 | 100,000.00 | 1,200,000.00 |
-| 38 | Ropa | Gasto | No tan necesario | Otros gastos | Trimestral | 1,500,000.00 | 150,000.00 | 1,800,000.00 |
+| Fila | Concepto               | I/G     | Tipo             | Categoría        | Frecuencia | Valor base   | Valor mensual | Valor anual   |
+| ---- | ---------------------- | ------- | ---------------- | ---------------- | ---------- | ------------ | ------------- | ------------- |
+| 7    | Salario                | Ingreso | Fijo             | Salario          | Mensual    | 4,000,000.00 | 4,000,000.00  | 48,000,000.00 |
+| 8    | Prima salario          | Ingreso | Fijo             | Otros ingresos   | Semestral  | 2,000,000.00 | 333,333.33    | 4,000,000.00  |
+| 9    | Proyectos asesorias    | Ingreso | Variable         | Negocio          | Trimestral | 3,500,000.00 | 1,166,666.67  | 14,000,000.00 |
+| 10   | Dividendos inversiones | Ingreso | Variable         | Inversión        | Anual      | 2,000,000.00 | 166,666.67    | 2,000,000.00  |
+| 11   | Bonos adicionales      | Ingreso | Variable         | Otros ingresos   | Trimestral | 2,500,000.00 | 833,333.33    | 10,000,000.00 |
+| 12   | Otro                   | Ingreso | Variable         | Otros ingresos   | Mensual    | 700,000.00   | 700,000.00    | 8,400,000.00  |
+| 13   | Arriendo               | Gasto   | Necesario        | Hogar            | Mensual    | 1,700,000.00 | 1,700,000.00  | 20,400,000.00 |
+| 14   | Administración         | Gasto   | Necesario        | Hogar            | Mensual    | 150,000.00   | 150,000.00    | 1,800,000.00  |
+| 15   | Mercado                | Gasto   | Necesario        | Alimentación     | Mensual    | 500,000.00   | 500,000.00    | 6,000,000.00  |
+| 16   | Agua                   | Gasto   | Necesario        | Hogar            | Bimensual  | 150,000.00   | 75,000.00     | 900,000.00    |
+| 17   | Luz                    | Gasto   | Necesario        | Hogar            | Mensual    | 120,000.00   | 120,000.00    | 1,440,000.00  |
+| 18   | Gas                    | Gasto   | Necesario        | Hogar            | Mensual    | 40,000.00    | 40,000.00     | 480,000.00    |
+| 19   | Provisiones pagos      | Gasto   | Necesario        | Provisiones      | Mensual    | 200,000.00   | 200,000.00    | 2,400,000.00  |
+| 20   | Plan de datos          | Gasto   | No tan necesario | Otros gastos     | Mensual    | 80,000.00    | 80,000.00     | 960,000.00    |
+| 21   | Gasolina               | Gasto   | Necesario        | Transporte       | Mensual    | 150,000.00   | 150,000.00    | 1,800,000.00  |
+| 22   | Mantenimiento carro    | Gasto   | Necesario        | Transporte       | Trimestral | 500,000.00   | 166,666.67    | 2,000,000.00  |
+| 23   | Seguro carro           | Gasto   | No tan necesario | Transporte       | Anual      | 1,000,000.00 | 50,000.00     | 600,000.00    |
+| 24   | Gimnasio               | Gasto   | No tan necesario | Otros gastos     | Anual      | 900,000.00   | 30,000.00     | 360,000.00    |
+| 25   | Internet y telefono    | Gasto   | No necesario     | Familia          | Mensual    | 120,000.00   | 50,000.00     | 600,000.00    |
+| 26   | Streaming              | Gasto   | No tan necesario | Familia          | Mensual    | 120,000.00   | 40,000.00     | 480,000.00    |
+| 27   | Taxi/Uber/Bus          | Gasto   | No tan necesario | Transporte       | Mensual    | 140,000.00   | 65,000.00     | 780,000.00    |
+| 28   | Crédito carro          | Gasto   | Necesario        | Deudas entidades | Mensual    | 1,200,000.00 | 1,200,000.00  | 14,400,000.00 |
+| 29   | Viajes                 | Gasto   | No tan necesario | Entretenimiento  | Semestral  | 4,000,000.00 | 300,000.00    | 3,600,000.00  |
+| 30   | Restaurantes           | Gasto   | No necesario     | Entretenimiento  | Mensual    | 600,000.00   | 200,000.00    | 2,400,000.00  |
+| 31   | Peluqueria perritos    | Gasto   | Necesario        | Familia          | Mensual    | 150,000.00   | 150,000.00    | 1,800,000.00  |
+| 32   | Seguro médico          | Gasto   | Necesario        | Familia          | Mensual    | 400,000.00   | 400,000.00    | 4,800,000.00  |
+| 33   | Centro comercial       | Gasto   | No necesario     | Entretenimiento  | Mensual    | 450,000.00   | 150,000.00    | 1,800,000.00  |
+| 34   | Impuestos              | Gasto   | Necesario        | Impuestos        | Anual      | 1,300,000.00 | 108,333.33    | 1,300,000.00  |
+| 35   | Juguetes perritos      | Gasto   | No necesario     | Familia          | Bimensual  | 100,000.00   | 0.00          | 0.00          |
+| 36   | Peluquería             | Gasto   | Necesario        | Otros gastos     | Mensual    | 100,000.00   | 100,000.00    | 1,200,000.00  |
+| 37   | Domicilios             | Gasto   | No necesario     | Alimentación     | Mensual    | 400,000.00   | 100,000.00    | 1,200,000.00  |
+| 38   | Ropa                   | Gasto   | No tan necesario | Otros gastos     | Trimestral | 1,500,000.00 | 150,000.00    | 1,800,000.00  |
 
 **Totales agregados por categoría (panel K:M)**:
 
-| Fila | Categoría | Presupuesto (mes) | Presupuesto (año) |
-|------|-----------|-------------------|-------------------|
-| 7 | Salario | 4,000,000.00 | 48,000,000.00 |
-| 8 | Negocio | 1,166,666.67 | 14,000,000.00 |
-| 9 | Inversión | 166,666.67 | 2,000,000.00 |
-| 10 | Otros ingresos | 1,866,666.67 | 22,400,000.00 |
-| 11 | Hogar | 2,085,000.00 | 25,020,000.00 |
-| 12 | Alimentación | 600,000.00 | 7,200,000.00 |
-| 13 | Transporte | 431,666.67 | 5,180,000.00 |
-| 14 | Provisiones | 200,000.00 | 2,400,000.00 |
-| 15 | Deudas entidades | 1,200,000.00 | 14,400,000.00 |
-| 16 | Deudas conocidos | 0.00 | 0.00 |
-| 17 | Entretenimiento | 650,000.00 | 7,800,000.00 |
-| 18 | Familia | 640,000.00 | 7,680,000.00 |
-| 19 | Impuestos | 108,333.33 | 1,300,000.00 |
-| 20 | Otros gastos | 360,000.00 | 4,320,000.00 |
-| 22 | TOTAL INGRESOS | 7,200,000.00 | 86,400,000.00 |
-| 23 | TOTAL GASTOS | 6,275,000.00 | 75,300,000.00 |
-| 25 | CAPACIDAD INVERSIÓN | 925,000.00 | 11,100,000.00 |
+| Fila | Categoría           | Presupuesto (mes) | Presupuesto (año) |
+| ---- | ------------------- | ----------------- | ----------------- |
+| 7    | Salario             | 4,000,000.00      | 48,000,000.00     |
+| 8    | Negocio             | 1,166,666.67      | 14,000,000.00     |
+| 9    | Inversión           | 166,666.67        | 2,000,000.00      |
+| 10   | Otros ingresos      | 1,866,666.67      | 22,400,000.00     |
+| 11   | Hogar               | 2,085,000.00      | 25,020,000.00     |
+| 12   | Alimentación        | 600,000.00        | 7,200,000.00      |
+| 13   | Transporte          | 431,666.67        | 5,180,000.00      |
+| 14   | Provisiones         | 200,000.00        | 2,400,000.00      |
+| 15   | Deudas entidades    | 1,200,000.00      | 14,400,000.00     |
+| 16   | Deudas conocidos    | 0.00              | 0.00              |
+| 17   | Entretenimiento     | 650,000.00        | 7,800,000.00      |
+| 18   | Familia             | 640,000.00        | 7,680,000.00      |
+| 19   | Impuestos           | 108,333.33        | 1,300,000.00      |
+| 20   | Otros gastos        | 360,000.00        | 4,320,000.00      |
+| 22   | TOTAL INGRESOS      | 7,200,000.00      | 86,400,000.00     |
+| 23   | TOTAL GASTOS        | 6,275,000.00      | 75,300,000.00     |
+| 25   | CAPACIDAD INVERSIÓN | 925,000.00        | 11,100,000.00     |
 
 **Fórmulas relevantes**:
 
@@ -373,7 +378,7 @@ El Excel implementa un grafo de dependencias estrictamente **acíclico** con una
   ┌─────────────────────────┐
   │       PRESUPUESTO       │  ← SUMIFS por categoría × naturaleza
   │  F12=7,200,000 (ingresos)
-  │  F24=8,345,000 (gastos) 
+  │  F24=8,345,000 (gastos)
   │  F27=-1,145,000 (FCL)   │
   └──────┬──────────┬───────┘
          │          │
@@ -423,30 +428,32 @@ El Excel implementa un grafo de dependencias estrictamente **acíclico** con una
 - **Tabla de naturalezas enumeradas (gastos)**: `Necesario`, `No tan necesario`, `No necesario`. **Tres valores exactos, no más, no menos**.
 - **Enums que el PRD menciona y el Excel no usa como columna propia**: el PRD habla de `tipo_flujo` (Ingreso/Egreso) como columna. En el Excel, el tipo de flujo se infiere por la columna donde aparece la transacción (`B..F` = Ingreso, `H..L` = Gasto); no hay un flag textual.
 - **Función de filtro dinámico**: el Excel usa `__xludf.DUMMYFUNCTION("FILTER(...)")` (Excel 365). El MVP debe decidir si replica con `WHERE` SQL sobre la tabla `Transacciones` o usa un cliente TS. La regla de negocio subyacente es: para cada `naturaleza_necesidad` ∈ {`No necesario`, `No tan necesario`}, listar las transacciones correspondientes y permitir editar el `nuevo_valor_centavos`.
+
 ## 6. Cruce con el PRD (`MVP-Financiero-Local_ Tecnologías-y-SCRUM.md`)
 
 ### 6.1 Valores cuantitativos
 
-| Concepto del PRD | Valor citado en el PRD | Valor en el Excel | Celda de referencia | ¿Match? |
-|------------------|------------------------|-------------------|--------------------|---------|
-| Suma de Ingresos Consolidados | `$7,200,000` | `7,200,000` | `PRESUPUESTO!F12` y `ESTADO DE RESULTADOS!D4` | ✅ |
-| Egresos Críticos (Necesarios + Provisiones) | `$3,860,000` | `5,060,000` (Necesario total, incluye Provisiones) | `PRESUPUESTO!C24` y `ESTADO DE RESULTADOS!D7` (con desglose `3,660,000` + `200,000`) | ⚠️ discrepancia |
-| Deudas entidades | (implícito) | `1,200,000` | `PRESUPUESTO!F18` | ✅ |
-| Flujo de Ahorro 1 | `$2,140,000` | `2,140,000` | `ESTADO DE RESULTADOS!D14 = H14` | ✅ |
-| Gastos No tan necesarios | `$1,665,000` | `1,665,000` | `PRESUPUESTO!D24` | ✅ |
-| Gastos No necesarios | `$1,620,000` | `1,620,000` | `PRESUPUESTO!E24` | ✅ |
-| Flujo de Ahorro 2 (Déficit Base) | `-$1,145,000` | `-1,145,000` (sólo si NO se deduce salario en el lado inicial) | `ESTADO DE RESULTADOS!D21` | ✅ pero condicional |
-| Salario Personal Objetivo | (mencionado, no numérico inicial) | `500,000` | `MIS FINANZAS!C3`, `ESTADO DE RESULTADOS!H16` | ✅ |
-| TOTAL GASTOS VARIABLES (mejorado) | `$1,215,000` | `1,215,000` | `OPORTUNIDADES DE MEJORA!D9`, `ESTADO DE RESULTADOS!H17` | ✅ |
-| Capacidad de Inversión (mejorada) | `$925,000` | `925,000` | `ESTADO DE RESULTADOS!H23`, `PRESUPUESTO MEJORADO!L25` | ✅ |
-| TOTAL AHORRO anual | `$24,840,000` | `24,840,000` | `OPORTUNIDADES DE MEJORA!E13` | ✅ |
-| Tamaño del dataset | "32 filas" | `6 ingresos + 26 gastos = 32` | `MIS FINANZAS` filas 7..32 | ✅ |
+| Concepto del PRD                            | Valor citado en el PRD            | Valor en el Excel                                              | Celda de referencia                                                                  | ¿Match?             |
+| ------------------------------------------- | --------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------- |
+| Suma de Ingresos Consolidados               | `$7,200,000`                      | `7,200,000`                                                    | `PRESUPUESTO!F12` y `ESTADO DE RESULTADOS!D4`                                        | ✅                  |
+| Egresos Críticos (Necesarios + Provisiones) | `$3,860,000`                      | `5,060,000` (Necesario total, incluye Provisiones)             | `PRESUPUESTO!C24` y `ESTADO DE RESULTADOS!D7` (con desglose `3,660,000` + `200,000`) | ⚠️ discrepancia     |
+| Deudas entidades                            | (implícito)                       | `1,200,000`                                                    | `PRESUPUESTO!F18`                                                                    | ✅                  |
+| Flujo de Ahorro 1                           | `$2,140,000`                      | `2,140,000`                                                    | `ESTADO DE RESULTADOS!D14 = H14`                                                     | ✅                  |
+| Gastos No tan necesarios                    | `$1,665,000`                      | `1,665,000`                                                    | `PRESUPUESTO!D24`                                                                    | ✅                  |
+| Gastos No necesarios                        | `$1,620,000`                      | `1,620,000`                                                    | `PRESUPUESTO!E24`                                                                    | ✅                  |
+| Flujo de Ahorro 2 (Déficit Base)            | `-$1,145,000`                     | `-1,145,000` (sólo si NO se deduce salario en el lado inicial) | `ESTADO DE RESULTADOS!D21`                                                           | ✅ pero condicional |
+| Salario Personal Objetivo                   | (mencionado, no numérico inicial) | `500,000`                                                      | `MIS FINANZAS!C3`, `ESTADO DE RESULTADOS!H16`                                        | ✅                  |
+| TOTAL GASTOS VARIABLES (mejorado)           | `$1,215,000`                      | `1,215,000`                                                    | `OPORTUNIDADES DE MEJORA!D9`, `ESTADO DE RESULTADOS!H17`                             | ✅                  |
+| Capacidad de Inversión (mejorada)           | `$925,000`                        | `925,000`                                                      | `ESTADO DE RESULTADOS!H23`, `PRESUPUESTO MEJORADO!L25`                               | ✅                  |
+| TOTAL AHORRO anual                          | `$24,840,000`                     | `24,840,000`                                                   | `OPORTUNIDADES DE MEJORA!E13`                                                        | ✅                  |
+| Tamaño del dataset                          | "32 filas"                        | `6 ingresos + 26 gastos = 32`                                  | `MIS FINANZAS` filas 7..32                                                           | ✅                  |
 
 ### 6.2 Discrepancias materiales detectadas
 
 **Discrepancia 1 — "Egresos Críticos" del PRD: $3,860,000 vs. Excel $5,060,000**
 
 El PRD en §"Arquitectura de Agregación" define:
+
 > "Egresos Críticos: La suma cruzada de aquellos registros identificados como 'Gastos Fijos', categorizados explícitamente entre 'Necesarios' y 'Provisiones' ($3,860,000), sumado a la carga de 'Deudas' ($1,200,000)."
 
 Pero el Excel calcula el FA1 como `Ingresos - Necesario (total) - Deudas` y obtiene 2,140,000. Eso significa que trata el rubro Necesario completo ($5,060,000) como egreso crítico, no un subconjunto. La cifra $3,860,000 que cita el PRD parece provenir de un subconjunto de Necesario (quizá excluyendo Provisiones y los gastos variables clasificados como Necesario), pero esa partición **no se implementa en el Excel**. La fórmula real del FA1 (que sí cierra en 2,140,000) es:
@@ -468,6 +475,7 @@ Y `D7 = D8 + D9 = 3,660,000 + 200,000 = 3,860,000`, donde `D8 = PRESUPUESTO!C24 
 **Discrepancia 2 — FA2 inicial no descuenta el Salario Personal Objetivo**
 
 El PRD define:
+
 > "Flujo de Ahorro 2 (Déficit Base): Deduce el 'Salario Personal Objetivo' junto a la agresiva bolsa de 'Gastos Variables' compuesta por los cruces lógicos de 'No tan necesarios' ($1,665,000) y 'No necesarios' ($1,620,000). La aserción arroja una deficiencia y una Capacidad de Inversión neta de -$1,145,000…"
 
 El Excel, sin embargo, tiene `D16` **vacío** en el lado Inicial, por lo que el cálculo efectivo es:
@@ -479,9 +487,10 @@ D21 (FA2 inicial) = D14 - D16 - D17 = 2,140,000 - 0 - 3,285,000 = -1,145,000
 Si se descuentan los $500,000 de salario, el resultado sería `-1,645,000`, no `-1,145,000`. **El número del PRD coincide con el cálculo del Excel sin descontar salario** (lo que sugiere que el PRD tiene un error de copy: cita `-1,145,000` y dice que se descuenta el salario, pero ambos no pueden ser ciertos a la vez).
 
 > **Conclusión para el MVP**: la implementación debe tomar una decisión explícita. Opciones:
+>
 > 1. Replicar el Excel: FA2 inicial no descuenta salario (D16 vacío). El número -1,145,000 es la métrica del usuario antes de definir cuánto quiere pagarse a sí mismo. La "Capacidad de Inversión" en este caso es simplemente FA2 (porque Capacidad = Salario + FA2 con Salario = 0).
 > 2. Replicar el PRD: FA2 inicial sí descuenta salario, lo que daría -1,645,000. Esto requiere un valor por defecto de salario objetivo en la primera carga.
-> **Recomendación**: replicar el Excel (D16 vacío por defecto; el usuario define su salario al activar el modo "Mejorado"). Es lo más fiel a la fuente de verdad.
+>    **Recomendación**: replicar el Excel (D16 vacío por defecto; el usuario define su salario al activar el modo "Mejorado"). Es lo más fiel a la fuente de verdad.
 
 **Discrepancia 3 — Ingresos: el dataset usa `Otros ingresos` (4 veces) y el PRD no lo lista**
 
@@ -509,14 +518,14 @@ El PRD muestra como ejemplo de ingresos solo: `Salario`, `Dividendos inversiones
 
 Mapa del estado de los 6 bloqueos originales del PRD tras este análisis:
 
-| # | Bloqueo del PRD | Estado | Evidencia |
-|---|------------------|--------|-----------|
-| 1 | Enums concretos (`frecuencia`, `comportamiento`, `naturaleza_necesidad`, `tipo_flujo`) | ✅ **Resuelto** | `frecuencia` ∈ {`Mensual`, `Bimensual`, `Trimestral`, `Semestral`, `Anual`} (MIS FINANZAS D y J); `comportamiento` ∈ {`Fijo`, `Variable`} (C, ingresos); `naturaleza_necesidad` ∈ {`Necesario`, `No tan necesario`, `No necesario`} (I, gastos); `tipo_flujo` se infiere por columna de captura (B=Ingreso, H=Gasto), no hay flag textual — el MVP debe materializar un campo `tipo_flujo` explícito en la tabla `Transacciones`. |
-| 2 | Dataset completo de 32 filas | ✅ **Resuelto** | 6 ingresos (B7:F12) + 26 gastos (H7:L32) = 32 transacciones reales; filas 33..103 son plantilla vacía. Lista completa en §3.1. |
-| 3 | Agrupamiento "Provisiones" | ✅ **Resuelto (con observación)** | En el Excel, `Provisiones` es una **categoría** de gasto (no una naturaleza transversal), y se contabiliza dentro de `Necesario`. La transacción canónica es `Provisiones pagos` (fila 13, 200,000). El PRD lo presenta como un agrupador; el MVP debe tratarlo como categoría única para que las SUMIFS del Excel repliquen. |
-| 4 | Reglas de redondeo | ✅ **Resuelto (sin reglas especiales)** | El Excel **no aplica redondeo**: `1,166,666.667` se preserva con 3 decimales. El MVP, vía `decimal.js`, debe mantener la precisión completa hasta la presentación. En la UI se puede redondear a 0 o 2 decimales. |
-| 5 | Validación de `naturaleza_necesidad` para ingresos | ⚠️ **Pendiente** | El Excel **no lo valida**: si se escribe un valor en `I` para un ingreso, las SUMIFS contaminan los totales. El MVP debe agregar `CHECK (tipo_flujo='Gasto' OR naturaleza_necesidad IS NULL)` a nivel SQL o equivalente en la capa de aplicación. |
-| 6 | Idioma UI | ⚠️ **Pendiente (definición de producto)** | El Excel está en español rioplatense ("ASESORÍAS", "Peluquería"). El PRD pide español neutro. El MVP debe normalizar todos los strings (categorías, naturalezas, frecuencias) y exponer un selector de locale. |
+| #   | Bloqueo del PRD                                                                        | Estado                                    | Evidencia                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| --- | -------------------------------------------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Enums concretos (`frecuencia`, `comportamiento`, `naturaleza_necesidad`, `tipo_flujo`) | ✅ **Resuelto**                           | `frecuencia` ∈ {`Mensual`, `Bimensual`, `Trimestral`, `Semestral`, `Anual`} (MIS FINANZAS D y J); `comportamiento` ∈ {`Fijo`, `Variable`} (C, ingresos); `naturaleza_necesidad` ∈ {`Necesario`, `No tan necesario`, `No necesario`} (I, gastos); `tipo_flujo` se infiere por columna de captura (B=Ingreso, H=Gasto), no hay flag textual — el MVP debe materializar un campo `tipo_flujo` explícito en la tabla `Transacciones`. |
+| 2   | Dataset completo de 32 filas                                                           | ✅ **Resuelto**                           | 6 ingresos (B7:F12) + 26 gastos (H7:L32) = 32 transacciones reales; filas 33..103 son plantilla vacía. Lista completa en §3.1.                                                                                                                                                                                                                                                                                                    |
+| 3   | Agrupamiento "Provisiones"                                                             | ✅ **Resuelto (con observación)**         | En el Excel, `Provisiones` es una **categoría** de gasto (no una naturaleza transversal), y se contabiliza dentro de `Necesario`. La transacción canónica es `Provisiones pagos` (fila 13, 200,000). El PRD lo presenta como un agrupador; el MVP debe tratarlo como categoría única para que las SUMIFS del Excel repliquen.                                                                                                     |
+| 4   | Reglas de redondeo                                                                     | ✅ **Resuelto (sin reglas especiales)**   | El Excel **no aplica redondeo**: `1,166,666.667` se preserva con 3 decimales. El MVP, vía `decimal.js`, debe mantener la precisión completa hasta la presentación. En la UI se puede redondear a 0 o 2 decimales.                                                                                                                                                                                                                 |
+| 5   | Validación de `naturaleza_necesidad` para ingresos                                     | ⚠️ **Pendiente**                          | El Excel **no lo valida**: si se escribe un valor en `I` para un ingreso, las SUMIFS contaminan los totales. El MVP debe agregar `CHECK (tipo_flujo='Gasto' OR naturaleza_necesidad IS NULL)` a nivel SQL o equivalente en la capa de aplicación.                                                                                                                                                                                 |
+| 6   | Idioma UI                                                                              | ⚠️ **Pendiente (definición de producto)** | El Excel está en español rioplatense ("ASESORÍAS", "Peluquería"). El PRD pide español neutro. El MVP debe normalizar todos los strings (categorías, naturalezas, frecuencias) y exponer un selector de locale.                                                                                                                                                                                                                    |
 
 **Resumen**: 4 de 6 bloqueos quedaron resueltos con evidencia cuantitativa del Excel. 2 bloqueos siguen abiertos porque dependen de decisiones de producto que el Excel no implementa explícitamente (validación de enums en runtime, estrategia de localización).
 
