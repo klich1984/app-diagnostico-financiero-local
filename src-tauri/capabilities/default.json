@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capacidades mínimas: solo core (ventana, eventos, app). No fs, no shell, no http. La DB se accede via tauri-plugin-sql, habilitado en su capability propia (Slice 2).",
+  "description": "Capacidades mínimas: core (ventana, eventos, app) + sql:default para que la WebView pueda leer y escribir la DB local. No fs, no shell, no http. Ver design.md §2 'Capacidades mínimas'.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "sql:default", "sql:allow-execute", "sql:allow-select"]
 }
