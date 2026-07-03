@@ -21,12 +21,24 @@ pub fn src_tauri_root() -> PathBuf {
 /// Path to `migrations/001_inicial.sql` (the canonical migration file
 /// described in design.md §5.6). The IMPL phase is expected to `include_str!`
 /// this file from `src-tauri/src/db/migrations.rs`.
+///
+/// `#[allow(dead_code)]` is required because each test crate compiles its
+/// own copy of `common::mod`; only the test files that actually call this
+/// helper see it as "used". The other crates report a `never used` warning
+/// that we suppress here at the source.
+#[allow(dead_code)]
 pub fn sql_initial_migration_path() -> PathBuf {
     src_tauri_root().join("migrations").join("001_inicial.sql")
 }
 
 /// Path to `Cargo.toml`. Used by the SQL plugin test to assert that
 /// `tauri-plugin-sql` is declared with the `sqlite` feature.
+///
+/// `#[allow(dead_code)]` is required because each test crate compiles its
+/// own copy of `common::mod`; only the test files that actually call this
+/// helper see it as "used". The other crates report a `never used` warning
+/// that we suppress here at the source.
+#[allow(dead_code)]
 pub fn cargo_toml_path() -> PathBuf {
     src_tauri_root().join("Cargo.toml")
 }
@@ -34,6 +46,12 @@ pub fn cargo_toml_path() -> PathBuf {
 /// Path to the capabilities file that grants permissions to the main window.
 /// The IMPL phase is expected to declare `sql:default`, `sql:allow-execute`
 /// and `sql:allow-select` here.
+///
+/// `#[allow(dead_code)]` is required because each test crate compiles its
+/// own copy of `common::mod`; only the test files that actually call this
+/// helper see it as "used". The other crates report a `never used` warning
+/// that we suppress here at the source.
+#[allow(dead_code)]
 pub fn capabilities_default_path() -> PathBuf {
     src_tauri_root().join("capabilities").join("default.json")
 }
