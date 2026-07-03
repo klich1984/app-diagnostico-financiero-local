@@ -9,6 +9,7 @@ pub mod migrations;
 pub mod path;
 pub mod plugin;
 pub mod seeds;
+pub mod transacciones;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
