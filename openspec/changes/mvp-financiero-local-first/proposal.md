@@ -160,3 +160,9 @@ Las dos preguntas abiertas que el `explore.md` defería a esta fase quedaron res
 - **Análisis técnico del Excel fuente**: `docs/analisis-plantilla-financiera.md`
 - **Exploración previa**: `openspec/changes/mvp-financiero-local-first/explore.md`
 - **Plantilla fuente**: `docs/Plantilla-diagnóstico-financiero-(Ejemplo).xlsx`
+
+---
+
+## 11. Estado de cierre
+
+Esta propuesta fue implementada en 6 slices (Épicas 1 a 5) y cerrada como MVP el **2026-07-04**. Cierre al centavo contra el Excel fuente con 127 tests verde (74 frontend + 53 backend). Ver [`MVP-COMPLETE.md`](./MVP-COMPLETE.md) para el resumen ejecutivo, las métricas de cierre y las release notes por historia de usuario.
