@@ -53,6 +53,7 @@ import { valorMensual, type Frecuencia } from '../normalizacion'
  *     con los fixtures del golden test.
  */
 export interface TransaccionMin {
+  id?: number
   tipo_flujo: 'Ingreso' | 'Gasto'
   categoria_id: number
   frecuencia: Frecuencia
