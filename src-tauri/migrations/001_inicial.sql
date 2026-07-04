@@ -82,9 +82,15 @@ CREATE TABLE IF NOT EXISTS Transacciones (
     FOREIGN KEY (usuario_id)   REFERENCES Usuarios(id)   ON DELETE CASCADE,
     FOREIGN KEY (categoria_id) REFERENCES Categorias(id) ON DELETE RESTRICT,
     CHECK (
+        -- Gasto: ambos campos requeridos.
         (tipo_flujo = 'Gasto'   AND comportamiento IS NOT NULL AND naturaleza_necesidad IS NOT NULL)
         OR
-        (tipo_flujo = 'Ingreso' AND comportamiento IS NULL      AND naturaleza_necesidad IS NULL)
+        -- Ingreso: naturaleza_necesidad SIEMPRE NULL. comportamiento
+        -- puede ser NULL o NOT NULL porque el dominio distingue
+        -- Ingresos Fijos vs Variables (la capa de agregación
+        -- matriz.ts usa `comportamiento` para separar los buckets
+        -- de Ingreso Fijo vs Variable).
+        (tipo_flujo = 'Ingreso' AND naturaleza_necesidad IS NULL)
     )
 );
 
