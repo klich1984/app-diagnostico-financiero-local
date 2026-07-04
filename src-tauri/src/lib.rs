@@ -5,6 +5,7 @@
 // vive en `src/domain/` (TypeScript) y la persistencia en los módulos
 // Rust de este crate (`path`, `plugin`, `migrations`, `seeds`).
 
+pub mod kpis;
 pub mod migrations;
 pub mod path;
 pub mod plugin;
