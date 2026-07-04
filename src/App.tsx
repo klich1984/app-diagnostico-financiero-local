@@ -8,6 +8,7 @@
 // the validated `TransaccionInput` so we can drive the UI manually.
 
 import { TransaccionForm, type TransaccionInput } from './components/molecules/TransaccionForm'
+import { CATEGORIAS_SEED } from './data/categorias-seed'
 
 function App(): JSX.Element {
   // Demo handler: in Slice 4 this will dispatch to the IPC layer + store.
@@ -26,8 +27,8 @@ function App(): JSX.Element {
 
         <div className="rounded-lg bg-white p-6 shadow">
           <h2 className="mb-4 text-xl font-semibold text-slate-800">Nueva transacción</h2>
-          {/* Empty categorias on purpose: Slice 4 wires the categories store. */}
-          <TransaccionForm categorias={[]} onSubmit={handleSubmit} />
+          {/* Seed estático de las 14 categorías; Slice 4 reemplaza por el store real. */}
+          <TransaccionForm categorias={CATEGORIAS_SEED} onSubmit={handleSubmit} />
         </div>
 
         <p className="mt-4 text-center text-sm text-slate-400">
