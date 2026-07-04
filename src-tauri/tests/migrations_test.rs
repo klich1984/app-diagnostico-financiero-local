@@ -59,7 +59,7 @@ fn req_103_creates_all_four_tables_on_first_run() {
 
 /// REQ-103 / Scenario: "las columnas monetarias usan tipo INTEGER para
 /// almacenar centavos". The design specifies that `valor_centavos`,
-/// `salario_personal_objetivo_centavos` and `nuevo_valor_mensual_centavos`
+/// `salario_personal_objetivo_centavos` and `nuevo_valor_centavos`
 /// are always INTEGER to preserve cent precision across the pipeline.
 #[test]
 fn req_103_transacciones_table_has_integer_columns_for_monetary_amounts() {
@@ -74,8 +74,8 @@ fn req_103_transacciones_table_has_integer_columns_for_monetary_amounts() {
         "REQ-103: Usuarios.salario_personal_objetivo_centavos must be INTEGER",
     );
     assert!(
-        sql.contains("nuevo_valor_mensual_centavos INTEGER"),
-        "REQ-103: Simulador.nuevo_valor_mensual_centavos must be INTEGER",
+        sql.contains("nuevo_valor_centavos INTEGER"),
+        "REQ-103: Simulador.nuevo_valor_centavos must be INTEGER",
     );
 }
 

@@ -29,6 +29,14 @@ serde_json = "1"
 rusqlite = { version = "0.31", features = ["bundled"] }
 sha2 = "0.10"
 
+# Slice 6 (Épica 4, REQ-501 + REQ-605) — el motor de cálculo de KPIs
+# (Estado de Resultados dual) opera con `Decimal` para garantizar cierre
+# exacto al centavo contra el Excel fuente. La aritmética con f64
+# introduce drift en divisiones como 200_000_000/6 o 130_000_000/12,
+# así que este crate es la única forma autorizada de hacer cálculos
+# monetarios del lado backend (ver design.md §1 reglas arquitectónicas).
+rust_decimal = { version = "1", features = ["serde-with-str"] }
+
 [features]
 # this feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]

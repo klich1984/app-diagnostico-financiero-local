@@ -5,10 +5,12 @@
 // vive en `src/domain/` (TypeScript) y la persistencia en los módulos
 // Rust de este crate (`path`, `plugin`, `migrations`, `seeds`).
 
+pub mod kpis;
 pub mod migrations;
 pub mod path;
 pub mod plugin;
 pub mod seeds;
+pub mod simulador;
 pub mod transacciones;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
