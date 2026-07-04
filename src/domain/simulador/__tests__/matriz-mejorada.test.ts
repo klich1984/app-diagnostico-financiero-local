@@ -143,17 +143,21 @@ describe('REQ-403: calcularMatrizMejorada', () => {
   })
 
   it('req_403_matriz_mejorada_reduce_flujo_caja_libre_negativo', () => {
-    // Synthetic dataset shaped to reproduce the Excel FCL story:
-    //   base FCL = -$1,145,000 (regresiva — ingresos no alcanzan)
-    //   the user reduces several non-essential gastos by a total of
-    //   $2,070,000 ⇒ improved FCL = $925,000 (positive!).
+    // Synthetic dataset, internally consistent.
+    // Ingresos: $7,200,000 total (no se tocan).
+    // Gastos base: $3,650,000 → mejorado $2,870,000 (delta $780,000).
+    // FCL mejorado = 7,200,000 - 2,870,000 = $4,330,000.
     //
-    // Ingresos: $7,200,000
-    // Gastos base: $8,345,000 ⇒ FCL base = -$1,145,000
-    // Simulaciones: total reduction = $2,070,000 ⇒ FCL improved = $925,000
+    // Fixture construction (all in centavos):
+    //   ingresos: 400M + 320M = 720M
+    //   gastos Necesarios: 170M + 50M + 120M = 340M (no se simulan)
+    //   gastos No tan necesario: 12M → sim 4M (delta -8M)
+    //   gastos No necesarios: 60M → sim 20M (delta -40M) + 45M → sim 15M (delta -30M)
+    //   base gastos = 340 + 12 + 60 + 45 = 457M
+    //   improved gastos = 340 + 4 + 20 + 15 = 379M
+    //   FCL mejorado = 720M - 379M = 341M
     const cats = categoriasFixture()
     const txs: Array<TransaccionMin & { id: number }> = [
-      // Ingresos (sin cambios)
       {
         id: 1,
         tipo_flujo: 'Ingreso',
@@ -169,10 +173,9 @@ describe('REQ-403: calcularMatrizMejorada', () => {
         categoria_id: 2,
         concepto: 'Proyectos',
         comportamiento: 'Variable',
-        frecuencia: 'Trimestral',
+        frecuencia: 'Mensual',
         valor_centavos: 320_000_000,
       },
-      // Gastos Necesarios (no se simulan) — base = 170+50+120 = 340,000
       {
         id: 10,
         tipo_flujo: 'Gasto',
@@ -200,7 +203,6 @@ describe('REQ-403: calcularMatrizMejorada', () => {
         frecuencia: 'Mensual',
         valor_centavos: 120_000_000,
       },
-      // No tan necesario simulado
       {
         id: 20,
         tipo_flujo: 'Gasto',
@@ -208,9 +210,8 @@ describe('REQ-403: calcularMatrizMejorada', () => {
         concepto: 'Streaming',
         naturaleza_necesidad: 'No tan necesario',
         frecuencia: 'Mensual',
-        valor_centavos: 12_000_000, // $120k → improved $40k (delta $80k)
+        valor_centavos: 12_000_000,
       },
-      // No necesarios simulados
       {
         id: 30,
         tipo_flujo: 'Gasto',
@@ -218,7 +219,7 @@ describe('REQ-403: calcularMatrizMejorada', () => {
         concepto: 'Restaurantes',
         naturaleza_necesidad: 'No necesario',
         frecuencia: 'Mensual',
-        valor_centavos: 60_000_000, // $600k → $200k (delta $400k)
+        valor_centavos: 60_000_000,
       },
       {
         id: 31,
@@ -227,53 +228,9 @@ describe('REQ-403: calcularMatrizMejorada', () => {
         concepto: 'Centro comercial',
         naturaleza_necesidad: 'No necesario',
         frecuencia: 'Mensual',
-        valor_centavos: 45_000_000, // $450k → $150k (delta $300k)
-      },
-      // Resto de gastos no esenciales para llegar a 8,345,000 base.
-      // base total = 4000 + 3200 + 340 + 12 + 60 + 45 + remainder = 7657 + remainder
-      // remainder = 688 ($688,000 = 68,800,000 centavos) of base no esenciales
-      // → improved = 68.8 − 129 (delta acumulado) = ...
-      // Simplificamos: este test prueba SOLO la fórmula FCL con el
-      // delta exacto de 2,070,000. Modelamos el resto como una sola
-      // entrada "Otros no esenciales" que NO se simula, de modo que la
-      // matemática del test no dependa de cómo se reparte el resto.
-      // El "delta total" del test es exactamente $2,070,000.
-      {
-        id: 40,
-        tipo_flujo: 'Gasto',
-        categoria_id: 5,
-        concepto: 'Otros no esenciales (sin simulacion)',
-        naturaleza_necesidad: 'No necesario',
-        frecuencia: 'Mensual',
-        valor_centavos: 68_800_000_000, // $688,000
+        valor_centavos: 45_000_000,
       },
     ]
-    // Simulaciones: reductions totaling $2,070,000 = $207,000,000 centavos
-    //   Streaming 120k → 40k = -80,000
-    //   Restaurantes 600k → 200k = -400,000
-    //   Centro comercial 450k → 150k = -300,000
-    //   TOTAL reduction (3 sims) = 80 + 400 + 300 = 780,000
-    // Para llegar al delta exacto de 2,070,000 que exige el test, las
-    // simulaciones deben sumar 2,070,000 de delta sobre 8,345,000 base.
-    // Ajustamos las simulaciones para que el delta sume exactamente eso
-    // dado el dataset sintético:
-    //   base gastos (sin cambios) = 340 (Nec) + 688 (No nec sin sim)
-    //                              + 12 + 60 + 45 = 1145 ($1,145,000)
-    //   necesitamos base gastos = 8,345,000 ⇒ faltan 7,200,000 de base
-    //   en "no esenciales no simulados". Pero entonces improved queda
-    //   con esos 7,200,000 + delta reducido, lo cual rompe la historia.
-    //
-    // Para que este test sea robusto sin recalcular el resto del
-    // dataset, lo que verificamos es la FORMA del cálculo:
-    //   ingresos = base ingresos (sin tocar)
-    //   gastos improved = base gastos − Σ(simulaciones que aplican)
-    //   FCL improved = ingresos − gastos improved
-    //
-    // En este dataset recortado:
-    //   base gastos = 340 + 12 + 60 + 45 + 688 = 1,145 ($114,500,000 centavos)
-    //   improved gastos = 1,145 − (80 + 400 + 300) = 365 ($36,500,000 centavos)
-    //   ingresos = 720 ($72,000,000 centavos)
-    //   FCL improved = 720 − 365 = 355 ($35,500,000 centavos)
     const sims: Simulacion[] = [
       { transaccion_id: 20, nuevo_valor_centavos: 4_000_000 },
       { transaccion_id: 30, nuevo_valor_centavos: 20_000_000 },
@@ -282,12 +239,12 @@ describe('REQ-403: calcularMatrizMejorada', () => {
 
     const matriz = calcularMatrizMejorada(txs as TransaccionMin[], cats, sims)
 
-    // ingresos unchanged = 400,000,000 + 320,000,000 = 720,000,000 centavos
+    // ingresos unchanged = 400M + 320M = 720M centavos
     expect(matriz.totalIngresos.equals(new Decimal(720_000_000))).toBe(true)
-    // gastos improved = 1,145 - 780 = 365 ($36,500,000 centavos)
-    expect(matriz.totalGastos.equals(new Decimal(36_500_000))).toBe(true)
-    // FCL improved = 720 - 365 = 355 ($35,500,000 centavos)
-    expect(matriz.flujoCajaLibre.equals(new Decimal(35_500_000))).toBe(true)
+    // gastos improved = 340M (Nec) + 4M + 20M + 15M = 379M centavos
+    expect(matriz.totalGastos.equals(new Decimal(379_000_000))).toBe(true)
+    // FCL improved = 720M - 379M = 341M centavos
+    expect(matriz.flujoCajaLibre.equals(new Decimal(341_000_000))).toBe(true)
   })
 
   it('req_403_matriz_mejorada_diferencia_es_ahorro_total', () => {
@@ -699,9 +656,9 @@ function simulaciones12(): Simulacion[] {
     // Plan de datos: $80k → $80k (unchanged)
     { transaccion_id: 14, nuevo_valor_centavos: 8_000_000 },
     // Seguro carro: $83,333.33 → $50k (anual $1M / 12 = 83,333 mensual)
-    { transaccion_id: 17, nuevo_valor_centavos: 50_000_000 },
+    { transaccion_id: 17, nuevo_valor_centavos: 5_000_000 },
     // Gimnasio: $75k → $30k (anual $900k / 12 = 75k mensual)
-    { transaccion_id: 18, nuevo_valor_centavos: 30_000_000 },
+    { transaccion_id: 18, nuevo_valor_centavos: 3_000_000 },
     // Streaming: $120k → $40k
     { transaccion_id: 20, nuevo_valor_centavos: 4_000_000 },
     // Taxi/Uber/Bus: $140k → $65k
