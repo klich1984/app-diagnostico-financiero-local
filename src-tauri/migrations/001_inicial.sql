@@ -108,8 +108,8 @@ CREATE TABLE IF NOT EXISTS Simulador (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id INTEGER NOT NULL,
     transaccion_id INTEGER NOT NULL,
-    nuevo_valor_mensual_centavos INTEGER NOT NULL
-        CHECK (nuevo_valor_mensual_centavos >= 0),
+    nuevo_valor_centavos INTEGER NOT NULL
+        CHECK (nuevo_valor_centavos >= 0),
     created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
     updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
     FOREIGN KEY (usuario_id)    REFERENCES Usuarios(id)       ON DELETE CASCADE,
@@ -147,8 +147,8 @@ INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Salari
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Otros ingresos', 'Ingreso', NULL);
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Negocio', 'Ingreso', NULL);
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Inversion', 'Ingreso', NULL);
-INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Hogar', 'Gasto', 1);
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Alimentacion', 'Gasto', 1);
+INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Hogar', 'Gasto', 1);
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Transporte', 'Gasto', 1);
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Provisiones', 'Gasto', 1);
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Deudas entidades', 'Gasto', 1);
