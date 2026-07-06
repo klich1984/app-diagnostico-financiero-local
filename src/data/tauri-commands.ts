@@ -10,7 +10,7 @@
 // `src-tauri/src/lib.rs`:
 //
 //   * `obtenerCategorias()`     → `cmd_obtener_categorias`
-//   * `insertarTransaccion(t)`  → `cmd_insert_transaccion`    (payload: `t`)
+//   * `insertarTransaccion(input)` → `cmd_insert_transaccion` (payload: { input })
 //   * `listarTransacciones()`   → `cmd_listar_transacciones`  (SIN payload)
 //
 // NOTA slice 7: `listarTransacciones()` no recibe `usuario_id`. La
@@ -47,8 +47,11 @@ export interface CategoriaDto {
  * lado Rust — los nombres de campos coinciden (snake_case) para que
  * Tauri's IPC serializer no necesite transformaciones.
  *
- * `usuario_id` lo resuelve el backend en slices futuros; en slice 7 el
- * form no lo incluye en el payload.
+ * `usuario_id` NO se incluye aquí: el backend lo resuelve vía
+ * `resolver_usuario_activo()` antes de invocar `repo::insert`. Esto
+ * es coherente con la decisión de producto #6 (multi-perfil con
+ * selector al abrir) — la UI no necesita saber qué perfil está
+ * activo; eso es responsabilidad del backend.
  */
 export interface TransaccionInputDto {
   tipo_flujo: 'Ingreso' | 'Gasto'
@@ -99,18 +102,24 @@ export async function obtenerCategorias(): Promise<CategoriaDto[]> {
  * Persiste una transacción nueva en la DB SQLite local.
  *
  * Devuelve el `id` autoincrement asignado por la DB. Cualquier violación
- * de CHECK constraint (p. ej. `valor_centavos = 0`) se propaga como
+ * de CHECK constraint (p.ej. `valor_centavos = 0`) se propaga como
  * `Error` rechazado por la promesa — la UI debe envolver la llamada en
  * try/catch y mostrar el mensaje al usuario.
  *
- * El payload se serializa en snake_case aplanado para coincidir 1-a-1
- * con los campos de `crate::transacciones::repo::TransaccionInput` del
- * backend Rust. La convención de Tauri v2 trata cada campo del struct
- * como una clave top-level del args object, así que pasamos el `input`
- * directo sin wrapping.
+ * ## Contrato IPC de Tauri v2
+ * Las keys del objeto payload DEBEN coincidir con los nombres de los
+ * parámetros del comando Rust. El comando Rust es:
+ *
+ *     pub async fn cmd_insert_transaccion(
+ *         app: tauri::AppHandle,
+ *         input: TransaccionInput,
+ *     )
+ *
+ * `app` lo inyecta Tauri automáticamente; `input` lo proveemos nosotros.
+ * Por eso el payload va envuelto en `{ input }`, no aplanado.
  */
 export async function insertarTransaccion(input: TransaccionInputDto): Promise<number> {
-  return invoke<number>('cmd_insert_transaccion', input as unknown as Record<string, unknown>)
+  return invoke<number>('cmd_insert_transaccion', { input })
 }
 
 /**

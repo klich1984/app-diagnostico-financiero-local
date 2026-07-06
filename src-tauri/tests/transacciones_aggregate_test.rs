@@ -67,7 +67,7 @@ fn ingreso_input(
     frecuencia: &str,
 ) -> TransaccionInput {
     TransaccionInput {
-        usuario_id,
+        usuario_id: Some(usuario_id),
         tipo_flujo: "Ingreso".to_string(),
         categoria_id,
         concepto: "Salario".to_string(),
@@ -90,7 +90,7 @@ fn gasto_input(
     naturaleza_necesidad: &str,
 ) -> TransaccionInput {
     TransaccionInput {
-        usuario_id,
+        usuario_id: Some(usuario_id),
         tipo_flujo: "Gasto".to_string(),
         categoria_id,
         concepto: "Internet".to_string(),
