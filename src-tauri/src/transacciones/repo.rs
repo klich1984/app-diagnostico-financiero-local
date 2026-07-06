@@ -23,8 +23,18 @@ use rusqlite::{params, Connection, Row};
 
 /// Input "crudo" para crear o actualizar una transacción.
 /// NO incluye `id`, `created_at` ni `updated_at`: la DB los asigna.
+///
+/// `Deserialize` se necesita para que `cmd_insert_transaccion` (Slice 7)
+/// pueda aceptar este struct como argumento IPC desde el frontend
+/// (que lo envía como `{ t: { ... } }`). Sin este derive Tauri no puede
+/// reconstruir el payload en la frontera del comando.
+///
+/// `usuario_id` es `Option<i64>` porque el frontend NO lo manda (lo
+/// resuelve el backend via `resolver_usuario_activo()` antes de
+/// invocar `repo::insert`). El command garantiza que llega con valor.
+#[derive(serde::Deserialize)]
 pub struct TransaccionInput {
-    pub usuario_id: i64,
+    pub usuario_id: Option<i64>,
     pub tipo_flujo: String,
     pub categoria_id: i64,
     pub concepto: String,
@@ -48,7 +58,10 @@ pub struct TransaccionInput {
 /// `Clone` se necesita para que el motor de KPIs (Slice 6) pueda
 /// materializar la vista "mejorada" sin mutar las transacciones
 /// originales. `Debug` ayuda al diagnóstico de tests fallidos.
-#[derive(Clone, Debug)]
+/// `Serialize` se necesita para que `cmd_listar_transacciones` (Slice 7)
+/// pueda devolver esta estructura como payload IPC a la WebView sin
+/// tener que definir un DTO paralelo.
+#[derive(Clone, Debug, serde::Serialize)]
 pub struct Transaccion {
     pub id: i64,
     pub usuario_id: i64,
@@ -101,7 +114,18 @@ fn row_to_transaccion(row: &Row<'_>) -> rusqlite::Result<Transaccion> {
 /// `comportamiento`/`naturaleza_necesidad`, FK de `usuario_id` o
 /// `categoria_id`, etc.) se propaga como `rusqlite::Error` sin
 /// envolver, para que el caller decida cómo traducirlo.
+///
+/// Devuelve `rusqlite::Error::InvalidParameterName` si
+/// `TransaccionInput.usuario_id` es `None` — el command es responsable
+/// de resolverlo (vía `resolver_usuario_activo`) antes de invocar
+/// `insert`.
 pub fn insert(conn: &Connection, t: &TransaccionInput) -> rusqlite::Result<i64> {
+    let usuario_id = t.usuario_id.ok_or_else(|| {
+        rusqlite::Error::InvalidParameterName(
+            "TransaccionInput.usuario_id is None; the command must set it before calling insert"
+                .into(),
+        )
+    })?;
     conn.execute(
         "INSERT INTO Transacciones (
              usuario_id, tipo_flujo, categoria_id, concepto,
@@ -109,7 +133,7 @@ pub fn insert(conn: &Connection, t: &TransaccionInput) -> rusqlite::Result<i64> 
              valor_centavos
          ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
         params![
-            t.usuario_id,
+            usuario_id,
             t.tipo_flujo,
             t.categoria_id,
             t.concepto,

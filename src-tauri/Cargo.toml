@@ -37,6 +37,13 @@ sha2 = "0.10"
 # monetarios del lado backend (ver design.md §1 reglas arquitectónicas).
 rust_decimal = { version = "1", features = ["serde-with-str"] }
 
+[dev-dependencies]
+# Slice 7 (REQ-202 persistencia IPC) — los tests de `db.rs` necesitan un
+# directorio temporal real para verificar que `abrir_conexion_en_path`
+# crea el archivo `misfinanzas.db` en disco sin necesidad del runtime
+# de Tauri.
+tempfile = "3"
+
 [features]
 # this feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
-custom-protocol = ["tauri/custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]  
