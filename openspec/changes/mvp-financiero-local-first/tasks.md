@@ -292,3 +292,47 @@ T-101 ─► T-102 ─► T-103 ─► T-104 ─► T-105 ─► T-106
 3. **Multi-perfil**: El selector de perfil se implementa desde T-106 (comandos de usuario) y T-205 (transacciones filtradas por usuario_id).
 4. **Sin límite de transacciones**: La UI implementa scroll/paginación si es necesario, pero el backend no limita.
 5. **Precisión decimal**: Se usa decimal.js con ROUND_HALF_EVEN y precisión 28.
+
+---
+
+## H. Slice 7 (post-MVP) — Persistencia IPC
+
+> Slice adicional creado **fuera del blueprint original de 6 PRs** (todos
+> ya mergeados). Cierra el loop entre `TransaccionForm` (UI) y los
+> repositorios Rust (backend), eliminando el `console.log` y el
+> `CATEGORIAS_SEED` estático que aún viven en `App.tsx` desde Slice 3.
+>
+> Plan de tests de la fase RED: ver
+> `openspec/changes/mvp-financiero-local-first/slice-7-test-plan.md`.
+>
+> **Rama dedicada**: `feat/persistencia` (creada desde `main` el
+> 2026-07-04; el usuario NO debe tocar `main` para este slice).
+
+| ID     | HU    | REQs    | Título                                                  | Tests                                  | Estado  |
+| ------ | ----- | ------- | ------------------------------------------------------- | -------------------------------------- | ------- |
+| T-701  | HU-202 | REQ-202 | Wiring: `cmd_obtener_categorias` (Rust)                 | `slice7_cmd_obtener_categorias_returns_all_14`, `..._returns_correct_shape` | [x] RED |
+| T-702  | HU-202 | REQ-202 | Wiring: `cmd_insert_transaccion` (Rust)                 | `slice7_cmd_insert_transaccion_persists_to_db`, `..._validates_value_positive` | [x] RED |
+| T-703  | HU-202 | REQ-202 | Wiring: `cmd_listar_transacciones` (Rust)               | `slice7_cmd_listar_transacciones_returns_only_user_rows` | [x] RED |
+| T-704  | HU-202 | REQ-202 | Wrappers TS en `src/data/tauri-commands.ts`             | 5 tests en `tauri-commands.test.ts`    | [x] RED |
+| T-705  | HU-202 | REQ-202 | Integración App.tsx (usa wrappers en lugar de seed)     | (futuro, no incluido en RED)           | [ ]     |
+
+### H.1 RED phase artifact checklist
+
+- [x] `src-tauri/tests/commands_test.rs` creado (336 líneas, 5 tests)
+- [x] `src/data/__tests__/tauri-commands.test.ts` creado (229 líneas, 5 tests)
+- [x] `openspec/changes/mvp-financiero-local-first/slice-7-test-plan.md` creado (195 líneas, español)
+- [x] `cargo test --no-run` falla con `E0432: unresolved import 'commands'` (RED confirmado)
+- [x] `pnpm test` falla con `Failed to resolve import "../tauri-commands"` (RED confirmado)
+- [x] 13 test files preexistentes / 74 tests siguen pasando (no hubo regresión)
+
+### H.2 Pending for IMPL phase (delegated agent)
+
+- [ ] Crear `src-tauri/src/commands.rs` con `CategoriaDto` y las 3 funciones `*_impl(&Connection)`.
+- [ ] Agregar `pub mod commands;` a `src-tauri/src/lib.rs`.
+- [ ] Crear `src/data/tauri-commands.ts` con los wrappers + DTOs.
+- [ ] (Slice 7 GREEN, fuera de RED) Cablear `App.tsx` para usar `obtenerCategorias()` + `insertarTransaccion()` en lugar de `CATEGORIAS_SEED` + `console.log`.
+
+### H.3 Suggested commits (user commits, agent does NOT execute)
+
+1. `test: add failing tests for slice 7 (persistencia IPC)`
+2. `docs: add slice 7 test plan`
