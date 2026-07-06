@@ -23,6 +23,12 @@ use rusqlite::{params, Connection, Row};
 
 /// Input "crudo" para crear o actualizar una transacción.
 /// NO incluye `id`, `created_at` ni `updated_at`: la DB los asigna.
+///
+/// `Deserialize` se necesita para que `cmd_insert_transaccion` (Slice 7)
+/// pueda aceptar este struct como argumento IPC desde el frontend
+/// (que lo envía como `{ t: { ... } }`). Sin este derive Tauri no puede
+/// reconstruir el payload en la frontera del comando.
+#[derive(serde::Deserialize)]
 pub struct TransaccionInput {
     pub usuario_id: i64,
     pub tipo_flujo: String,
@@ -48,7 +54,10 @@ pub struct TransaccionInput {
 /// `Clone` se necesita para que el motor de KPIs (Slice 6) pueda
 /// materializar la vista "mejorada" sin mutar las transacciones
 /// originales. `Debug` ayuda al diagnóstico de tests fallidos.
-#[derive(Clone, Debug)]
+/// `Serialize` se necesita para que `cmd_listar_transacciones` (Slice 7)
+/// pueda devolver esta estructura como payload IPC a la WebView sin
+/// tener que definir un DTO paralelo.
+#[derive(Clone, Debug, serde::Serialize)]
 pub struct Transaccion {
     pub id: i64,
     pub usuario_id: i64,
