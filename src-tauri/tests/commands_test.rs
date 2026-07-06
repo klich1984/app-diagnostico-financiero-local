@@ -83,9 +83,13 @@ use rusqlite::Connection;
 // Helpers
 // ---------------------------------------------------------------------------
 
-/// Opens a fresh in-memory DB, applies the canonical schema (which also
-/// seeds the 14 categorias per the migration), inserts one default
-/// `Usuario` row and returns the connection + its id.
+/// Opens a fresh in-memory DB, applies the canonical schema (which now
+/// seeds BOTH the 14 categorias AND the 'Yo' usuario per the migration),
+/// and returns the connection + the `Yo` user's id.
+///
+/// The `Yo` row is created by the `INSERT OR IGNORE` seed block in
+/// `001_inicial.sql`, so the helper just reads its id — it does NOT
+/// re-insert (that would violate the unique index on `Usuarios.nombre`).
 ///
 /// Mirrors the fixture style used by `transacciones_repo_test.rs` so the
 /// slice 7 tests look consistent with the slice 3 suite.
@@ -93,12 +97,13 @@ fn fresh_db_with_user() -> (Connection, i64) {
     let conn = Connection::open_in_memory().expect("open in-memory db");
     apply_all(&conn).expect("apply_all should succeed on a fresh db");
 
-    conn.execute(
-        "INSERT INTO Usuarios (nombre) VALUES (?1)",
-        rusqlite::params!["Yo"],
-    )
-    .expect("insert usuario");
-    let usuario_id = conn.last_insert_rowid();
+    let usuario_id: i64 = conn
+        .query_row(
+            "SELECT id FROM Usuarios WHERE nombre = ?1 LIMIT 1",
+            rusqlite::params!["Yo"],
+            |row| row.get(0),
+        )
+        .expect("seeded 'Yo' usuario must exist after apply_all");
     (conn, usuario_id)
 }
 
@@ -118,9 +123,15 @@ fn categoria_id_for(conn: &Connection, tipo_flujo: &str) -> i64 {
 /// Builds a minimal-but-valid `TransaccionInput` for a Gasto row (must
 /// include comportamiento + naturaleza_necesidad per the cross-column
 /// CHECK in `migrations/001_inicial.sql`).
+///
+/// `usuario_id` se pasa como `Some(_)` porque en el test ejercitamos
+/// `cmd_insert_transaccion_impl` directamente (no el wrapper
+/// `cmd_insert_transaccion` que resolvería el perfil activo). Esto
+/// refleja el contrato del command: el `_impl` confía en que el
+/// wrapper ya rellenó el campo.
 fn gasto_input(usuario_id: i64, categoria_id: i64, valor_centavos: i64) -> TransaccionInput {
     TransaccionInput {
-        usuario_id,
+        usuario_id: Some(usuario_id),
         tipo_flujo: "Gasto".to_string(),
         categoria_id,
         concepto: "Internet".to_string(),

@@ -116,6 +116,10 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
 
     expect(invokeMock).toHaveBeenCalledTimes(1)
     expect(invokeMock).toHaveBeenCalledWith('cmd_obtener_categorias')
+    // Strengthened: assert no payload was sent (exact command string + 1 arg).
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_obtener_categorias')
+    expect(callArgs[1]).toBeUndefined()
   })
 
   // REQ-201: the wrapper MUST return what the Rust side resolves with,
@@ -146,8 +150,14 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
   //
   // Given: a valid `TransaccionInputDto` and a mock that resolves to `42`.
   // When:  `insertarTransaccion(input)` is invoked.
-  // Then:  `invoke` is called with `'cmd_insert_transaccion'` + the input
-  //        object as the second argument, and the wrapper resolves to 42.
+  // Then:  `invoke` is called with `'cmd_insert_transaccion'` and the
+  //        payload wrapped under the `input` key (matching the Rust
+  //        command signature `cmd_insert_transaccion(app, input)`), and
+  //        the wrapper resolves to 42.
+  //
+  // IPC contract note: Tauri v2 maps each key of the payload object to
+  // a Rust parameter by name. The Rust command declares `input: TransaccionInput`,
+  // so the payload MUST be `{ input: ... }`, NOT the flattened object.
   it('slice7_insertar_transaccion_invokes_cmd_insert_transaccion_with_input', async () => {
     const input: TransaccionInputDto = {
       tipo_flujo: 'Gasto',
@@ -163,8 +173,48 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     const newId = await insertarTransaccion(input)
 
     expect(invokeMock).toHaveBeenCalledTimes(1)
-    expect(invokeMock).toHaveBeenCalledWith('cmd_insert_transaccion', input)
+    // Strengthened: exact shape match — payload MUST be wrapped under `input`.
+    expect(invokeMock).toHaveBeenCalledWith('cmd_insert_transaccion', { input })
+    // Additional deep-equality assertion so a future regression that
+    // flattens the payload (e.g. spreads the object, drops the wrapper,
+    // or renames the key) is caught even if `toHaveBeenCalledWith` is
+    // loosened.
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_insert_transaccion')
+    expect(callArgs[1]).toEqual({ input })
     expect(newId).toBe(42)
+  })
+
+  // Regression guard for the flattened-payload bug: calling
+  // `insertarTransaccion(payload)` MUST NOT pass `payload` directly as
+  // the second arg. The Rust command expects `{ input: payload }`.
+  //
+  // This test exists explicitly because a previous version of the
+  // wrapper did `invoke('cmd_insert_transaccion', input)` (flattened),
+  // which produced a runtime `missing required key input` error.
+  it('slice7_insertar_transaccion_wraps_payload_in_input_key_not_flattened', async () => {
+    const payload: TransaccionInputDto = {
+      tipo_flujo: 'Gasto',
+      categoria_id: 1,
+      concepto: 'Test',
+      frecuencia: 'Mensual',
+      comportamiento: 'Fijo',
+      naturaleza_necesidad: 'Necesario',
+      valor_centavos: 100_000,
+    }
+    invokeMock.mockResolvedValueOnce(42)
+
+    await insertarTransaccion(payload)
+
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_insert_transaccion')
+    expect(callArgs[1]).toEqual({ input: payload })
+    // Guard against the bug: payload MUST NOT be passed flattened.
+    expect(callArgs[1]).not.toEqual(payload)
+    // The flattened shape would also leak `tipo_flujo` / `valor_centavos`
+    // as top-level keys — assert those are absent at the top level.
+    expect(callArgs[1]).not.toHaveProperty('tipo_flujo')
+    expect(callArgs[1]).not.toHaveProperty('valor_centavos')
   })
 
   // REQ-202 + REQ-603: `listarTransacciones` MUST call
@@ -225,6 +275,7 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
 
     await expect(insertarTransaccion(input)).rejects.toBe(boom)
     expect(invokeMock).toHaveBeenCalledTimes(1)
-    expect(invokeMock).toHaveBeenCalledWith('cmd_insert_transaccion', input)
+    // Strengthened: same IPC contract — payload wrapped under `input`.
+    expect(invokeMock).toHaveBeenCalledWith('cmd_insert_transaccion', { input })
   })
 })

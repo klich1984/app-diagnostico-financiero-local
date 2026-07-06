@@ -28,9 +28,13 @@ use rusqlite::{params, Connection, Row};
 /// pueda aceptar este struct como argumento IPC desde el frontend
 /// (que lo envía como `{ t: { ... } }`). Sin este derive Tauri no puede
 /// reconstruir el payload en la frontera del comando.
+///
+/// `usuario_id` es `Option<i64>` porque el frontend NO lo manda (lo
+/// resuelve el backend via `resolver_usuario_activo()` antes de
+/// invocar `repo::insert`). El command garantiza que llega con valor.
 #[derive(serde::Deserialize)]
 pub struct TransaccionInput {
-    pub usuario_id: i64,
+    pub usuario_id: Option<i64>,
     pub tipo_flujo: String,
     pub categoria_id: i64,
     pub concepto: String,
@@ -110,7 +114,18 @@ fn row_to_transaccion(row: &Row<'_>) -> rusqlite::Result<Transaccion> {
 /// `comportamiento`/`naturaleza_necesidad`, FK de `usuario_id` o
 /// `categoria_id`, etc.) se propaga como `rusqlite::Error` sin
 /// envolver, para que el caller decida cómo traducirlo.
+///
+/// Devuelve `rusqlite::Error::InvalidParameterName` si
+/// `TransaccionInput.usuario_id` es `None` — el command es responsable
+/// de resolverlo (vía `resolver_usuario_activo`) antes de invocar
+/// `insert`.
 pub fn insert(conn: &Connection, t: &TransaccionInput) -> rusqlite::Result<i64> {
+    let usuario_id = t.usuario_id.ok_or_else(|| {
+        rusqlite::Error::InvalidParameterName(
+            "TransaccionInput.usuario_id is None; the command must set it before calling insert"
+                .into(),
+        )
+    })?;
     conn.execute(
         "INSERT INTO Transacciones (
              usuario_id, tipo_flujo, categoria_id, concepto,
@@ -118,7 +133,7 @@ pub fn insert(conn: &Connection, t: &TransaccionInput) -> rusqlite::Result<i64> 
              valor_centavos
          ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
         params![
-            t.usuario_id,
+            usuario_id,
             t.tipo_flujo,
             t.categoria_id,
             t.concepto,

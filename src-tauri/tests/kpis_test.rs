@@ -127,9 +127,9 @@ use rusqlite::Connection;
 // Helpers
 // ---------------------------------------------------------------------------
 
-/// Opens a fresh in-memory DB, applies the canonical schema, and inserts
-/// a default user (`Yo` con salario_objetivo = $500,000 = 50_000_000
-/// centavos según decisión bloqueada del usuario).
+/// Opens a fresh in-memory DB, applies the canonical schema, and reads
+/// the id of the seeded default user (`Yo` con salario_objetivo =
+/// $500,000 = 50_000_000 centavos — seed en `001_inicial.sql`).
 ///
 /// Returns `(conn, usuario_id)`. Each test is responsible for inserting
 /// its own `Transacciones` and `Simulador` rows.
@@ -137,13 +137,13 @@ fn fresh_db_with_default_user() -> (Connection, i64) {
     let conn = Connection::open_in_memory().expect("open in-memory db");
     apply_all(&conn).expect("apply_all should succeed on a fresh db");
 
-    conn.execute(
-        "INSERT INTO Usuarios (nombre, salario_personal_objetivo_centavos)
-         VALUES (?1, ?2)",
-        rusqlite::params!["Yo", 50_000_000_i64],
-    )
-    .expect("insert default user 'Yo'");
-    let usuario_id = conn.last_insert_rowid();
+    let usuario_id: i64 = conn
+        .query_row(
+            "SELECT id FROM Usuarios WHERE nombre = ?1 LIMIT 1",
+            rusqlite::params!["Yo"],
+            |row| row.get(0),
+        )
+        .expect("seeded 'Yo' usuario must exist after apply_all");
     (conn, usuario_id)
 }
 
@@ -174,7 +174,7 @@ fn insertar_tx(
     insert(
         conn,
         &TransaccionInput {
-            usuario_id,
+            usuario_id: Some(usuario_id),
             tipo_flujo: tipo.to_string(),
             categoria_id,
             concepto: concepto.to_string(),

@@ -25,14 +25,16 @@
 //!
 //! ## Resolver de usuario activo
 //!
-//! Para `cmd_listar_transacciones` (que el frontend llama SIN pasar
-//! `usuario_id`), el backend necesita saber qué perfil está mirando
-//! el usuario. La estrategia mínima viable en este slice (sin estado
-//! global ni selector de perfil todavía) es: tomar el `Usuarios` de
-//! menor `id` — el primero que el seed o el usuario creó. Cuando se
-//! implemente el selector de perfil (Épica 5), este resolver se
-//! reemplaza por `cmd_obtener_usuario_activo` sin tocar la API pública
-//! del comando.
+//! Para `cmd_listar_transacciones` y `cmd_insert_transaccion` (que el
+//! frontend llama SIN pasar `usuario_id`), el backend necesita saber
+//! qué perfil está mirando el usuario. La estrategia mínima viable en
+//! este slice (sin estado global ni selector de perfil todavía) es
+//! resolver por nombre — el seed en `001_inicial.sql` garantiza la
+//! existencia del usuario 'Yo' (`INSERT OR IGNORE`), y este resolver
+//! lo encuentra por `SELECT id FROM Usuarios WHERE nombre = 'Yo'`.
+//! Cuando se implemente el selector de perfil (decision de producto #6,
+//! slices futuros), ambos resolvers se reemplazan por
+//! `cmd_obtener_usuario_activo` sin tocar la API pública del comando.
 
 use crate::db;
 use crate::transacciones::repo::{self, Transaccion, TransaccionInput};
@@ -90,6 +92,10 @@ pub async fn cmd_obtener_categorias(app: tauri::AppHandle) -> Result<Vec<Categor
 /// `frecuencia` no válida, cross-column `tipo_flujo` vs comportamiento
 /// o naturaleza_necesidad, FK inválida) sin envolver, como `String`,
 /// para que el frontend muestre el mensaje al usuario.
+///
+/// NOTA: el `TransaccionInput` llega con `usuario_id` ya resuelto por
+/// el command wrapper (`cmd_insert_transaccion`). Este `_impl` no
+/// resuelve nada — confía en el contrato.
 pub fn cmd_insert_transaccion_impl(
     conn: &Connection,
     t: &TransaccionInput,
@@ -97,11 +103,30 @@ pub fn cmd_insert_transaccion_impl(
     repo::insert(conn, t).map_err(|e| format!("inserting Transaccion: {e}"))
 }
 
+/// Resuelve el `usuario_id` activo para el comando actual.
+///
+/// Slice 7 (MVP local): retorna el id del usuario 'Yo' (creado por el
+/// seed en `001_inicial.sql`). Cuando exista el selector de perfil
+/// (decision de producto #6, slices futuros), este helper leerá la
+/// sesión activa desde el estado de Tauri (vía `tauri::State`) y ya
+/// no abrirá la conexión acá — solo delegará en el `cmd_obtener_usuario_activo`.
+fn resolver_usuario_activo(app: &tauri::AppHandle) -> Result<i64, String> {
+    let conn = db::abrir_conexion(app)?;
+    conn.query_row(
+        "SELECT id FROM Usuarios WHERE nombre = ?1 LIMIT 1",
+        ["Yo"],
+        |row| row.get::<_, i64>(0),
+    )
+    .map_err(|e| format!("resolver_usuario_activo: no user 'Yo' found: {e}"))
+}
+
 #[tauri::command]
 pub async fn cmd_insert_transaccion(
     app: tauri::AppHandle,
-    input: TransaccionInput,
+    mut input: TransaccionInput,
 ) -> Result<i64, String> {
+    let usuario_id = resolver_usuario_activo(&app)?;
+    input.usuario_id = Some(usuario_id);
     let conn = db::abrir_conexion(&app)?;
     cmd_insert_transaccion_impl(&conn, &input)
 }
@@ -118,13 +143,20 @@ pub fn cmd_listar_transacciones_impl(
 
 /// Resuelve el `id` del primer `Usuarios` insertado (menor `id`).
 ///
-/// Estrategia de mínimo costo para slice 7: existe UN perfil semilla
-/// cuando la DB es nueva (no se inserta ninguno automáticamente —
-/// el `INSERT INTO Usuarios` lo hace la capa de UI en algún slice
-/// futuro). Si la tabla está vacía, devolvemos `Err` claro. Cuando
-/// se implemente el selector de perfil (Épica 5), este resolver
-/// se reemplaza sin tocar `cmd_listar_transacciones_impl`.
-fn resolver_usuario_activo(conn: &Connection) -> Result<i64, String> {
+/// Estrategia de mínimo costo para slice 7: la seed migration inserta
+/// UN perfil llamado 'Yo' en `001_inicial.sql`. Tomamos el de menor
+/// `id` por robustez (si en el futuro la seed agrega más perfiles,
+/// este resolver sigue funcionando). Si la tabla está vacía,
+/// devolvemos `Err` claro. Cuando se implemente el selector de
+/// perfil (Épica 5), este resolver se reemplaza sin tocar
+/// `cmd_listar_transacciones_impl`.
+///
+/// NOTA: este resolver vive sólo para `cmd_listar_transacciones`
+/// (lee de la DB). El resolver que usa `cmd_insert_transaccion` es
+/// `resolver_usuario_activo(&AppHandle)` y resuelve por nombre — son
+/// dos helpers con propósitos distintos (este lee de un `&Connection`
+/// ya abierto; el otro abre la conexión vía `AppHandle`).
+fn resolver_usuario_activo_desde_db(conn: &Connection) -> Result<i64, String> {
     conn.query_row(
         "SELECT id FROM Usuarios ORDER BY id ASC LIMIT 1",
         [],
@@ -139,6 +171,6 @@ pub async fn cmd_listar_transacciones(
     app: tauri::AppHandle,
 ) -> Result<Vec<Transaccion>, String> {
     let conn = db::abrir_conexion(&app)?;
-    let usuario_id = resolver_usuario_activo(&conn)?;
+    let usuario_id = resolver_usuario_activo_desde_db(&conn)?;
     cmd_listar_transacciones_impl(&conn, usuario_id)
 }
