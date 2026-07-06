@@ -38,6 +38,12 @@ export interface TransaccionInput {
   concepto: string
   frecuencia: Frecuencia
   valor_centavos: number
+  // Required only for Gasto (cross-column CHECK en SQL). The form is the
+  // single source of truth para estos selects, así que viajamos con el
+  // payload completo a `onSubmit` para que el wrapper IPC los mande a
+  // `cmd_insert_transaccion` sin transformaciones.
+  comportamiento: Comportamiento | null
+  naturaleza_necesidad: NaturalezaNecesidad | null
 }
 
 export interface TransaccionFormProps {
@@ -115,6 +121,8 @@ export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps):
       concepto: conceptoTrimmed,
       frecuencia,
       valor_centavos: valorCentavos,
+      comportamiento: tipoFlujo === 'Gasto' ? comportamiento : null,
+      naturaleza_necesidad: tipoFlujo === 'Gasto' ? naturaleza : null,
     })
   }
 
