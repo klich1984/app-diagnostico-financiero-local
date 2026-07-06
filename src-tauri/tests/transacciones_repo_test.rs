@@ -76,9 +76,13 @@ fn categoria_id_for(conn: &Connection, tipo_flujo: &str) -> i64 {
 /// Helper that builds a `TransaccionInput` for a "Gasto" row with the
 /// minimum surface area required by the schema (comportamiento +
 /// naturaleza_necesidad NOT NULL for Gasto per the cross-column CHECK).
+///
+/// `usuario_id` se pasa como `Some(_)` porque los tests ejercitan
+/// `repo::insert` directamente — el command wrapper
+/// (`cmd_insert_transaccion`) es el responsable de resolverlo.
 fn gasto_input(usuario_id: i64, categoria_id: i64, valor_centavos: i64) -> TransaccionInput {
     TransaccionInput {
-        usuario_id,
+        usuario_id: Some(usuario_id),
         tipo_flujo: "Gasto".to_string(),
         categoria_id,
         concepto: "Internet".to_string(),
@@ -345,7 +349,7 @@ fn req_202_repo_rejects_ingreso_with_naturaleza_necesidad() {
     let categoria_id = categoria_id_for(&conn, "Ingreso");
 
     let bad = TransaccionInput {
-        usuario_id,
+        usuario_id: Some(usuario_id),
         tipo_flujo: "Ingreso".to_string(),
         categoria_id,
         concepto: "Salario mal categorizado".to_string(),

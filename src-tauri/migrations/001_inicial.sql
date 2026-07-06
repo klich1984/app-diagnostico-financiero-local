@@ -163,3 +163,17 @@ INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Entret
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Familia', 'Gasto', 1);
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Impuestos', 'Gasto', 1);
 INSERT INTO Categorias (nombre, tipo_flujo, es_esencial_defecto) VALUES ('Otros gastos', 'Gasto', 0);
+
+-- =============================================================================
+-- 8) Seed: usuario por defecto 'Yo' (Slice 7 — wire de persistencia).
+-- =============================================================================
+-- MVP local: un solo perfil llamado 'Yo' con salario_objetivo=$500,000
+-- ($500,000 = 50,000,000 centavos) para que el KPI engine tenga datos
+-- out-of-the-box. La decision de producto #2 mantiene que el salario
+-- NO se descuenta en el FA2 inicial — solo cuando modo_mejorado_activo=1.
+--
+-- `INSERT OR IGNORE` es idempotente: si 'Yo' ya existe (DBs creadas
+-- antes de este seed), no falla. La unicidad real la enforce el
+-- `idx_usuarios_nombre_unique` declarado arriba (case-insensitive).
+INSERT OR IGNORE INTO Usuarios (nombre, salario_personal_objetivo_centavos)
+VALUES ('Yo', 50000000);

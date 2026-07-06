@@ -3,8 +3,11 @@
 // Esta capa es delgada: su responsabilidad es montar el runtime de Tauri,
 // registrar plugins (SQL) y exponer comandos IPC. La lógica de negocio
 // vive en `src/domain/` (TypeScript) y la persistencia en los módulos
-// Rust de este crate (`path`, `plugin`, `migrations`, `seeds`).
+// Rust de este crate (`db`, `path`, `plugin`, `migrations`, `seeds`, y
+// los repositorios `transacciones/`, `simulador/`).
 
+pub mod commands;
+pub mod db;
 pub mod kpis;
 pub mod migrations;
 pub mod path;
@@ -18,6 +21,11 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_sql::Builder::default().build())
         .setup(|_app| Ok(()))
+        .invoke_handler(tauri::generate_handler![
+            commands::cmd_obtener_categorias,
+            commands::cmd_insert_transaccion,
+            commands::cmd_listar_transacciones,
+        ])
         .run(tauri::generate_context!())
         .expect("error al iniciar MVP Financiero");
 }
