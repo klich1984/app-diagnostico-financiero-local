@@ -25,6 +25,7 @@ pub fn run() {
             commands::cmd_obtener_categorias,
             commands::cmd_insert_transaccion,
             commands::cmd_listar_transacciones,
+            commands::cmd_eliminar_transaccion,
         ])
         .run(tauri::generate_context!())
         .expect("error al iniciar MVP Financiero");
