@@ -51,7 +51,8 @@
 // `globalThis.IS_REACT_ACT_ENVIRONMENT = true`.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, createRoot, type Root } from 'react-dom/client'
+import { act } from 'react-dom/test-utils'
+import { createRoot, type Root } from 'react-dom/client'
 import { SelectorPerfil } from '../SelectorPerfil'
 import type { UsuarioDto } from '../../../data/tauri-commands'
 
