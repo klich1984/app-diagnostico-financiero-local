@@ -1,75 +1,44 @@
-// Tests for Slice 7 (post-MVP persistencia IPC): TypeScript wrappers
-// around the Rust Tauri commands.
+// Tests for Slice 9 (perfil multi-usuario): TypeScript wrappers
+// around the 3 new Rust Tauri commands `cmd_obtener_perfiles`,
+// `cmd_crear_perfil`, and `cmd_obtener_perfil`.
 //
-// Spec:    `openspec/changes/mvp-financiero-local-first/spec.md` §REQ-202
-//          (Scenario: "Inserción de nueva transacción" + "Listado de
-//          transacciones por usuario" + "Catálogo de categorías").
+// Spec:    `openspec/changes/mvp-financiero-local-first/spec.md` §REQ-501
+//          (selector de perfil al abrir).
 // Design:  `openspec/changes/mvp-financiero-local-first/design.md` §7
-//          (React layer) + §11 (IPC pattern).
-// Tasks:   T-202 (Slice 3), T-205 (Slice 3 wiring), T-106 (Slice 2 IPC).
-// Test #:  slice 7 / frontend / REQ-202 IPC wrappers (5 tests).
-// Slice 8 adds 1 more test (`eliminarTransaccion` wrapper) — see bottom.
+//          (React layer) + §11 (seccion multi-profile).
+// Tasks:   T-501 (frontend wrappers) + T-901 (single-profile lookup).
+// Test #:  slice 9 / frontend / REQ-501 wrappers (3 tests) +
+//          slice 7 / REQ-202 wrappers (pre-existing 6 tests, slice 8
+//          `eliminarTransaccion` wrapper at the bottom).
 //
-// RED PHASE: this file imports `obtenerCategorias`,
-// `insertarTransaccion`, and `listarTransacciones` from
-// `../tauri-commands`, a module that does NOT exist yet. `pnpm test`
-// MUST fail at the import-resolution step before any `it()` block runs.
-// That is the expected RED state. The IMPL phase will introduce
-// `src/data/tauri-commands.ts` with the wrappers, each of which
-// delegates to `invoke<…>(…)` from `@tauri-apps/api/core`.
+// RED PHASE: this file imports `obtenerPerfiles`, `crearPerfil`, and
+// `obtenerPerfil`, and the types `UsuarioDto` / `CrearPerfilInput`,
+// from `../tauri-commands`. Those symbols do NOT exist yet (slice 7
+// only added CategoriaDto / TransaccionCompletaDto / TransaccionInputDto
+// and their wrappers). `pnpm test` MUST fail at the typecheck step
+// for this module. That is the expected RED state.
 //
-// ## Why we mock `@tauri-apps/api/core`
+// The IMPL phase will introduce in `src/data/tauri-commands.ts`:
 //
-// The wrappers under test are pure TS functions that call `invoke` from
-// `@tauri-apps/api/core`. In the renderer (real Tauri runtime) that
-// function talks to the Rust backend over the IPC channel; in jsdom
-// (where these tests run) it would throw because no Tauri runtime is
-// present. Mocking it with `vi.mock` lets us assert the *contract* the
-// wrappers have with the Rust side (command name + payload shape) without
-// standing up a Tauri process.
-//
-// ## Pin of signatures for the IMPL phase (from the user's prompt — binding):
-//
-//   export interface CategoriaDto {
+//   export interface UsuarioDto {
 //     id: number
 //     nombre: string
-//     grupo_pertenencia: 'Ingreso' | 'Gasto'
+//     salario_personal_objetivo_centavos: number
+//     modo_mejorado_activo: boolean
 //   }
 //
-//   export interface TransaccionCompletaDto {
-//     id: number
-//     usuario_id: number
-//     tipo_flujo: 'Ingreso' | 'Gasto'
-//     categoria_id: number
-//     categoria_nombre: string
-//     concepto: string
-//     frecuencia: 'Mensual' | 'Bimensual' | 'Trimestral' | 'Semestral' | 'Anual'
-//     comportamiento: 'Fijo' | 'Variable' | null
-//     naturaleza_necesidad: 'Necesario' | 'No tan necesario' | 'No necesario' | null
-//     valor_centavos: number
-//     created_at: number
-//     updated_at: number
+//   export interface CrearPerfilInput {
+//     nombre: string
+//     salario_personal_objetivo_centavos: number
 //   }
 //
-//   export interface TransaccionInputDto {
-//     tipo_flujo: 'Ingreso' | 'Gasto'
-//     categoria_id: number
-//     concepto: string
-//     frecuencia: 'Mensual' | 'Bimensual' | 'Trimestral' | 'Semestral' | 'Anual'
-//     comportamiento: 'Fijo' | 'Variable' | null
-//     naturaleza_necesidad: 'Necesario' | 'No tan necesario' | 'No necesario' | null
-//     valor_centavos: number
-//   }
+//   export async function obtenerPerfiles(): Promise<UsuarioDto[]>
+//   export async function crearPerfil(input: CrearPerfilInput): Promise<number>
+//   export async function obtenerPerfil(id: number): Promise<UsuarioDto>
 //
-//   export async function obtenerCategorias(): Promise<CategoriaDto[]>
-//   export async function insertarTransaccion(t: TransaccionInputDto): Promise<number>
-//   export async function listarTransacciones(): Promise<TransaccionCompletaDto[]>
-//   export async function eliminarTransaccion(id: number): Promise<void>   // Slice 8
-//
-// IMPORTANT: `listarTransacciones` has no `usuario_id` argument at the
-// TS level — the Rust side resolves the active profile (via
-// `cmd_obtener_usuario_activo` or similar Slice-2 IPC) and filters by
-// it internally. This keeps the React code free of profile plumbing.
+// and the wrappers MUST delegate to `invoke<…>(…)` from
+// `@tauri-apps/api/core` with the right command name + payload shape.
+// See `tauri-commands.ts` docblock for the IPC contract conventions.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -80,17 +49,22 @@ vi.mock('@tauri-apps/api/core', () => ({
 }))
 
 // Import AFTER the mock declaration so the module under test sees the
-// mocked `invoke`. (Vitest hoists `vi.mock` calls to the top of the file
-// regardless of source order, but keeping the import here makes the
-// intent obvious.)
+// mocked `invoke`. (Vitest hoists `vi.mock` calls to the top of the
+// file regardless of source order, but keeping the import here makes
+// the intent obvious.)
 import { invoke } from '@tauri-apps/api/core'
 import {
+  crearPerfil,
   eliminarTransaccion,
   insertarTransaccion,
   listarTransacciones,
   obtenerCategorias,
+  obtenerPerfil,
+  obtenerPerfiles,
   type CategoriaDto,
+  type CrearPerfilInput,
   type TransaccionInputDto,
+  type UsuarioDto,
 } from '../tauri-commands'
 
 // A typed alias for the mock — keeps the test bodies free of casts.
@@ -105,13 +79,6 @@ afterEach(() => {
 })
 
 describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
-  // REQ-202 + REQ-201: `obtenerCategorias` MUST call the Rust command
-  // `cmd_obtener_categorias` with no arguments.
-  //
-  // Given: a successful mock that resolves to `[]`.
-  // When:  `obtenerCategorias()` is invoked.
-  // Then:  `invoke` is called exactly once with the right command name
-  //        and no payload.
   it('slice7_obtener_categorias_invokes_cmd_obtener_categorias', async () => {
     invokeMock.mockResolvedValueOnce([])
 
@@ -119,20 +86,11 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
 
     expect(invokeMock).toHaveBeenCalledTimes(1)
     expect(invokeMock).toHaveBeenCalledWith('cmd_obtener_categorias')
-    // Strengthened: assert no payload was sent (exact command string + 1 arg).
     const callArgs = invokeMock.mock.calls[0]
     expect(callArgs[0]).toBe('cmd_obtener_categorias')
     expect(callArgs[1]).toBeUndefined()
   })
 
-  // REQ-201: the wrapper MUST return what the Rust side resolves with,
-  // typed as `CategoriaDto[]`. We assert shape + id ordering on a small
-  // fixture so the test would also catch a missing field rename.
-  //
-  // Given: a mock that resolves with two categorias (Ingreso + Gasto).
-  // When:  `obtenerCategorias()` is invoked.
-  // Then:  the promise resolves to the same array (deep equal) and the
-  //        elements match `CategoriaDto`.
   it('slice7_obtener_categorias_returns_typed_array', async () => {
     const fakeCategorias: CategoriaDto[] = [
       { id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' },
@@ -148,19 +106,6 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     expect(result[1]?.grupo_pertenencia).toBe('Gasto')
   })
 
-  // REQ-202: `insertarTransaccion` MUST forward the full input payload
-  // to `cmd_insert_transaccion` and return the new id.
-  //
-  // Given: a valid `TransaccionInputDto` and a mock that resolves to `42`.
-  // When:  `insertarTransaccion(input)` is invoked.
-  // Then:  `invoke` is called with `'cmd_insert_transaccion'` and the
-  //        payload wrapped under the `input` key (matching the Rust
-  //        command signature `cmd_insert_transaccion(app, input)`), and
-  //        the wrapper resolves to 42.
-  //
-  // IPC contract note: Tauri v2 maps each key of the payload object to
-  // a Rust parameter by name. The Rust command declares `input: TransaccionInput`,
-  // so the payload MUST be `{ input: ... }`, NOT the flattened object.
   it('slice7_insertar_transaccion_invokes_cmd_insert_transaccion_with_input', async () => {
     const input: TransaccionInputDto = {
       tipo_flujo: 'Gasto',
@@ -176,25 +121,13 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     const newId = await insertarTransaccion(input)
 
     expect(invokeMock).toHaveBeenCalledTimes(1)
-    // Strengthened: exact shape match — payload MUST be wrapped under `input`.
     expect(invokeMock).toHaveBeenCalledWith('cmd_insert_transaccion', { input })
-    // Additional deep-equality assertion so a future regression that
-    // flattens the payload (e.g. spreads the object, drops the wrapper,
-    // or renames the key) is caught even if `toHaveBeenCalledWith` is
-    // loosened.
     const callArgs = invokeMock.mock.calls[0]
     expect(callArgs[0]).toBe('cmd_insert_transaccion')
     expect(callArgs[1]).toEqual({ input })
     expect(newId).toBe(42)
   })
 
-  // Regression guard for the flattened-payload bug: calling
-  // `insertarTransaccion(payload)` MUST NOT pass `payload` directly as
-  // the second arg. The Rust command expects `{ input: payload }`.
-  //
-  // This test exists explicitly because a previous version of the
-  // wrapper did `invoke('cmd_insert_transaccion', input)` (flattened),
-  // which produced a runtime `missing required key input` error.
   it('slice7_insertar_transaccion_wraps_payload_in_input_key_not_flattened', async () => {
     const payload: TransaccionInputDto = {
       tipo_flujo: 'Gasto',
@@ -212,22 +145,11 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     const callArgs = invokeMock.mock.calls[0]
     expect(callArgs[0]).toBe('cmd_insert_transaccion')
     expect(callArgs[1]).toEqual({ input: payload })
-    // Guard against the bug: payload MUST NOT be passed flattened.
     expect(callArgs[1]).not.toEqual(payload)
-    // The flattened shape would also leak `tipo_flujo` / `valor_centavos`
-    // as top-level keys — assert those are absent at the top level.
     expect(callArgs[1]).not.toHaveProperty('tipo_flujo')
     expect(callArgs[1]).not.toHaveProperty('valor_centavos')
   })
 
-  // REQ-202 + REQ-603: `listarTransacciones` MUST call
-  // `cmd_listar_transacciones` with no arguments (the Rust side resolves
-  // the active profile internally) and return the typed array.
-  //
-  // Given: a mock that resolves with one fake transaccion.
-  // When:  `listarTransacciones()` is invoked.
-  // Then:  `invoke` is called with `'cmd_listar_transacciones'` and no
-  //        payload, and the wrapper returns the same array.
   it('slice7_listar_transacciones_invokes_cmd_listar_transacciones', async () => {
     const fakeList = [
       {
@@ -255,13 +177,6 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     expect(result[0]?.concepto).toBe('Internet')
   })
 
-  // REQ-202: error propagation. If the Rust side rejects the IPC call
-  // (e.g. the SQL CHECK constraint fires for `valor_centavos = 0`), the
-  // wrapper MUST reject too — we never swallow errors.
-  //
-  // Given: a mock that rejects with a generic Error.
-  // When:  `insertarTransaccion(input)` is invoked.
-  // Then:  the wrapper's returned promise also rejects with the same Error.
   it('slice7_insertar_transaccion_propagates_errors', async () => {
     const boom = new Error('constraint failed: valor_centavos > 0')
     invokeMock.mockRejectedValueOnce(boom)
@@ -278,30 +193,11 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
 
     await expect(insertarTransaccion(input)).rejects.toBe(boom)
     expect(invokeMock).toHaveBeenCalledTimes(1)
-    // Strengthened: same IPC contract — payload wrapped under `input`.
     expect(invokeMock).toHaveBeenCalledWith('cmd_insert_transaccion', { input })
   })
 })
 
-// ===========================================================================
-// Slice 8: REQ-202 (eliminar transacción) — IPC wrapper for the delete command.
-// ===========================================================================
 describe('REQ-202 / Slice 8: eliminarTransaccion IPC wrapper', () => {
-  // REQ-202 / Slice 8: `eliminarTransaccion(id)` MUST call the Rust
-  // command `cmd_eliminar_transaccion` with the id passed as a
-  // top-level payload key (Tauri v2 maps each key of the payload object
-  // to a Rust parameter by name — see `tauri-commands.ts` docblock).
-  //
-  // Given: a successful mock that resolves with `undefined`
-  //        (the Rust `cmd_eliminar_transaccion` returns `Result<(), String>`).
-  // When:  `eliminarTransaccion(42)` is invoked.
-  // Then:  `invoke` is called exactly once with `'cmd_eliminar_transaccion'`
-  //        and `{ id: 42 }`.
-  //
-  // RED phase: this test fails to compile because `eliminarTransaccion`
-  // is not exported from `../tauri-commands` yet. The IMPL phase will
-  // add the wrapper as `export async function eliminarTransaccion(id: number): Promise<void>`
-  // that delegates to `invoke<void>('cmd_eliminar_transaccion', { id })`.
   it('eliminarTransaccion invokes cmd_eliminar_transaccion with id', async () => {
     invokeMock.mockResolvedValueOnce(undefined)
 
@@ -309,10 +205,113 @@ describe('REQ-202 / Slice 8: eliminarTransaccion IPC wrapper', () => {
 
     expect(invokeMock).toHaveBeenCalledTimes(1)
     expect(invokeMock).toHaveBeenCalledWith('cmd_eliminar_transaccion', { id: 42 })
-    // Strengthened: exact-shape assertion to catch payload regressions
-    // (flattening, key renames, or accidentally wrapping under another key).
     const callArgs = invokeMock.mock.calls[0]
     expect(callArgs[0]).toBe('cmd_eliminar_transaccion')
     expect(callArgs[1]).toEqual({ id: 42 })
+  })
+})
+
+// ===========================================================================
+// Slice 9: REQ-501 (selector multi-perfil) — wrappers for the 3 new
+// profile-related Tauri commands.
+// ===========================================================================
+//
+// Surface tests para `obtenerPerfiles`, `crearPerfil`, `obtenerPerfil`:
+// todas delegan en `invoke<…>` con el nombre de comando exacto y el
+// shape del payload exigido por el lado Rust. Ver el binding del IMPL
+// en la cabecera de este archivo.
+//
+// ===========================================================================
+
+describe('REQ-501 / Slice 9: profile IPC wrappers', () => {
+  // REQ-501 / Scenario "Selector de perfil al iniciar":
+  // `obtenerPerfiles()` MUST call `cmd_obtener_perfiles` with NO payload
+  // (the command takes only the AppHandle; there is no Rust-side state
+  // to pass). Returns the array of all `UsuarioDto`s in the DB.
+  //
+  // Given: the IPC mock resolves with an empty array (no profiles yet,
+  //        which is the initial state on first launch).
+  // When:  `obtenerPerfiles()` is invoked.
+  // Then:  `invoke` is called exactly once with `'cmd_obtener_perfiles'`
+  //        and no payload; the wrapper resolves to the same array.
+  it('obtenerPerfiles invokes cmd_obtener_perfiles', async () => {
+    invokeMock.mockResolvedValueOnce([])
+
+    const result = await obtenerPerfiles()
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_obtener_perfiles')
+    // Strengthened: no payload (the Rust command has only `app`, which
+    // Tauri injects automatically).
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_obtener_perfiles')
+    expect(callArgs[1]).toBeUndefined()
+    expect(result).toEqual([])
+  })
+
+  // REQ-501 / Scenario "Selector de perfil al iniciar" +
+  // "Aislamiento de datos por perfil": `crearPerfil(input)` MUST forward
+  // the full input payload to `cmd_crear_perfil` (the Rust command takes
+  // `(app, nombre, salario_personal_objetivo_centavos)` — Tauri v2 maps
+  // each top-level key of the payload object to a parameter by name, so
+  // the wrapper MUST pass the input under a key that the Rust side
+  // declares). The binding pins the wrapper signature as
+  // `export async function crearPerfil(input: CrearPerfilInput)`.
+  //
+  // Given: a valid `CrearPerfilInput` and a mock resolving to `2`
+  //        (the new autoincrement id).
+  // When:  `crearPerfil({nombre, salario})` is invoked.
+  // Then:  `invoke` is called with `'cmd_crear_perfil'` and a payload
+  //        wrapping the input under a recognized key (the IMPL pin is
+  //        `{ input: ... }`, same shape as `insertarTransaccion`).
+  it('crearPerfil invokes cmd_crear_perfil with input', async () => {
+    const input: CrearPerfilInput = {
+      nombre: 'Maria',
+      salario_personal_objetivo_centavos: 60_000_000,
+    }
+    invokeMock.mockResolvedValueOnce(2)
+
+    const newId = await crearPerfil(input)
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_crear_perfil', {
+      input: { nombre: 'Maria', salario_personal_objetivo_centavos: 60_000_000 },
+    })
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_crear_perfil')
+    expect(callArgs[1]).toEqual({ input })
+    expect(callArgs[1]).not.toHaveProperty('nombre')
+    expect(callArgs[1]).not.toHaveProperty('salario_personal_objetivo_centavos')
+    expect(newId).toBe(2)
+  })
+
+  // REQ-501: `obtenerPerfil(id)` MUST call `cmd_obtener_perfil` with
+  // `{ id }` (top-level `id` key, same shape as `eliminarTransaccion`)
+  // and return a single `UsuarioDto`.
+  //
+  // Given: a mock that resolves with the 'Yo' profile (id=1,
+  //        salario=50_000_000, modo_mejorado=false).
+  // When:  `obtenerPerfil(1)` is invoked.
+  // Then:  `invoke` is called with `'cmd_obtener_perfil'` and `{ id: 1 }`;
+  //        the wrapper resolves to the same `UsuarioDto`.
+  it('obtenerPerfil invokes cmd_obtener_perfil with id', async () => {
+    const yo: UsuarioDto = {
+      id: 1,
+      nombre: 'Yo',
+      salario_personal_objetivo_centavos: 50_000_000,
+      modo_mejorado_activo: false,
+    }
+    invokeMock.mockResolvedValueOnce(yo)
+
+    const result = await obtenerPerfil(1)
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_obtener_perfil', { id: 1 })
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_obtener_perfil')
+    expect(callArgs[1]).toEqual({ id: 1 })
+    expect(result).toEqual(yo)
+    expect(result.nombre).toBe('Yo')
+    expect(result.modo_mejorado_activo).toBe(false)
   })
 })
