@@ -57,6 +57,14 @@ function App(): JSX.Element {
   const [transacciones, setTransacciones] = useState<TransaccionCompletaDto[]>([])
   const [cargandoTransacciones, setCargandoTransacciones] = useState(true)
 
+  // Reset del form post-submit: bumpeamos un counter y lo pasamos como
+  // `key` al `TransaccionForm`. React desmonta el instance anterior y
+  // monta uno nuevo con estado inicial — la forma idiomática de resetear
+  // estado interno de un molecule sin agregarle una API de `reset()`.
+  // Sin esto, el form retiene los valores del submit recién hecho y la
+  // siguiente entrada arranca pre-llenada (bug UX).
+  const [formKey, setFormKey] = useState<number>(0)
+
   // Slice 8: refetch helper. Reutilizado en mount + post-insert + post-delete.
   // El flag `cancelado` evita `setState` si el componente se desmonta
   // mientras la promesa está en vuelo (cleanup del `useEffect`).
@@ -133,6 +141,8 @@ function App(): JSX.Element {
       setEstadoSubmit('ok')
       // Slice 8: refrescar la lista para mostrar la fila recién creada.
       await refetchTransacciones()
+      // Reset del form: bump del `key` fuerza remount con estado inicial.
+      setFormKey((k) => k + 1)
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Error persistiendo transacción:', e)
@@ -165,7 +175,7 @@ function App(): JSX.Element {
 
         <div className="rounded-lg bg-white p-6 shadow">
           <h2 className="mb-4 text-xl font-semibold text-slate-800">Nueva transacción</h2>
-          <TransaccionForm categorias={categoriasParaForm} onSubmit={handleSubmit} />
+          <TransaccionForm key={formKey} categorias={categoriasParaForm} onSubmit={handleSubmit} />
         </div>
 
         {/* Status panel: feedback inmediato al usuario sobre el submit. */}
