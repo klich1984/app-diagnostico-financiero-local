@@ -149,3 +149,72 @@ export async function listarTransacciones(): Promise<TransaccionCompletaDto[]> {
 export async function eliminarTransaccion(id: number): Promise<void> {
   await invoke<void>('cmd_eliminar_transaccion', { id })
 }
+
+/**
+ * Fila de `Usuarios` proyectada para la UI del selector de perfil.
+ *
+ * Espejo del `UsuarioDto` en `src-tauri/src/commands.rs`. Los campos
+ * vienen en snake_case vía `serde` por defecto — sin transformaciones
+ * en la frontera IPC.
+ */
+export interface UsuarioDto {
+  id: number
+  nombre: string
+  salario_personal_objetivo_centavos: number
+  modo_mejorado_activo: boolean
+}
+
+/**
+ * Input del comando `cmd_crear_perfil`.
+ *
+ * El frontend lo construye desde el form de "crear perfil nuevo" del
+ * selector. `salario_personal_objetivo_centavos` se persiste como i64
+ * en la DB (ver `001_inicial.sql`).
+ */
+export interface CrearPerfilInput {
+  nombre: string
+  salario_personal_objetivo_centavos: number
+}
+
+/**
+ * Devuelve TODOS los perfiles disponibles en la DB.
+ *
+ * El backend ordena por `id ASC` para mantener un orden estable. La UI
+ * los mapea 1-a-1 a filas clickeables del `SelectorPerfil`.
+ *
+ * Contrato IPC: `invoke('cmd_obtener_perfiles')` sin payload (Tauri
+ * inyecta `AppHandle` automáticamente del lado Rust).
+ */
+export async function obtenerPerfiles(): Promise<UsuarioDto[]> {
+  return invoke<UsuarioDto[]>('cmd_obtener_perfiles')
+}
+
+/**
+ * Crea un perfil nuevo.
+ *
+ * Devuelve el `id` autoincrement asignado por la DB. Si el nombre es
+ * vacío, el backend propaga un error (rejection de la promesa) con
+ * un mensaje legible — la UI debe envolverlo en try/catch y mostrarlo
+ * al usuario.
+ *
+ * Contrato IPC: `invoke('cmd_crear_perfil', { input })` con `input`
+ * envuelto bajo la key `input`, mismo shape que `insertarTransaccion`.
+ */
+export async function crearPerfil(input: CrearPerfilInput): Promise<number> {
+  return invoke<number>('cmd_crear_perfil', { input })
+}
+
+/**
+ * Devuelve UN perfil por id (lookup 1-a-1).
+ *
+ * Útil para rehidratar el perfil activo al iniciar la app si el id en
+ * `localStorage` ya no existe (ej. la DB se regeneró). La UI debe
+ * envolver la llamada en try/catch y, ante `Err`, limpiar el id
+ * persistido y volver a mostrar el selector.
+ *
+ * Contrato IPC: `invoke('cmd_obtener_perfil', { id })` con `id`
+ * top-level, mismo shape que `eliminarTransaccion`.
+ */
+export async function obtenerPerfil(id: number): Promise<UsuarioDto> {
+  return invoke<UsuarioDto>('cmd_obtener_perfil', { id })
+}
