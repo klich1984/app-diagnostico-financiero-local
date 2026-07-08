@@ -12,6 +12,7 @@
 //   * `obtenerCategorias()`     → `cmd_obtener_categorias`
 //   * `insertarTransaccion(input)` → `cmd_insert_transaccion` (payload: { input })
 //   * `listarTransacciones()`   → `cmd_listar_transacciones`  (SIN payload)
+//   * `eliminarTransaccion(id)`   → `cmd_eliminar_transaccion` (payload: { id })
 //
 // NOTA slice 7: `listarTransacciones()` no recibe `usuario_id`. La
 // resolución del perfil activo vive en el backend (CRUD abierto en el
@@ -131,4 +132,20 @@ export async function insertarTransaccion(input: TransaccionInputDto): Promise<n
  */
 export async function listarTransacciones(): Promise<TransaccionCompletaDto[]> {
   return invoke<TransaccionCompletaDto[]>('cmd_listar_transacciones')
+}
+
+/**
+ * Elimina una transacción por id.
+ *
+ * Devuelve `void` en éxito. Si el id no existe, SQLite no hace nada
+ * (no es error — `execute` con 0 filas afectadas es un éxito válido
+ * en `rusqlite`). La UI debe refrescar la lista después de la llamada
+ * para reflejar el cambio.
+ *
+ * La tabla `Simulador` referencia `Transacciones` con
+ * `ON DELETE CASCADE`, así que cualquier propuesta de simulador
+ * asociada se limpia automáticamente.
+ */
+export async function eliminarTransaccion(id: number): Promise<void> {
+  await invoke<void>('cmd_eliminar_transaccion', { id })
 }

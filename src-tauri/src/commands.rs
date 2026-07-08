@@ -174,3 +174,24 @@ pub async fn cmd_listar_transacciones(
     let usuario_id = resolver_usuario_activo_desde_db(&conn)?;
     cmd_listar_transacciones_impl(&conn, usuario_id)
 }
+
+/// Elimina una transacción por id (hard delete).
+///
+/// Si el id no existe, SQLite no falla — `execute` devuelve 0 filas
+/// afectadas pero NO es un error. Esto es coherente con la semántica
+/// de `repo::delete` y `rusqlite::Connection::execute`. La UI debe
+/// refrescar la lista después de la llamada para reflejar el cambio.
+///
+/// La tabla `Simulador` referencia `Transacciones` con
+/// `ON DELETE CASCADE`, así que cualquier propuesta de simulador
+/// asociada se limpia automáticamente (ver `repo::delete`).
+pub fn cmd_eliminar_transaccion_impl(conn: &Connection, id: i64) -> Result<(), String> {
+    repo::delete(conn, id).map_err(|e| format!("eliminando Transaccion: {e}"))
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_eliminar_transaccion_impl`.
+#[tauri::command]
+pub async fn cmd_eliminar_transaccion(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_eliminar_transaccion_impl(&conn, id)
+}

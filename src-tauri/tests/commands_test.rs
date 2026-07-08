@@ -70,8 +70,8 @@
 //! `migrations/001_inicial.sql` already provides 4 INGRESO + 10 GASTO.
 
 use app_diagnostico_financiero_local_lib::commands::{
-    cmd_insert_transaccion_impl, cmd_listar_transacciones_impl,
-    cmd_obtener_categorias_impl, CategoriaDto,
+    cmd_eliminar_transaccion_impl, cmd_insert_transaccion_impl,
+    cmd_listar_transacciones_impl, cmd_obtener_categorias_impl, CategoriaDto,
 };
 use app_diagnostico_financiero_local_lib::migrations::apply_all;
 use app_diagnostico_financiero_local_lib::transacciones::repo::{
@@ -345,4 +345,63 @@ fn slice7_cmd_listar_transacciones_returns_only_user_rows() {
             "REQ-603: rows from other profiles must NEVER leak into the result"
         );
     }
+}
+
+/// REQ-202 (Scenario: "Eliminar transacción") + REQ-602: a new command
+/// `cmd_eliminar_transaccion_impl` MUST remove the row by id, and a
+/// follow-up list MUST reflect the deletion (the table no longer
+/// contains the row).
+///
+/// Given: a fresh DB with the seeded 'Yo' user + a Gasto categoria, and
+///        one valid TransaccionInput inserted via `cmd_insert_transaccion_impl`.
+/// When:  `cmd_eliminar_transaccion_impl(&conn, id)` is called with the
+///        returned id.
+/// Then:  a subsequent `cmd_listar_transacciones_impl(&conn, usuario_id)`
+///        returns 0 rows (the row is gone).
+///
+/// RED phase: this test fails to compile because
+/// `cmd_eliminar_transaccion_impl` does NOT exist in
+/// `crate::commands` yet. The IMPL phase will introduce the helper
+/// with signature `pub fn cmd_eliminar_transaccion_impl(conn: &Connection, id: i64) -> Result<(), String>`
+/// that delegates to `repo::delete`.
+#[test]
+fn req_202_cmd_eliminar_transaccion_removes_row() {
+    let (conn, usuario_id) = fresh_db_with_user();
+    let categoria_id = categoria_id_for(&conn, "Gasto");
+
+    let input = TransaccionInput {
+        usuario_id: Some(usuario_id),
+        tipo_flujo: "Gasto".to_string(),
+        categoria_id,
+        concepto: "Test delete".to_string(),
+        frecuencia: "Mensual".to_string(),
+        comportamiento: Some("Fijo".to_string()),
+        naturaleza_necesidad: Some("Necesario".to_string()),
+        valor_centavos: 100_000,
+    };
+
+    let id = cmd_insert_transaccion_impl(&conn, &input).expect("insert should succeed");
+
+    // Sanity check: the row exists before the delete.
+    let before = cmd_listar_transacciones_impl(&conn, usuario_id).expect("list before");
+    assert_eq!(
+        before.len(),
+        1,
+        "REQ-202: should have exactly 1 row before delete"
+    );
+    assert_eq!(
+        before[0].id, id,
+        "REQ-202: the listed row must be the one we inserted"
+    );
+
+    // Delete it.
+    cmd_eliminar_transaccion_impl(&conn, id).expect("delete should succeed");
+
+    // Post-condition: the row is gone — the list is empty.
+    let after = cmd_listar_transacciones_impl(&conn, usuario_id).expect("list after");
+    assert_eq!(
+        after.len(),
+        0,
+        "REQ-202: should have 0 rows after delete (hard delete, not soft)"
+    );
 }

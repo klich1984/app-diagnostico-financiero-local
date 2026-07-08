@@ -8,6 +8,7 @@
 //          (React layer) + §11 (IPC pattern).
 // Tasks:   T-202 (Slice 3), T-205 (Slice 3 wiring), T-106 (Slice 2 IPC).
 // Test #:  slice 7 / frontend / REQ-202 IPC wrappers (5 tests).
+// Slice 8 adds 1 more test (`eliminarTransaccion` wrapper) — see bottom.
 //
 // RED PHASE: this file imports `obtenerCategorias`,
 // `insertarTransaccion`, and `listarTransacciones` from
@@ -63,6 +64,7 @@
 //   export async function obtenerCategorias(): Promise<CategoriaDto[]>
 //   export async function insertarTransaccion(t: TransaccionInputDto): Promise<number>
 //   export async function listarTransacciones(): Promise<TransaccionCompletaDto[]>
+//   export async function eliminarTransaccion(id: number): Promise<void>   // Slice 8
 //
 // IMPORTANT: `listarTransacciones` has no `usuario_id` argument at the
 // TS level — the Rust side resolves the active profile (via
@@ -83,6 +85,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 // intent obvious.)
 import { invoke } from '@tauri-apps/api/core'
 import {
+  eliminarTransaccion,
   insertarTransaccion,
   listarTransacciones,
   obtenerCategorias,
@@ -277,5 +280,39 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     expect(invokeMock).toHaveBeenCalledTimes(1)
     // Strengthened: same IPC contract — payload wrapped under `input`.
     expect(invokeMock).toHaveBeenCalledWith('cmd_insert_transaccion', { input })
+  })
+})
+
+// ===========================================================================
+// Slice 8: REQ-202 (eliminar transacción) — IPC wrapper for the delete command.
+// ===========================================================================
+describe('REQ-202 / Slice 8: eliminarTransaccion IPC wrapper', () => {
+  // REQ-202 / Slice 8: `eliminarTransaccion(id)` MUST call the Rust
+  // command `cmd_eliminar_transaccion` with the id passed as a
+  // top-level payload key (Tauri v2 maps each key of the payload object
+  // to a Rust parameter by name — see `tauri-commands.ts` docblock).
+  //
+  // Given: a successful mock that resolves with `undefined`
+  //        (the Rust `cmd_eliminar_transaccion` returns `Result<(), String>`).
+  // When:  `eliminarTransaccion(42)` is invoked.
+  // Then:  `invoke` is called exactly once with `'cmd_eliminar_transaccion'`
+  //        and `{ id: 42 }`.
+  //
+  // RED phase: this test fails to compile because `eliminarTransaccion`
+  // is not exported from `../tauri-commands` yet. The IMPL phase will
+  // add the wrapper as `export async function eliminarTransaccion(id: number): Promise<void>`
+  // that delegates to `invoke<void>('cmd_eliminar_transaccion', { id })`.
+  it('eliminarTransaccion invokes cmd_eliminar_transaccion with id', async () => {
+    invokeMock.mockResolvedValueOnce(undefined)
+
+    await eliminarTransaccion(42)
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_eliminar_transaccion', { id: 42 })
+    // Strengthened: exact-shape assertion to catch payload regressions
+    // (flattening, key renames, or accidentally wrapping under another key).
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_eliminar_transaccion')
+    expect(callArgs[1]).toEqual({ id: 42 })
   })
 })
