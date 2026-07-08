@@ -16,7 +16,7 @@
 // Ver `design.md` §7 (capa React, Atomic Design: este archivo es un
 // molecule) y §1 (regla de centavos).
 
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { parseAmount, toCentavos } from '../../domain/precision/money'
 import type { Frecuencia } from '../../domain/normalizacion'
 
@@ -79,6 +79,19 @@ export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps):
   )
 
   const [categoriaId, setCategoriaId] = useState<number>(() => categoriasFiltradas[0]?.id ?? 0)
+
+  // Sync `categoriaId` when `categoriasFiltradas` changes. The lazy
+  // `useState` initializer above only runs on mount; if categorias arrive
+  // async after mount (the App.tsx `key={formKey}` remount pattern),
+  // `categoriaId` would stay at 0 and the next submit would violate the
+  // `categoria_id` FOREIGN KEY. This effect also handles the case where
+  // the current categoria is no longer in the filtered subset.
+  useEffect(() => {
+    if (categoriasFiltradas.length === 0) return
+    if (categoriaId === 0 || !categoriasFiltradas.some((c) => c.id === categoriaId)) {
+      setCategoriaId(categoriasFiltradas[0].id)
+    }
+  }, [categoriasFiltradas, categoriaId])
 
   // Cuando cambia el tipo de flujo, sincronizamos la categoría para que
   // el select siempre apunte a una categoría válida del subconjunto
