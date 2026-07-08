@@ -194,3 +194,47 @@ describe('REQ-202: TransaccionForm (validación de UI)', () => {
     expect(Number.isInteger(arg!.valor_centavos)).toBe(true)
   })
 })
+
+// Regression: REQ-202 FK violation on the second submit.
+//
+// Bug pattern: App.tsx forces a remount via `key={formKey}`. On remount,
+// `categorias` arrives async via the IPC `obtenerCategorias()` call, so the
+// component first mounts with `categorias=[]`. The lazy `useState`
+// initializer in `TransaccionForm` runs only once with `[]` and stores
+// `categoriaId=0`. Once categorias arrive, `categoriasFiltradas` updates
+// but `categoriaId` stays at 0, so the next submit hits the FK constraint
+// with `categoria_id=0`.
+//
+// Fix: a `useEffect` that syncs `categoriaId` whenever
+// `categoriasFiltradas` changes and the current value is not in the set.
+describe('REQ-202: TransaccionForm (sync de categoriaId tras remount)', () => {
+  it('req_202_form_syncs_categoria_id_when_categorias_arrive_after_mount', () => {
+    // 1. Mount with empty categorias (the App.tsx initial state, before
+    //    `obtenerCategorias()` IPC roundtrip resolves).
+    act(() => {
+      root.render(<TransaccionForm categorias={[]} onSubmit={onSubmit} />)
+    })
+
+    // 2. Categorias arrive async (as App.tsx does after the IPC call).
+    const categorias: TransaccionFormProps['categorias'] = [
+      { id: 1, nombre: 'Salario', tipo_flujo: 'Ingreso' },
+      { id: 5, nombre: 'Hogar', tipo_flujo: 'Gasto' },
+      { id: 6, nombre: 'Transporte', tipo_flujo: 'Gasto' },
+    ]
+    act(() => {
+      root.render(<TransaccionForm categorias={categorias} onSubmit={onSubmit} />)
+    })
+
+    // 3. User fills the form and submits. Default `tipoFlujo` is 'Gasto',
+    //    so the first Gasto (id=5) must be picked — NOT 0.
+    typeConcepto('Test sync')
+    typeValue('1000000')
+    clickSubmit()
+
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+    const arg = onSubmit.mock.calls[0]?.[0] as { categoria_id: number } | undefined
+    expect(arg).toBeDefined()
+    expect(arg!.categoria_id).toBeGreaterThan(0)
+    expect(arg!.categoria_id).toBe(5)
+  })
+})
