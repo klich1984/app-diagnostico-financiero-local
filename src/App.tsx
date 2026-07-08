@@ -17,6 +17,14 @@
 // (wraps `cmd_eliminar_transaccion`). After every successful insert
 // OR delete we refetch the list so the table stays in sync with SQLite.
 //
+// Slice 9 WIRE (REQ-501): selector de perfil al abrir la app. La
+// persistencia del perfil activo es local (WebView `localStorage`),
+// mientras que la resolución del `usuario_id` para `insertarTransaccion`
+// sigue viviendo en el backend (sigue resolviendo por 'Yo' — el selector
+// sólo cambia el chip "Perfil activo:" del header, la lógica de
+// aislamiento por perfil se cablea en un slice futuro). El comando
+// `cmd_obtener_perfiles` ya existe y se invoca al montar.
+//
 // The old `CATEGORIAS_SEED` + plain `console.log` path is gone; the seed
 // file (`src/data/categorias-seed.ts`) is intentionally KEPT as a fallback
 // reference. The user explicitly requested keeping the `console.log` for
@@ -28,12 +36,16 @@ import {
   insertarTransaccion,
   listarTransacciones,
   obtenerCategorias,
+  obtenerPerfiles,
   type CategoriaDto,
   type TransaccionCompletaDto,
   type TransaccionInputDto,
+  type UsuarioDto,
 } from './data/tauri-commands'
+import { obtenerPerfilActivo, guardarPerfilActivo } from './data/perfil-activo'
 import { TransaccionForm, type TransaccionInput } from './components/molecules/TransaccionForm'
 import { ListaTransacciones } from './components/organisms/ListaTransacciones'
+import { SelectorPerfil } from './components/organisms/SelectorPerfil'
 
 function App(): JSX.Element {
   const [categorias, setCategorias] = useState<CategoriaDto[]>([])
@@ -56,6 +68,18 @@ function App(): JSX.Element {
   // Slice 8: estado de la lista de transacciones persistidas.
   const [transacciones, setTransacciones] = useState<TransaccionCompletaDto[]>([])
   const [cargandoTransacciones, setCargandoTransacciones] = useState(true)
+
+  // Slice 9: estado del selector multi-perfil.
+  //   * `perfilActivo` se hidrata desde `localStorage` (sincrónico al
+  //     montar) para decidir si mostramos el selector o el chip del
+  //     header en el primer render.
+  //   * `perfiles` lo carga el `cmd_obtener_perfiles` al montar.
+  //   * `mostrarSelector` permite volver a abrir el selector desde el
+  //     chip "Cambiar perfil".
+  const [perfilActivo, setPerfilActivo] = useState<number | null>(obtenerPerfilActivo())
+  const [perfiles, setPerfiles] = useState<UsuarioDto[]>([])
+  const [cargandoPerfiles, setCargandoPerfiles] = useState(true)
+  const [mostrarSelector, setMostrarSelector] = useState(false)
 
   // Reset del form post-submit: bumpeamos un counter y lo pasamos como
   // `key` al `TransaccionForm`. React desmonta el instance anterior y
@@ -82,6 +106,28 @@ function App(): JSX.Element {
       if (!cancelado.v) {
         setCargandoTransacciones(false)
       }
+    }
+  }
+
+  // Slice 9: carga inicial de perfiles desde la DB (REQ-501).
+  // Se usa para mostrar el nombre del perfil activo en el chip del
+  // header. Si el IPC falla, caemos en el array vacío y el selector
+  // se mostrará igual (aunque sin opciones más allá del "crear
+  // nuevo").
+  const cargarPerfiles = async (): Promise<void> => {
+    setCargandoPerfiles(true)
+    try {
+      const ps = await obtenerPerfiles()
+      // Defensa: si el mock (en tests) o un bug del IPC devuelve algo
+      // no-array, caemos a `[]` para no romper el render del selector
+      // (`perfiles.map(...)`).
+      setPerfiles(Array.isArray(ps) ? ps : [])
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Error cargando perfiles:', e)
+      setPerfiles([])
+    } finally {
+      setCargandoPerfiles(false)
     }
   }
 
@@ -122,6 +168,26 @@ function App(): JSX.Element {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Slice 9: carga inicial de perfiles al montar.
+  useEffect(() => {
+    void cargarPerfiles()
+  }, [])
+
+  // Slice 9: handler de selección de perfil. Persiste el id en
+  // localStorage y oculta el overlay.
+  const handleSeleccionarPerfil = (id: number): void => {
+    guardarPerfilActivo(id)
+    setPerfilActivo(id)
+    setMostrarSelector(false)
+    // eslint-disable-next-line no-console
+    console.log('Perfil seleccionado:', id)
+  }
+
+  // Slice 9: handler "Cambiar perfil" desde el chip del header.
+  const handleCambiarPerfil = (): void => {
+    setMostrarSelector(true)
+  }
 
   // Handler de submit: cruza la frontera del form → IPC → SQLite.
   // Conservamos el `console.log` original (debugging explícito del
@@ -165,6 +231,12 @@ function App(): JSX.Element {
     }
   }
 
+  // Slice 9: nombre del perfil activo para mostrar en el chip del header.
+  const perfilActivoNombre =
+    perfilActivo !== null
+      ? perfiles.find((p) => p.id === perfilActivo)?.nombre ?? `#${perfilActivo}`
+      : null
+
   return (
     <main className="min-h-screen bg-slate-50 p-8">
       <section className="mx-auto max-w-2xl">
@@ -172,6 +244,26 @@ function App(): JSX.Element {
         <p className="mb-8 text-slate-600">
           Aplicación local-first para gestión financiera personal.
         </p>
+
+        {/* Slice 9: chip del perfil activo (visible cuando hay perfil
+            activo y NO se está cambiando). */}
+        {perfilActivo !== null && !mostrarSelector ? (
+          <div
+            data-testid="perfil-activo-chip"
+            className="mb-4 flex items-center justify-between rounded-md border border-slate-200 bg-white p-3"
+          >
+            <span className="text-sm text-slate-600">
+              Perfil activo: <strong>{perfilActivoNombre}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={handleCambiarPerfil}
+              className="text-xs text-slate-700 underline"
+            >
+              Cambiar perfil
+            </button>
+          </div>
+        ) : null}
 
         <div className="rounded-lg bg-white p-6 shadow">
           <h2 className="mb-4 text-xl font-semibold text-slate-800">Nueva transacción</h2>
@@ -206,9 +298,20 @@ function App(): JSX.Element {
         </div>
 
         <p className="mt-4 text-center text-sm text-slate-400">
-          Épica 1 + Slices 2–8 · Wire IPC activo contra SQLite local
+          Épica 1 + Slices 2–9 · Wire IPC activo contra SQLite local
         </p>
       </section>
+
+      {/* Slice 9: selector multi-perfil (REQ-501). Se muestra cuando NO
+          hay perfil activo (primera vez) o cuando el usuario clickea
+          "Cambiar perfil". */}
+      {perfilActivo === null || mostrarSelector ? (
+        <SelectorPerfil
+          perfiles={perfiles}
+          onSeleccionar={handleSeleccionarPerfil}
+          cargando={cargandoPerfiles}
+        />
+      ) : null}
     </main>
   )
 }
