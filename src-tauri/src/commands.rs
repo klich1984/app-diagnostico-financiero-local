@@ -195,3 +195,151 @@ pub async fn cmd_eliminar_transaccion(app: tauri::AppHandle, id: i64) -> Result<
     let conn = db::abrir_conexion(&app)?;
     cmd_eliminar_transaccion_impl(&conn, id)
 }
+
+// ===========================================================================
+// Slice 9: REQ-501 (selector multi-perfil) + REQ-603 (soporte multi-perfil).
+// ===========================================================================
+//
+// Tres comandos nuevos para el ciclo "selector al abrir":
+//
+//   * `cmd_obtener_perfiles` — devuelve TODOS los `Usuarios` (ordenados por
+//     `id` ASC para mantener un orden estable en la UI).
+//   * `cmd_crear_perfil`    — inserta un `Usuarios` nuevo. El CHECK
+//     `length(trim(nombre)) > 0` se valida tanto del lado del `_impl`
+//     (rechazo temprano con mensaje claro) como del lado SQL
+//     (defensa en profundidad).
+//   * `cmd_obtener_perfil`  — lookup 1-a-1 por id, devuelve un `UsuarioDto`.
+//
+// Decisión de producto #6 (multi-perfil con selector al abrir): el selector
+// se muestra al abrir la app. La persistencia del perfil activo se hace
+// del lado frontend (localStorage del WebView); un slice futuro agregará
+// la tabla `Sesion` o equivalente en el backend si la decisión cambia.
+//
+// ===========================================================================
+
+/// DTO que la capa React consume para cada `Usuarios`.
+///
+/// Los campos son espejos 1-a-1 de la tabla (snake_case en el JSON vía
+/// `serde` por defecto) para evitar transformaciones en la frontera IPC.
+#[derive(serde::Serialize, Clone, Debug)]
+pub struct UsuarioDto {
+    pub id: i64,
+    pub nombre: String,
+    pub salario_personal_objetivo_centavos: i64,
+    pub modo_mejorado_activo: bool,
+}
+
+/// Devuelve TODOS los perfiles (`Usuarios`) de la DB.
+///
+/// Orden estable por `id` ASC para que el selector presente siempre el
+/// mismo orden. El frontend mapea a una lista clickeable.
+pub fn cmd_obtener_perfiles_impl(conn: &Connection) -> Result<Vec<UsuarioDto>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, nombre, salario_personal_objetivo_centavos, modo_mejorado_activo \
+             FROM Usuarios ORDER BY id ASC",
+        )
+        .map_err(|e| format!("preparing SELECT Usuarios: {e}"))?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(UsuarioDto {
+                id: row.get(0)?,
+                nombre: row.get(1)?,
+                salario_personal_objetivo_centavos: row.get(2)?,
+                // `modo_mejorado_activo` se almacena como INTEGER 0/1 en SQL;
+                // lo proyectamos a bool explícitamente para evitar surprises
+                // con `serde` (que interpretaría i64 como número).
+                modo_mejorado_activo: row.get::<_, i64>(3)? != 0,
+            })
+        })
+        .map_err(|e| format!("querying Usuarios: {e}"))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("collecting Usuarios rows: {e}"))?;
+
+    Ok(rows)
+}
+
+/// Wrapper IPC: resuelve la conexión vía `db::abrir_conexion` y delega.
+#[tauri::command]
+pub async fn cmd_obtener_perfiles(app: tauri::AppHandle) -> Result<Vec<UsuarioDto>, String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_obtener_perfiles_impl(&conn)
+}
+
+/// Input del comando `cmd_crear_perfil`.
+///
+/// Se modela como struct dedicado (en vez de pasar `(nombre, salario)`
+/// sueltos) para mantener consistencia con `cmd_insert_transaccion` que
+/// ya recibe un `TransaccionInput`. Tauri v2 mapea las keys del payload
+/// JSON a los campos del struct por nombre.
+#[derive(serde::Deserialize)]
+pub struct CrearPerfilInput {
+    pub nombre: String,
+    pub salario_personal_objetivo_centavos: i64,
+}
+
+/// Inserta un `Usuarios` nuevo y devuelve el id asignado.
+///
+/// Rechaza `nombre` vacío / whitespace-only con un mensaje claro (el
+/// CHECK `length(trim(nombre)) > 0` lo haría fallar en SQL, pero
+/// devolvemos un error más legible). El salario se persiste tal cual —
+/// la validación de `salario_personal_objetivo_centavos >= 0` la hace
+/// la tabla via CHECK.
+pub fn cmd_crear_perfil_impl(
+    conn: &Connection,
+    nombre: String,
+    salario_personal_objetivo_centavos: i64,
+) -> Result<i64, String> {
+    let nombre_trimmed = nombre.trim();
+    if nombre_trimmed.is_empty() {
+        return Err("el nombre del perfil es obligatorio".to_string());
+    }
+
+    conn.execute(
+        "INSERT INTO Usuarios (nombre, salario_personal_objetivo_centavos) VALUES (?1, ?2)",
+        rusqlite::params![nombre_trimmed, salario_personal_objetivo_centavos],
+    )
+    .map_err(|e| format!("inserting Usuario: {e}"))?;
+
+    Ok(conn.last_insert_rowid())
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_crear_perfil_impl`.
+#[tauri::command]
+pub async fn cmd_crear_perfil(
+    app: tauri::AppHandle,
+    input: CrearPerfilInput,
+) -> Result<i64, String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_crear_perfil_impl(&conn, input.nombre, input.salario_personal_objetivo_centavos)
+}
+
+/// Devuelve UN perfil por id (lookup 1-a-1).
+///
+/// `query_row` devuelve `Err` si no encuentra fila — eso se propaga como
+/// `String` con un mensaje identificable (útil para que la UI sepa que
+/// el id ya no existe).
+pub fn cmd_obtener_perfil_impl(conn: &Connection, id: i64) -> Result<UsuarioDto, String> {
+    conn.query_row(
+        "SELECT id, nombre, salario_personal_objetivo_centavos, modo_mejorado_activo \
+         FROM Usuarios WHERE id = ?1",
+        [id],
+        |row| {
+            Ok(UsuarioDto {
+                id: row.get(0)?,
+                nombre: row.get(1)?,
+                salario_personal_objetivo_centavos: row.get(2)?,
+                modo_mejorado_activo: row.get::<_, i64>(3)? != 0,
+            })
+        },
+    )
+    .map_err(|e| format!("looking up Usuario id={id}: {e}"))
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_obtener_perfil_impl`.
+#[tauri::command]
+pub async fn cmd_obtener_perfil(app: tauri::AppHandle, id: i64) -> Result<UsuarioDto, String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_obtener_perfil_impl(&conn, id)
+}
