@@ -263,4 +263,85 @@ describe('App: form reset after successful submit', () => {
 
     expect(getConceptoInput().value).toBe('')
   })
+
+  // -------------------------------------------------------------------------
+  // Slice 10 — Tab system (REQ-301, REQ-302)
+  // -------------------------------------------------------------------------
+  //
+  // The App shell exposes two tabs at the top: "Transacciones" (the
+  // current behavior of the page) and "Presupuesto" (the new Matriz
+  // view). No React Router — local state with `useState<Tab>`. Both
+  // tab buttons MUST be present in the DOM after mount so the user can
+  // always navigate between the two views.
+  //
+  // These tests live at the App level (not at the MatrizPresupuesto
+  // organism level) because the tab system is a shell-level concern:
+  // it composes organisms, not the other way around.
+
+  it('slice10_app_renders_tabs_for_transacciones_and_presupuesto', async () => {
+    invokeMock.mockResolvedValueOnce([
+      { id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' },
+    ])
+    invokeMock.mockResolvedValueOnce([]) // initial listarTransacciones
+    invokeMock.mockResolvedValueOnce([]) // obtenerPerfiles (slice 9)
+
+    await act(async () => {
+      root.render(<App />)
+    })
+
+    // Find the two tab buttons by their visible labels. We use a
+    // regex-tolerant match (case-insensitive) so the IMPL can change
+    // capitalization without breaking the test.
+    const tabTransacciones = container.querySelector<HTMLButtonElement>(
+      'button[data-testid="tab-transacciones"]',
+    )
+    const tabPresupuesto = container.querySelector<HTMLButtonElement>(
+      'button[data-testid="tab-presupuesto"]',
+    )
+
+    expect(tabTransacciones).not.toBeNull()
+    expect(tabPresupuesto).not.toBeNull()
+    expect(tabTransacciones?.textContent ?? '').toMatch(/transacciones/i)
+    expect(tabPresupuesto?.textContent ?? '').toMatch(/presupuesto/i)
+  })
+
+  // Clicking the "Presupuesto" tab MUST surface the MatrizPresupuesto
+  // container (`data-testid="matriz-presupuesto"`). This is the
+  // contract that wires the organism into the App shell: the App holds
+  // the tab state and conditionally renders the organism. We don't
+  // assert on specific matrix numbers here — that is the organism's
+  // contract, covered in `MatrizPresupuesto.test.tsx`.
+  it('slice10_app_shows_matriz_container_when_presupuesto_tab_is_active', async () => {
+    invokeMock.mockResolvedValueOnce([
+      { id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' },
+    ])
+    invokeMock.mockResolvedValueOnce([]) // initial listarTransacciones
+    invokeMock.mockResolvedValueOnce([]) // obtenerPerfiles (slice 9)
+
+    await act(async () => {
+      root.render(<App />)
+    })
+
+    // Sanity precondition: in the initial render the Matriz MUST NOT
+    // be present (we land on the Transacciones tab by default).
+    expect(
+      container.querySelector('[data-testid="matriz-presupuesto"]'),
+    ).toBeNull()
+
+    // Click the Presupuesto tab. The IMPL uses a `<button>` so we can
+    // trigger it with a native click event wrapped in `act()`.
+    const tabPresupuesto = container.querySelector<HTMLButtonElement>(
+      'button[data-testid="tab-presupuesto"]',
+    )
+    expect(tabPresupuesto).not.toBeNull()
+
+    await act(async () => {
+      tabPresupuesto?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    // Postcondition: the Matriz container is now in the DOM.
+    expect(
+      container.querySelector('[data-testid="matriz-presupuesto"]'),
+    ).not.toBeNull()
+  })
 })
