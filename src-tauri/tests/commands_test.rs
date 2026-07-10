@@ -57,9 +57,10 @@
 //! below exercises the first one explicitly.
 
 use app_diagnostico_financiero_local_lib::commands::{
-    cmd_crear_perfil_impl, cmd_eliminar_transaccion_impl, cmd_insert_transaccion_impl,
-    cmd_listar_transacciones_impl, cmd_obtener_categorias_impl, cmd_obtener_perfil_impl,
-    cmd_obtener_perfiles_impl, CategoriaDto, UsuarioDto,
+    cmd_crear_perfil_impl, cmd_eliminar_simulacion_impl, cmd_eliminar_transaccion_impl,
+    cmd_insert_transaccion_impl, cmd_listar_simulaciones_impl, cmd_listar_transacciones_impl,
+    cmd_obtener_categorias_impl, cmd_obtener_perfil_impl, cmd_obtener_perfiles_impl,
+    cmd_upsert_simulacion_impl, CategoriaDto, SimulacionCompletaDto, UsuarioDto,
 };
 use app_diagnostico_financiero_local_lib::migrations::apply_all;
 use app_diagnostico_financiero_local_lib::transacciones::repo::{
@@ -421,5 +422,203 @@ fn req_501_cmd_obtener_perfil_returns_by_id() {
     assert_eq!(
         perfil.id, yo_id,
         "REQ-501: cmd_obtener_perfil_impl must echo back the id we asked for"
+    );
+}
+
+// ===========================================================================
+// Slice 11: REQ-602 (simulador commands) + REQ-603 (panel UI support)
+// ===========================================================================
+//
+// Surface tests para los 3 nuevos comandos del Simulador:
+//
+//   * `cmd_listar_simulaciones_impl(&Connection, usuario_id: i64) -> Result<Vec<SimulacionCompletaDto>, String>`
+//   * `cmd_upsert_simulacion_impl(&Connection, transaccion_id: i64,
+//                                 nuevo_valor_centavos: i64, usuario_id: i64)
+//                          -> Result<i64, String>`
+//   * `cmd_eliminar_simulacion_impl(&Connection, transaccion_id: i64) -> Result<(), String>`
+//
+// y el struct:
+//
+//   * `pub struct SimulacionCompletaDto { id, usuario_id, transaccion_id,
+//                                        nuevo_valor_centavos, created_at, updated_at }`
+//
+// Decisión de producto del slice 11 (Simulador UI):
+//   * El backend expone CRUD de propuestas (`Simulador` table, ya en el
+//     schema, tiene `UNIQUE(transaccion_id)` y `CHECK(nuevo_valor_centavos >= 0)`).
+//   * El comando `upsert` es idempotente (INSERT ... ON CONFLICT DO UPDATE).
+//   * El listado filtra estrictamente por `usuario_id` (REQ-603 — aislamiento
+//     por perfil).
+//
+// ===========================================================================
+
+/// REQ-602 + REQ-603 (slice 11 / backend): `cmd_listar_simulaciones_impl`
+/// MUST return an empty Vec on a fresh DB. The `Simulador` table is
+/// empty until the user starts moving sliders in the Panel Simulador;
+/// the list command MUST NOT fabricate rows, MUST NOT return an error.
+///
+/// Given: fresh in-memory DB (no `Simulador` rows).
+/// When:  `cmd_listar_simulaciones_impl(&conn, 1)` is called.
+/// Then:  the call returns `Ok(vec![])` with `len() == 0`.
+#[test]
+fn req_602_cmd_listar_simulaciones_returns_empty_initially() {
+    let (conn, _yo_id) = fresh_db_with_user();
+
+    let sims: Vec<SimulacionCompletaDto> = cmd_listar_simulaciones_impl(&conn, 1)
+        .expect("req_602: cmd_listar_simulaciones_impl must succeed on an empty Simulador table");
+
+    assert_eq!(
+        sims.len(),
+        0,
+        "REQ-602: the freshly-seeded DB has no Simulador rows; the list MUST be empty"
+    );
+}
+
+/// REQ-602 + REQ-603 (slice 11 / backend): `cmd_upsert_simulacion_impl`
+/// MUST insert a new `Simulador` row when there is no existing row for
+/// the given `transaccion_id` (the `UNIQUE(transaccion_id)` constraint
+/// guarantees there's at most one row per transaction).
+///
+/// Given: a freshly-seeded DB + a non-essential `Gasto` transaction
+///        (`naturaleza_necesidad = "No necesario"`).
+/// When:  `cmd_upsert_simulacion_impl(&conn, tx_id, 100_000, 1)` is
+///        called.
+/// Then:  the call returns `Ok(id > 0)` AND the subsequent
+///        `cmd_listar_simulaciones_impl(&conn, 1)` shows exactly one
+///        row with the same `transaccion_id` and the same
+///        `nuevo_valor_centavos`.
+#[test]
+fn req_602_cmd_upsert_simulacion_inserts_new_simulation() {
+    let (conn, yo_id) = fresh_db_with_user();
+    let categoria_id = categoria_id_for(&conn, "Gasto");
+
+    let input = TransaccionInput {
+        usuario_id: Some(yo_id),
+        tipo_flujo: "Gasto".to_string(),
+        categoria_id,
+        concepto: "Test simulador insert".to_string(),
+        frecuencia: "Mensual".to_string(),
+        comportamiento: Some("Variable".to_string()),
+        naturaleza_necesidad: Some("No necesario".to_string()),
+        valor_centavos: 300_000,
+    };
+    let tx_id = insert(&conn, &input).expect("insert tx for the simulation");
+
+    cmd_upsert_simulacion_impl(&conn, tx_id, 100_000, yo_id)
+        .expect("req_602: cmd_upsert_simulacion_impl must succeed for a fresh (tx_id)");
+
+    let sims = cmd_listar_simulaciones_impl(&conn, yo_id)
+        .expect("req_602: cmd_listar_simulaciones_impl must succeed after upsert");
+
+    assert_eq!(
+        sims.len(),
+        1,
+        "REQ-602: after the first upsert there MUST be exactly one Simulador row for this user"
+    );
+    assert_eq!(
+        sims[0].transaccion_id, tx_id,
+        "REQ-602: the listed row MUST belong to the inserted tx_id"
+    );
+    assert_eq!(
+        sims[0].nuevo_valor_centavos, 100_000,
+        "REQ-602: the listed row MUST carry the nuevo_valor_centavos we sent"
+    );
+    assert_eq!(
+        sims[0].usuario_id, yo_id,
+        "REQ-603: the listed row MUST be owned by the resolved usuario_id"
+    );
+}
+
+/// REQ-602 (slice 11 / backend, upsert semantics): calling
+/// `cmd_upsert_simulacion_impl` twice on the SAME `transaccion_id` MUST
+/// update the existing row in place (not duplicate it). The
+/// `UNIQUE(transaccion_id)` constraint guarantees there's at most one
+/// row per transaction; combined with `INSERT ... ON CONFLICT DO
+/// UPDATE`, the second call MUST keep `len == 1` but refresh
+/// `nuevo_valor_centavos`.
+///
+/// Given: a Simulador row already inserted via `cmd_upsert_simulacion_impl`.
+/// When:  the same `cmd_upsert_simulacion_impl` is called again with a
+///        different `nuevo_valor_centavos`.
+/// Then:  the resulting list has exactly one row, and that row carries
+///        the NEW value.
+#[test]
+fn req_602_cmd_upsert_simulacion_updates_existing() {
+    let (conn, yo_id) = fresh_db_with_user();
+    let categoria_id = categoria_id_for(&conn, "Gasto");
+
+    let input = TransaccionInput {
+        usuario_id: Some(yo_id),
+        tipo_flujo: "Gasto".to_string(),
+        categoria_id,
+        concepto: "Test simulador update".to_string(),
+        frecuencia: "Mensual".to_string(),
+        comportamiento: Some("Variable".to_string()),
+        naturaleza_necesidad: Some("No necesario".to_string()),
+        valor_centavos: 300_000,
+    };
+    let tx_id = insert(&conn, &input).expect("insert tx for the simulation");
+
+    // First upsert — inserts.
+    cmd_upsert_simulacion_impl(&conn, tx_id, 100_000, yo_id)
+        .expect("req_602: first upsert must succeed");
+    // Second upsert — updates in place.
+    cmd_upsert_simulacion_impl(&conn, tx_id, 50_000, yo_id)
+        .expect("req_602: second upsert must succeed (idempotent on conflict)");
+
+    let sims = cmd_listar_simulaciones_impl(&conn, yo_id)
+        .expect("req_602: cmd_listar_simulaciones_impl must succeed after double-upsert");
+
+    assert_eq!(
+        sims.len(),
+        1,
+        "REQ-602: a second upsert on the same transaccion_id MUST NOT duplicate the row (UNIQUE constraint)"
+    );
+    assert_eq!(
+        sims[0].transaccion_id, tx_id,
+        "REQ-602: the existing row MUST still belong to the same transaccion_id"
+    );
+    assert_eq!(
+        sims[0].nuevo_valor_centavos, 50_000,
+        "REQ-602: the second upsert MUST have refreshed nuevo_valor_centavos (in-place update)"
+    );
+}
+
+/// REQ-602 (slice 11 / backend, delete semantics):
+/// `cmd_eliminar_simulacion_impl(transaccion_id)` MUST delete the
+/// proposal for that transaction (no-op if absent). After deletion,
+/// the listing MUST no longer contain that row.
+///
+/// Given: an upserted simulation.
+/// When:  `cmd_eliminar_simulacion_impl(&conn, tx_id)` is called.
+/// Then:  the subsequent list is empty (for that `tx_id`).
+/// NOTE: extra coverage beyond the minimum — keeps the test plan
+/// symmetric with `list_by_user` / `delete` patterns from slice 7.
+#[test]
+fn req_602_cmd_eliminar_simulacion_removes_row() {
+    let (conn, yo_id) = fresh_db_with_user();
+    let categoria_id = categoria_id_for(&conn, "Gasto");
+
+    let input = TransaccionInput {
+        usuario_id: Some(yo_id),
+        tipo_flujo: "Gasto".to_string(),
+        categoria_id,
+        concepto: "Test simulador delete".to_string(),
+        frecuencia: "Mensual".to_string(),
+        comportamiento: Some("Variable".to_string()),
+        naturaleza_necesidad: Some("No necesario".to_string()),
+        valor_centavos: 300_000,
+    };
+    let tx_id = insert(&conn, &input).expect("insert tx for the simulation");
+
+    cmd_upsert_simulacion_impl(&conn, tx_id, 100_000, yo_id)
+        .expect("req_602: upsert before delete");
+    cmd_eliminar_simulacion_impl(&conn, tx_id)
+        .expect("req_602: cmd_eliminar_simulacion_impl must succeed");
+
+    let sims = cmd_listar_simulaciones_impl(&conn, yo_id)
+        .expect("req_602: cmd_listar_simulaciones_impl must succeed after delete");
+    assert!(
+        sims.is_empty(),
+        "REQ-602: after cmd_eliminar_simulacion_impl the listing MUST be empty"
     );
 }

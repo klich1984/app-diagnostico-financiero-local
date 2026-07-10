@@ -55,12 +55,15 @@ vi.mock('@tauri-apps/api/core', () => ({
 import { invoke } from '@tauri-apps/api/core'
 import {
   crearPerfil,
+  eliminarSimulacion,
   eliminarTransaccion,
   insertarTransaccion,
   listarTransacciones,
   obtenerCategorias,
   obtenerPerfil,
   obtenerPerfiles,
+  obtenerSimulaciones,
+  upsertSimulacion,
   type CategoriaDto,
   type CrearPerfilInput,
   type TransaccionInputDto,
@@ -313,5 +316,141 @@ describe('REQ-501 / Slice 9: profile IPC wrappers', () => {
     expect(result).toEqual(yo)
     expect(result.nombre).toBe('Yo')
     expect(result.modo_mejorado_activo).toBe(false)
+  })
+})
+
+// ===========================================================================
+// Slice 11: REQ-602 + REQ-603 — wrappers for the 3 new Simulador
+// Tauri commands (`cmd_listar_simulaciones`, `cmd_upsert_simulacion`,
+// `cmd_eliminar_simulacion`).
+// ===========================================================================
+//
+// Surface tests para `obtenerSimulaciones`, `upsertSimulacion` y
+// `eliminarSimulacion`: todas delegan en `invoke<…>` con el nombre de
+// comando exacto y el shape del payload exigido por el lado Rust.
+//
+// DTOs y wrappers que el IMPL debe agregar a `tauri-commands.ts`:
+//
+//   export interface SimulacionCompletaDto {
+//     id: number
+//     usuario_id: number
+//     transaccion_id: number
+//     nuevo_valor_centavos: number
+//     created_at: number
+//     updated_at: number
+//   }
+//
+//   export interface UpsertSimulacionInput {
+//     transaccionId: number
+//     nuevoValorCentavos: number
+//     usuarioId: number
+//   }
+//
+//   export async function obtenerSimulaciones(
+//     usuarioId: number,
+//   ): Promise<SimulacionCompletaDto[]>
+//
+//   export async function upsertSimulacion(
+//     input: UpsertSimulacionInput,
+//   ): Promise<number>
+//
+//   export async function eliminarSimulacion(
+//     transaccionId: number,
+//   ): Promise<void>
+//
+// ===========================================================================
+
+describe('REQ-602 / Slice 11: Simulador IPC wrappers', () => {
+  // REQ-602 (slice 11 / frontend):
+  // `obtenerSimulaciones(usuarioId)` MUST call
+  // `cmd_listar_simulaciones` with the `usuarioId` as a top-level key
+  // (the Rust command takes it as a positional i64), and return the
+  // array of `SimulacionCompletaDto`. Initial state on a fresh DB is
+  // an empty array.
+  //
+  // Given: a mock that resolves with an empty `SimulacionCompletaDto[]`.
+  // When:  `obtenerSimulaciones(1)` is invoked.
+  // Then:  `invoke` is called with `'cmd_listar_simulaciones'` and
+  //        `{ usuarioId: 1 }`.
+  it('obtenerSimulaciones invokes cmd_listar_simulaciones', async () => {
+    invokeMock.mockResolvedValueOnce([])
+
+    const result = await obtenerSimulaciones(1)
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_listar_simulaciones', {
+      usuarioId: 1,
+    })
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_listar_simulaciones')
+    expect(callArgs[1]).toEqual({ usuarioId: 1 })
+    expect(result).toEqual([])
+  })
+
+  // REQ-602 (slice 11 / frontend, upsert): the wrapper MUST forward the
+  // full input under `{ input: ... }` (mirroring `insertarTransaccion`),
+  // so the Rust command can deserialize it with Tauri v2's
+  // `{ input }` payload convention. The mock resolves to `42`
+  // (a placeholder autoincrement id).
+  //
+  // Given: a valid `UpsertSimulacionInput` payload.
+  // When:  `upsertSimulacion({transaccionId, nuevoValorCentavos, usuarioId})`
+  //        is invoked.
+  // Then:  `invoke` is called with `'cmd_upsert_simulacion'` and
+  //        `{ input: { transaccionId, nuevoValorCentavos, usuarioId } }`,
+  //        and the promise resolves to the new id.
+  it('upsertSimulacion invokes cmd_upsert_simulacion with input', async () => {
+    invokeMock.mockResolvedValueOnce(42)
+
+    const newId = await upsertSimulacion({
+      transaccionId: 1,
+      nuevoValorCentavos: 100_000,
+      usuarioId: 1,
+    })
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_upsert_simulacion', {
+      input: {
+        transaccionId: 1,
+        nuevoValorCentavos: 100_000,
+        usuarioId: 1,
+      },
+    })
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_upsert_simulacion')
+    expect(callArgs[1]).toEqual({
+      input: {
+        transaccionId: 1,
+        nuevoValorCentavos: 100_000,
+        usuarioId: 1,
+      },
+    })
+    // Belt-and-braces: ensure the wrapper does NOT flatten the payload
+    // (matches the project's IPC convention pinned by slice 7 + 9).
+    expect(callArgs[1]).not.toHaveProperty('transaccionId')
+    expect(callArgs[1]).not.toHaveProperty('nuevoValorCentavos')
+    expect(newId).toBe(42)
+  })
+
+  // REQ-602 (slice 11 / frontend, delete): `eliminarSimulacion(id)`
+  // MUST call `cmd_eliminar_simulacion` with `{ transaccionId: id }`
+  // (top-level, same shape as `eliminarTransaccion`). Returns `void`.
+  //
+  // Given: a mock that resolves to `undefined`.
+  // When:  `eliminarSimulacion(7)` is invoked.
+  // Then:  `invoke` is called with `'cmd_eliminar_simulacion'` and
+  //        `{ transaccionId: 7 }`.
+  it('eliminarSimulacion invokes cmd_eliminar_simulacion', async () => {
+    invokeMock.mockResolvedValueOnce(undefined)
+
+    await eliminarSimulacion(7)
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_eliminar_simulacion', {
+      transaccionId: 7,
+    })
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_eliminar_simulacion')
+    expect(callArgs[1]).toEqual({ transaccionId: 7 })
   })
 })
