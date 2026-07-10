@@ -30,7 +30,7 @@
 // reference. The user explicitly requested keeping the `console.log` for
 // debugging — there are 4 of them, see below.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   eliminarTransaccion,
   insertarTransaccion,
@@ -46,6 +46,8 @@ import { obtenerPerfilActivo, guardarPerfilActivo } from './data/perfil-activo'
 import { TransaccionForm, type TransaccionInput } from './components/molecules/TransaccionForm'
 import { ListaTransacciones } from './components/organisms/ListaTransacciones'
 import { SelectorPerfil } from './components/organisms/SelectorPerfil'
+import { MatrizPresupuesto } from './components/organisms/MatrizPresupuesto'
+import { calcularMatriz, type CategoriaMin } from './domain/agregaciones/matriz'
 
 function App(): JSX.Element {
   const [categorias, setCategorias] = useState<CategoriaDto[]>([])
@@ -80,6 +82,37 @@ function App(): JSX.Element {
   const [perfiles, setPerfiles] = useState<UsuarioDto[]>([])
   const [cargandoPerfiles, setCargandoPerfiles] = useState(true)
   const [mostrarSelector, setMostrarSelector] = useState(false)
+
+  // Slice 10: tab activa en el shell de la app (REQ-301, REQ-302).
+  //   * 'transacciones' es el default — coincide con el comportamiento
+  //     pre-Slice-10.
+  //   * 'presupuesto' muestra la matriz de presupuesto con los totales
+  //     agregados (REQ-301). Los charts (REQ-302) entran en otro slice.
+  // El estado es local; no se persiste — al reabrir la app volvemos a
+  // 'transacciones' (es el flujo principal del usuario).
+  type TabActiva = 'transacciones' | 'presupuesto'
+  const [tabActiva, setTabActiva] = useState<TabActiva>('transacciones')
+
+  // Slice 10: matriz de presupuesto derivada de las transacciones
+  // cargadas. `useMemo` evita recalcularla en cada render — sólo se
+  // recomputa cuando cambian las transacciones o el catálogo de
+  // categorías. El cálculo vive en `domain/agregaciones/matriz.ts`
+  // (puro, sin React), así que sólo cambiamos la frecuencia de
+  // invocación acá.
+  const matriz = useMemo(
+    () => {
+      // El agregador espera `CategoriaMin` (keys TitleCase para
+      // `grupo_pertenencia`); el DTO del IPC ya viene TitleCase, así
+      // que el casteo es directo.
+      const catsMin: CategoriaMin[] = categorias.map((c) => ({
+        id: c.id,
+        nombre: c.nombre,
+        grupo_pertenencia: c.grupo_pertenencia.toUpperCase() === 'INGRESO' ? 'INGRESO' : 'GASTO',
+      }))
+      return calcularMatriz(transacciones, catsMin)
+    },
+    [transacciones, categorias],
+  )
 
   // Reset del form post-submit: bumpeamos un counter y lo pasamos como
   // `key` al `TransaccionForm`. React desmonta el instance anterior y
@@ -287,18 +320,59 @@ function App(): JSX.Element {
           <p className="mt-2 text-xs text-red-600">Error cargando categorías: {errorCategorias}</p>
         ) : null}
 
-        {/* Slice 8: lista de transacciones persistidas con acción eliminar. */}
+        {/* Slice 10: shell de tabs (REQ-301, REQ-302).
+            Las tabs se renderizan en el shell de la app independientemente
+            de si hay perfil activo o no — el `SelectorPerfil` es un overlay
+            full-screen (`fixed inset-0 z-50`) que cubre visualmente las
+            tabs cuando el usuario aún no eligió perfil. Esto permite que
+            los tests del shell (`App.test.tsx`) puedan queryar las tabs
+            sin tener que simular primero la selección de perfil. */}
         <div className="mt-8 rounded-lg bg-white p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold text-slate-800">Transacciones</h2>
-          <ListaTransacciones
-            transacciones={transacciones}
-            cargando={cargandoTransacciones}
-            onEliminar={handleEliminar}
-          />
+          <nav
+            className="flex gap-1 border-b border-slate-200"
+            aria-label="Secciones principales"
+          >
+            <button
+              type="button"
+              data-testid="tab-transacciones"
+              onClick={() => setTabActiva('transacciones')}
+              className={`px-4 py-2 text-sm font-medium ${
+                tabActiva === 'transacciones'
+                  ? 'border-b-2 border-slate-900 text-slate-900'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Transacciones
+            </button>
+            <button
+              type="button"
+              data-testid="tab-presupuesto"
+              onClick={() => setTabActiva('presupuesto')}
+              className={`px-4 py-2 text-sm font-medium ${
+                tabActiva === 'presupuesto'
+                  ? 'border-b-2 border-slate-900 text-slate-900'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Presupuesto
+            </button>
+          </nav>
+
+          <div className="pt-4">
+            {tabActiva === 'transacciones' ? (
+              <ListaTransacciones
+                transacciones={transacciones}
+                cargando={cargandoTransacciones}
+                onEliminar={handleEliminar}
+              />
+            ) : (
+              <MatrizPresupuesto matriz={matriz} />
+            )}
+          </div>
         </div>
 
         <p className="mt-4 text-center text-sm text-slate-400">
-          Épica 1 + Slices 2–9 · Wire IPC activo contra SQLite local
+          Épica 1 + Slices 2–10 · Wire IPC activo contra SQLite local
         </p>
       </section>
 

@@ -96,5 +96,42 @@ describe('REQ-202: parser y formateador de montos (input de captura)', () => {
       // Larger amounts:
       expect(formatCentavos(1_234_567_890)).toBe('12.345.678,90')
     })
+
+    // Regression: Matriz UI was rendering "61.666,66.66666662693024"
+    // for `formatCentavos(6166666.66)`. Root cause: the implementation
+    // did `centavos % 100` directly on a float, so IEEE 754 garbage
+    // (e.g. `6166666.66 % 100 === 66.66666662693024`) leaked into the
+    // output as 4+ digit fractional sequences. The fix rounds the input
+    // to integer centavos FIRST; this test pins that contract — the
+    // output must match canonical es-ES format with at most two
+    // fractional digits (never a long decimal run).
+    it('req_202_format_centavos_handles_float_with_decimal_garbage', () => {
+      const result = formatCentavos(6166666.66)
+      // Strip the grouping-thousand dots so the regex no longer flags them.
+      const noGrouping = result.replace(/\./g, '')
+      // Only digits and at most two fractional digits after the comma.
+      expect(noGrouping).toMatch(/^-?\d+(,\d{1,2})?$/)
+      // No long decimal run leaked (the original bug showed ".66000000014901").
+      expect(result).not.toMatch(/,\d{3,}/)
+    })
+
+    // The same float garbage pattern, but with a value that rounds
+    // predictably: Math.round(2300000.0) === 2300000, so no decimals.
+    it('req_202_format_centavos_float_2300000_renders_clean', () => {
+      expect(formatCentavos(2300000)).toBe('23.000')
+      expect(formatCentavos(2300000.0)).toBe('23.000')
+    })
+
+    // No regression for the integer-input path: clean integer centavos
+    // must still render exactly as before. 99 centavos → "0,99"
+    // (intPart=0 because 99<100, centsPart=99). 2300000 centavos →
+    // "23.000" (no cents shown). These mirror the es-ES thousand grouping
+    // + "hide decimals when cents==0" contract.
+    it('req_202_format_centavos_integer_input_unchanged', () => {
+      expect(formatCentavos(6166666)).toBe('61.666,66')
+      expect(formatCentavos(6166667)).toBe('61.666,67')
+      expect(formatCentavos(2300000)).toBe('23.000')
+      expect(formatCentavos(99)).toBe('0,99')
+    })
   })
 })

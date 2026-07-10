@@ -184,9 +184,13 @@ export function calcularMatriz(
     if (tx.tipo_flujo === 'Ingreso') {
       const acc = accIngresos.get(tx.categoria_id)
       if (!acc) continue
+      // `comportamiento` puede ser null/undefined para Ingresos (el form
+      // lo manda null, slice 9 contract). Default = 'Variable' (no label
+      // = variable income).
       if (tx.comportamiento === 'Fijo') {
         acc.fijo = acc.fijo.plus(mensual)
-      } else if (tx.comportamiento === 'Variable') {
+      } else {
+        // 'Variable' OR null OR undefined → treat as Variable.
         acc.variable = acc.variable.plus(mensual)
       }
       continue

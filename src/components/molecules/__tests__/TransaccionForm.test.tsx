@@ -195,6 +195,49 @@ describe('REQ-202: TransaccionForm (validación de UI)', () => {
   })
 })
 
+// Regression: REQ-202 Comportamiento selector must be visible for Ingreso.
+//
+// Bug pattern: the form hid BOTH `comportamiento` and `naturaleza_necesidad`
+// whenever `tipoFlujo !== 'Gasto'`. As a result, Ingreso rows were persisted
+// with `comportamiento = NULL`, which the matriz then either dropped or
+// misrendered as 0 in the "Fijo" column. Naturaleza stays Gasto-only
+// (semantically meaningless for Ingreso), but `comportamiento` is a valid
+// column on Ingreso rows and must remain user-editable.
+//
+// Fix: keep `comportamiento` always rendered; only guard `naturaleza` behind
+// the `tipoFlujo === 'Gasto'` branch.
+describe('REQ-202: TransaccionForm (visibilidad del selector de Comportamiento)', () => {
+  it('req_202_form_keeps_comportamiento_visible_for_ingreso', () => {
+    act(() => {
+      root.render(<TransaccionForm categorias={[]} onSubmit={onSubmit} />)
+    })
+
+    // Default `tipoFlujo` is 'Gasto'. Switch to 'Ingreso' to expose the bug.
+    const tipoSelect = container.querySelector<HTMLSelectElement>('[name="tipo_flujo"]')
+    if (!tipoSelect) throw new Error('form is missing the `tipo_flujo` select')
+    act(() => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLSelectElement.prototype,
+        'value',
+      )?.set
+      nativeSetter?.call(tipoSelect, 'Ingreso')
+      tipoSelect.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+
+    // Comportamiento MUST still be visible — the previous build hid it
+    // along with Naturaleza, forcing Ingreso rows to persist `comportamiento = NULL`.
+    const comportamientoSelect = container.querySelector<HTMLSelectElement>(
+      '[name="comportamiento"]',
+    )
+    expect(comportamientoSelect).not.toBeNull()
+    expect(comportamientoSelect!.tagName).toBe('SELECT')
+
+    // Naturaleza stays Gasto-only (semantically meaningless for Ingreso).
+    const naturalezaSelect = container.querySelector('[name="naturaleza_necesidad"]')
+    expect(naturalezaSelect).toBeNull()
+  })
+})
+
 // Regression: REQ-202 FK violation on the second submit.
 //
 // Bug pattern: App.tsx forces a remount via `key={formKey}`. On remount,
