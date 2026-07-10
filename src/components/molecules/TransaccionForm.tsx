@@ -134,7 +134,9 @@ export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps):
       concepto: conceptoTrimmed,
       frecuencia,
       valor_centavos: valorCentavos,
-      comportamiento: tipoFlujo === 'Gasto' ? comportamiento : null,
+      // `comportamiento` is editable for both Ingreso and Gasto; `naturaleza`
+      // is Gasto-only (see the section comment above the renders).
+      comportamiento,
       naturaleza_necesidad: tipoFlujo === 'Gasto' ? naturaleza : null,
     })
   }
@@ -226,28 +228,31 @@ export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps):
         </select>
       </div>
 
-      {/* Comportamiento + Naturaleza: solo para Gasto */}
-      {tipoFlujo === 'Gasto' ? (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label htmlFor="comportamiento" className="block text-sm font-medium text-slate-700">
-              Comportamiento
-            </label>
-            <select
-              id="comportamiento"
-              name="comportamiento"
-              value={comportamiento}
-              onChange={(e) => setComportamiento(e.target.value as Comportamiento)}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
-            >
-              {COMPORTAMIENTOS.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
+      {/* Comportamiento is always editable so Ingreso rows can be classified
+          as Fijo/Variable. Naturaleza stays Gasto-only: it is semantically
+          meaningless for income — the cross-column CHECK in the schema also
+          requires it only on Gasto. */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <label htmlFor="comportamiento" className="block text-sm font-medium text-slate-700">
+            Comportamiento
+          </label>
+          <select
+            id="comportamiento"
+            name="comportamiento"
+            value={comportamiento}
+            onChange={(e) => setComportamiento(e.target.value as Comportamiento)}
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
+          >
+            {COMPORTAMIENTOS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
 
+        {tipoFlujo === 'Gasto' ? (
           <div className="space-y-1">
             <label
               htmlFor="naturaleza_necesidad"
@@ -269,8 +274,8 @@ export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps):
               ))}
             </select>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       {/* Valor (input monetario localized) */}
       <div className="space-y-1">

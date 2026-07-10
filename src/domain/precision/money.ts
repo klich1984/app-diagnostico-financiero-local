@@ -89,9 +89,14 @@ export function toCentavos(amount: number): number {
  */
 export function formatCentavos(centavos: number): string {
   // Trabajamos siempre con enteros hacia abajo: si por algún motivo
-  // llega un flotante, primero lo redondeamos a centavos enteros.
-  const intPart = Math.trunc(centavos / 100)
-  const centsPart = Math.abs(centavos % 100)
+  // llega un flotante, primero lo redondeamos a centavos enteros para
+  // evitar que errores de precisión IEEE 754 (ej. 0.1+0.2=0.30000000000000004)
+  // se filtren al output como "66.66666662693024" en lugar de "66".
+  // Esto protege la frontera DB → UI: aunque un flotante entre al formateador,
+  // el render nunca expone la basura fraccional que `numero % 100` arrastra.
+  const centavosEnteros = Math.round(centavos)
+  const intPart = Math.trunc(centavosEnteros / 100)
+  const centsPart = Math.abs(centavosEnteros % 100)
 
   const intStr = Math.abs(intPart).toLocaleString('es-ES', {
     maximumFractionDigits: 0,
