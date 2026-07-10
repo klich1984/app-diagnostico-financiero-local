@@ -328,6 +328,59 @@ describe('REQ-301: matriz de agregación por categoría y naturaleza', () => {
       expect(matriz.flujoCajaLibre.equals(new Decimal(100_000_000))).toBe(true)
     })
 
+    it('REQ-301: Ingreso with comportamiento undefined is counted as Variable', () => {
+      // Bug: the form sends `comportamiento: null` for Ingreso (the field
+      // only makes sense for Gasto). `calcularMatriz` used to drop those
+      // rows silently, so the Ingreso columns showed 0 in the UI even
+      // though the rows were persisted. Fix: treat null/undefined
+      // comportamiento as Variable.
+      const cats: CategoriaMin[] = [
+        { id: 1, nombre: 'Salario', grupo_pertenencia: 'INGRESO' },
+      ]
+      const txs: Array<TransaccionMin & { id: number }> = [
+        {
+          id: 1,
+          tipo_flujo: 'Ingreso',
+          categoria_id: 1,
+          frecuencia: 'Mensual',
+          // comportamiento intentionally undefined — matches the form
+          // contract for Ingreso rows (slice 9 form omits the field).
+          valor_centavos: 600_000_000,
+        },
+      ]
+
+      const matriz = calcularMatriz(txs, cats)
+
+      expect(matriz.ingresos.length).toBe(1)
+      const salario = matriz.ingresos[0]
+      expect(salario.categoria).toBe('Salario')
+      expect(salario.fijo.toNumber()).toBe(0)
+      expect(salario.variable.toNumber()).toBe(600_000_000)
+      expect(salario.total.toNumber()).toBe(600_000_000)
+    })
+
+    it('REQ-301: Ingreso with comportamiento undefined contributes to totalIngresos', () => {
+      // Companion to the row-bucket test: the totals roll-up must also
+      // pick up the row. If the row is dropped in the loop, `totalIngresos`
+      // ends at 0 even though the bucket exists (it would be all-zero).
+      const cats: CategoriaMin[] = [
+        { id: 1, nombre: 'Salario', grupo_pertenencia: 'INGRESO' },
+      ]
+      const txs: Array<TransaccionMin & { id: number }> = [
+        {
+          id: 1,
+          tipo_flujo: 'Ingreso',
+          categoria_id: 1,
+          frecuencia: 'Mensual',
+          // comportamiento undefined
+          valor_centavos: 600_000_000,
+        },
+      ]
+
+      const matriz = calcularMatriz(txs, cats)
+      expect(matriz.totalIngresos.toNumber()).toBe(600_000_000)
+    })
+
     it('req_301_matriz_anualizacion_es_x12_del_mensual', () => {
       const cats = categoriasFixture()
       const txs: TransaccionMin[] = [
