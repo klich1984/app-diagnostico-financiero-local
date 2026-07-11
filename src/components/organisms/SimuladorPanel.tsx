@@ -12,14 +12,19 @@
 //   3. Por cada gasto filtrado, mostrar:
 //        - el concepto y metadata (categoria + frecuencia + necesidad)
 //        - un `<input>` CONTROLADO con el valor propuesto en PESOS (lo
-//          que el usuario ve y tipea), debounced (300 ms via
-//          `createDebouncedCallback` de `domain/simulador/debounce.ts`)
-//          que manda CENTAVOS al backend.
+//          que el usuario ve y tipea). El string tipeado queda en state
+//          local hasta que el usuario hace click en el botón "Aplicar"
+//          (REQ-402 manual commit — slice 12 reemplaza el antiguo
+//          debounce de 300 ms).
+//        - un botón "Aplicar" (`data-testid="aplicar-{id}"`) que
+//          dispara `onUpsert` con PESOS → CENTAVOS al backend.
 //        - un botón de borrado (×) para limpiar la propuesta y volver
 //          al valor base (`onEliminar(transaccionId)`)
 //   4. Mostrar resultados agregados (ahorro mensual, anual y nuevo FCL)
 //     calculados con `calcularMatrizMejorada` para que el usuario vea
-//     en vivo el impacto de sus cambios.
+//     en vivo el impacto de sus cambios. La matriz mejorada incluye un
+//     "preview" de los valores tipeados pero todavía no aplicados
+//     (merge de `simulaciones` persistidas + `inputValues` locales).
 //
 // ## Slice 11 bugfix: input controlado
 //
@@ -39,10 +44,28 @@
 //      local (cuando el usuario todavía no tocó el campo), nunca en el
 //      render activo.
 //
+// ## Slice 12 evolution: Aplicar button (REQ-402 manual commit)
+//
+// El IMPL de slice 11 disparaba `onUpsert` con un debounce de 300 ms en
+// cada keystroke, lo que producía escrituras sorprendentes a SQLite
+// mientras el usuario editaba. El nuevo contrato es: cada fila tiene un
+// botón explícito "Aplicar", y `onUpsert` SOLO se invoca cuando el
+// usuario hace click ahí. El botón se deshabilita cuando el valor
+// tipeado coincide con el valor persistido (no hay diff para commit),
+// y se habilita en cuanto difiere.
+//
+// El state local `inputValues` (map transaccionId → string crudo) sigue
+// siendo la fuente de verdad del `<input>`. Al hacer click en Aplicar,
+// (a) se invoca `onUpsert` con PESOS→CENTAVOS, y (b) se limpia la entry
+// de `inputValues` para esa fila (el padre re-renderiza con la nueva
+// `simulaciones`, el input cae al formato persistido, y el botón se
+// vuelve a deshabilitar).
+//
 // Contrato de `data-testid` (binding con el test file):
 //   * `simulador-panel`         — root container
 //   * `simulador-input-{id}`    — input por cada gasto simulable
 //   * `simulador-vacio`         — placeholder del empty state
+//   * `aplicar-{id}`            — botón Aplicar por fila (REQ-402)
 //
 // Estilo: tailwind utility classes (mismo set que `MatrizPresupuesto.tsx`
 // y `ListaTransacciones.tsx`). Texto de UI: español neutro, sin voseo.
@@ -51,7 +74,6 @@ import { useMemo, useState } from 'react'
 import { formatCentavos, parsePesosInput } from '../../domain/precision/money'
 import { filtrarGastosNoEsenciales } from '../../domain/simulador/filtro'
 import { calcularMatrizMejorada } from '../../domain/simulador/matriz-mejorada'
-import { createDebouncedCallback } from '../../domain/simulador/debounce'
 import type {
   CategoriaDto,
   SimulacionCompletaDto,
@@ -146,42 +168,6 @@ export function SimuladorPanel({
     [transacciones],
   )
 
-  // Matriz mejorada: misma fórmula que `calcularMatriz`, pero con las
-  // propuestas del Simulador aplicadas en línea. Se recalcula sólo
-  // cuando cambian las transacciones / categorias / simulaciones.
-  const matrizMejorada = useMemo(() => {
-    const catsMin = categorias.map((c) => ({
-      id: c.id,
-      nombre: c.nombre,
-      grupo_pertenencia:
-        c.grupo_pertenencia === 'Ingreso' ? 'INGRESO' : 'GASTO',
-    })) as unknown as Parameters<typeof calcularMatrizMejorada>[1]
-    const simsMin = simulaciones.map((s) => ({
-      transaccion_id: s.transaccion_id,
-      nuevo_valor_centavos: s.nuevo_valor_centavos,
-    })) as unknown as Parameters<typeof calcularMatrizMejorada>[2]
-    return calcularMatrizMejorada(
-      transacciones as unknown as Parameters<typeof calcularMatrizMejorada>[0],
-      catsMin,
-      simsMin,
-    )
-  }, [transacciones, categorias, simulaciones])
-
-  // Debounce de 300 ms para el envío de propuestas a SQLite (REQ-402).
-  // La UI dispara `call(input)` en cada keystroke; el backend sólo se
-  // invoca tras 300 ms de inactividad (la última propuesta gana).
-  const debouncedUpsert = useMemo(
-    () =>
-      createDebouncedCallback<UpsertSimulacionInput>(
-        (input) => {
-          void onUpsert(input)
-        },
-        300,
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onUpsert],
-  )
-
   // State local: el string crudo que el usuario tipeó en cada input,
   // indexado por `transaccion_id`. La clave es la PK de la transacción,
   // NO la posición en la lista, así un reorden del padre no rompe el
@@ -195,23 +181,105 @@ export function SimuladorPanel({
   const valueFor = (id: number, centavos: number): string =>
     inputValues[id] ?? formatCentavosForInput(centavos)
 
+  // Slice 12 (REQ-402): una fila está "dirty" si el usuario tipeó un
+  // valor que parsea a CENTAVOS distintos del valor persistido. El
+  // botón "Aplicar" se habilita solo cuando `isDirty` es true; cuando
+  // es false (input vacío, inválido o coincide con el valor base), el
+  // botón permanece deshabilitado.
+  const isDirty = (id: number, currentCentavos: number): boolean => {
+    const raw = inputValues[id]
+    if (raw === undefined) return false
+    const parsed = parsePesosInput(raw)
+    if (parsed === null) return false
+    return parsed !== currentCentavos
+  }
+
+  // Preview de simulaciones: merge entre las simulaciones PERSISTIDAS
+  // (`simulaciones`, que ya están en SQLite) y los valores tipeados pero
+  // todavía NO aplicados (`inputValues`, locales). Esto permite que la
+  // matriz mejorada y el ahorro mensual reflejen el impacto en vivo de
+  // lo que el usuario está tipeando, sin esperar al click en Aplicar.
+  //
+  // Nota: las entries con `inputValues` cuyo parseo falla (`null`) o
+  // que coinciden con el valor persistido NO sobrescriben la simulación
+  // persistida — solo los diffs reales entran al preview.
+  const previewSimulaciones = useMemo(() => {
+    const merged = new Map<number, SimulacionCompletaDto>()
+    for (const s of simulaciones) {
+      merged.set(s.transaccion_id, s)
+    }
+    for (const [idStr, raw] of Object.entries(inputValues)) {
+      const id = Number(idStr)
+      const persisted = simulaciones.find((s) => s.transaccion_id === id)
+      const baseCentavos = persisted
+        ? persisted.nuevo_valor_centavos
+        : (txById.get(id)?.valor_centavos ?? 0)
+      const parsed = parsePesosInput(raw)
+      if (parsed !== null && parsed !== baseCentavos) {
+        // El placeholder mantiene la forma del DTO; sólo necesitamos
+        // `transaccion_id` + `nuevo_valor_centavos` para alimentar
+        // `calcularMatrizMejorada` (los otros campos se ignoran).
+        merged.set(id, {
+          id: 0,
+          usuario_id: 0,
+          transaccion_id: id,
+          nuevo_valor_centavos: parsed,
+          created_at: 0,
+          updated_at: 0,
+        })
+      }
+    }
+    return Array.from(merged.values())
+  }, [simulaciones, inputValues, txById])
+
+  // Matriz mejorada: misma fórmula que `calcularMatriz`, pero con las
+  // propuestas del Simulador aplicadas en línea (incluyendo el preview
+  // local). Se recalcula sólo cuando cambian las transacciones /
+  // categorias / simulaciones / inputValues.
+  const matrizMejorada = useMemo(() => {
+    const catsMin = categorias.map((c) => ({
+      id: c.id,
+      nombre: c.nombre,
+      grupo_pertenencia:
+        c.grupo_pertenencia === 'Ingreso' ? 'INGRESO' : 'GASTO',
+    })) as unknown as Parameters<typeof calcularMatrizMejorada>[1]
+    const simsMin = previewSimulaciones.map((s) => ({
+      transaccion_id: s.transaccion_id,
+      nuevo_valor_centavos: s.nuevo_valor_centavos,
+    })) as unknown as Parameters<typeof calcularMatrizMejorada>[2]
+    return calcularMatrizMejorada(
+      transacciones as unknown as Parameters<typeof calcularMatrizMejorada>[0],
+      catsMin,
+      simsMin,
+    )
+  }, [transacciones, categorias, previewSimulaciones])
+
   // Ahorro mensual total: lo que el usuario gasta hoy en gastos no
-  // esenciales menos lo que propone gastar en el simulador. El
-  // resultado se anualiza (x12) en el render.
+  // esenciales menos lo que propone gastar en el simulador (incluyendo
+  // el preview local — tipeos todavía no aplicados). El resultado se
+  // anualiza (x12) en el render.
   const ahorroMensual = useMemo(() => {
     let actual = 0
     for (const t of gastosNoEsenciales) {
       actual += t.valor_centavos / factorMensual(t.frecuencia)
     }
-    const txById = new Map(transacciones.map((t) => [t.id, t]))
     let simulado = 0
-    for (const s of simulaciones) {
+    for (const s of previewSimulaciones) {
       const tx = txById.get(s.transaccion_id)
       if (!tx) continue
       simulado += s.nuevo_valor_centavos / factorMensual(tx.frecuencia)
     }
     return actual - simulado
-  }, [gastosNoEsenciales, simulaciones, transacciones])
+  }, [gastosNoEsenciales, previewSimulaciones, txById])
+
+  // Flag global: ¿hay alguna fila con cambios sin aplicar? Lo usamos
+  // para anotar la sección de Resultados con un "(preview)" sutil que
+  // recuerda al usuario que está mirando valores tipeados que todavía
+  // no se persisten.
+  const hasPendingChanges = useMemo(
+    () => Object.keys(inputValues).length > 0,
+    [inputValues],
+  )
 
   if (cargando) {
     return (
@@ -273,33 +341,63 @@ export function SimuladorPanel({
                     // CONTROLADO: el value SIEMPRE refleja el state local
                     // (lo que el usuario tipeó). El `valueFor` cae al
                     // formateo en PESOS solo en la inicialización, así el
-                    // re-render del padre (post-debounce) no pisa lo que
-                    // el usuario está escribiendo.
+                    // re-render del padre no pisa lo que el usuario está
+                    // escribiendo.
+                    //
+                    // Slice 12 (REQ-402): el onChange SOLO actualiza el
+                    // state local — ya NO dispara el debounce. El commit
+                    // a SQLite queda en manos del botón "Aplicar" →
+                    // evitar escrituras sorprendentes mientras el
+                    // usuario edita.
                     value={valueFor(id, currentValue)}
                     onChange={(e) => {
                       const raw = e.target.value
-                      // 1) Actualizar el state local PRIMERO: el input
-                      //    sigue mostrando lo que el usuario tipeó.
                       setInputValues((prev) => ({ ...prev, [id]: raw }))
-                      // 2) Convertir PESOS → CENTAVOS y disparar el
-                      //    debounce. Si el input es inválido, no
-                      //    mandamos nada al backend.
-                      const centavos = parsePesosInput(raw)
-                      if (
-                        centavos !== null &&
-                        dto !== undefined &&
-                        dto.usuario_id !== undefined
-                      ) {
-                        debouncedUpsert.call({
-                          transaccionId: id,
-                          nuevoValorCentavos: centavos,
-                          usuarioId: dto.usuario_id,
-                        })
-                      }
                     }}
                     aria-label={`Nuevo valor propuesto para ${dto?.concepto ?? t.concepto}`}
                     className="w-32 rounded-md border border-slate-300 bg-white px-2 py-1 text-right text-sm font-mono"
                   />
+                  {/*
+                    Botón "Aplicar" (REQ-402 manual commit). El handler
+                    re-lee el string del state local (no del input.value,
+                    que es exactamente lo mismo pero más frágil ante
+                    edge-cases del DOM), lo parsea PESOS→CENTAVOS, y
+                    dispara onUpsert. Tras el commit, limpiamos la entry
+                    de `inputValues` para esa fila: el padre re-renderiza
+                    con la nueva simulación persistida, el input cae al
+                    formato del valor base, y el botón se deshabilita.
+                  */}
+                  <button
+                    type="button"
+                    data-testid={`aplicar-${id}`}
+                    onClick={() => {
+                      const raw = inputValues[id]
+                      if (raw === undefined) return
+                      const centavos = parsePesosInput(raw)
+                      if (
+                        centavos === null ||
+                        dto === undefined ||
+                        dto.usuario_id === undefined
+                      ) {
+                        return
+                      }
+                      void onUpsert({
+                        transaccionId: id,
+                        nuevoValorCentavos: centavos,
+                        usuarioId: dto.usuario_id,
+                      })
+                      setInputValues((prev) => {
+                        const next = { ...prev }
+                        delete next[id]
+                        return next
+                      })
+                    }}
+                    disabled={!isDirty(id, currentValue)}
+                    aria-label={`Aplicar nuevo valor propuesto para ${dto?.concepto ?? t.concepto}`}
+                    className="rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                  >
+                    Aplicar
+                  </button>
                   {sim ? (
                     <button
                       type="button"
@@ -334,6 +432,11 @@ export function SimuladorPanel({
               }`}
             >
               {formatCentavos(ahorroMensual)}
+              {hasPendingChanges ? (
+                <span className="ml-1 text-xs text-slate-400">
+                  (preview)
+                </span>
+              ) : null}
             </dd>
           </div>
           <div>
@@ -344,6 +447,11 @@ export function SimuladorPanel({
               }`}
             >
               {formatCentavos(ahorroMensual * 12)}
+              {hasPendingChanges ? (
+                <span className="ml-1 text-xs text-slate-400">
+                  (preview)
+                </span>
+              ) : null}
             </dd>
           </div>
           <div>
