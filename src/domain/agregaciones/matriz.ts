@@ -57,8 +57,18 @@ export interface TransaccionMin {
   tipo_flujo: 'Ingreso' | 'Gasto'
   categoria_id: number
   frecuencia: Frecuencia
-  comportamiento?: 'Fijo' | 'Variable'
-  naturaleza_necesidad?: 'Necesario' | 'No tan necesario' | 'No necesario'
+  // `| null` agregado en el bugfix del slice 11: el DTO del IPC
+  // (`TransaccionCompletaDto`) emite JSON `null` cuando el SQL
+  // subyacente es NULL, y `TransaccionCompletaDto[]` debe ser
+  // asignable a `TransaccionMin[]` sin casts en `App.tsx::calcularMatriz`.
+  // `undefined` sigue siendo la representación TS idiomática;
+  // el agregador trata ambos como "ausente" (ver las ramas `else`).
+  comportamiento?: 'Fijo' | 'Variable' | null
+  naturaleza_necesidad?:
+    | 'Necesario'
+    | 'No tan necesario'
+    | 'No necesario'
+    | null
   valor_centavos: number
   concepto?: string
   notas?: string | null

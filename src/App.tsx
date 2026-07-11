@@ -32,14 +32,19 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import {
+  eliminarSimulacion,
   eliminarTransaccion,
   insertarTransaccion,
   listarTransacciones,
   obtenerCategorias,
   obtenerPerfiles,
+  obtenerSimulaciones,
+  upsertSimulacion,
   type CategoriaDto,
+  type SimulacionCompletaDto,
   type TransaccionCompletaDto,
   type TransaccionInputDto,
+  type UpsertSimulacionInput,
   type UsuarioDto,
 } from './data/tauri-commands'
 import { obtenerPerfilActivo, guardarPerfilActivo } from './data/perfil-activo'
@@ -47,6 +52,7 @@ import { TransaccionForm, type TransaccionInput } from './components/molecules/T
 import { ListaTransacciones } from './components/organisms/ListaTransacciones'
 import { SelectorPerfil } from './components/organisms/SelectorPerfil'
 import { MatrizPresupuesto } from './components/organisms/MatrizPresupuesto'
+import { SimuladorPanel } from './components/organisms/SimuladorPanel'
 import { calcularMatriz, type CategoriaMin } from './domain/agregaciones/matriz'
 
 function App(): JSX.Element {
@@ -83,15 +89,25 @@ function App(): JSX.Element {
   const [cargandoPerfiles, setCargandoPerfiles] = useState(true)
   const [mostrarSelector, setMostrarSelector] = useState(false)
 
-  // Slice 10: tab activa en el shell de la app (REQ-301, REQ-302).
+  // Slice 10/11: tab activa en el shell de la app (REQ-301, REQ-302,
+  // REQ-602).
   //   * 'transacciones' es el default — coincide con el comportamiento
   //     pre-Slice-10.
   //   * 'presupuesto' muestra la matriz de presupuesto con los totales
   //     agregados (REQ-301). Los charts (REQ-302) entran en otro slice.
+  //   * 'simulador'  (Slice 11 / REQ-602) — tercer tab con el panel
+  //     del Simulador (sliders + matriz mejorada).
   // El estado es local; no se persiste — al reabrir la app volvemos a
   // 'transacciones' (es el flujo principal del usuario).
-  type TabActiva = 'transacciones' | 'presupuesto'
+  type TabActiva = 'transacciones' | 'presupuesto' | 'simulador'
   const [tabActiva, setTabActiva] = useState<TabActiva>('transacciones')
+
+  // Slice 11: estado del panel del Simulador. Se carga cuando cambia
+  // el perfil activo (no al montar — el selector ya filtró por perfil).
+  const [simulaciones, setSimulaciones] = useState<SimulacionCompletaDto[]>(
+    [],
+  )
+  const [cargandoSimulaciones, setCargandoSimulaciones] = useState(true)
 
   // Slice 10: matriz de presupuesto derivada de las transacciones
   // cargadas. `useMemo` evita recalcularla en cada render — sólo se
@@ -138,6 +154,34 @@ function App(): JSX.Element {
     } finally {
       if (!cancelado.v) {
         setCargandoTransacciones(false)
+      }
+    }
+  }
+
+  // Slice 11: refetch helper para las propuestas del Simulador.
+  // Idem `refetchTransacciones`: se reusa post-upsert + post-eliminar.
+  // El guard `perfilActivo === null` evita golpear el backend antes de
+  // que el usuario haya elegido perfil (REQ-501).
+  const refetchSimulaciones = async (
+    cancelado: { v: boolean } = { v: false },
+  ): Promise<void> => {
+    if (perfilActivo === null) {
+      setSimulaciones([])
+      setCargandoSimulaciones(false)
+      return
+    }
+    setCargandoSimulaciones(true)
+    try {
+      const sims = await obtenerSimulaciones(perfilActivo)
+      if (!cancelado.v) {
+        setSimulaciones(sims)
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Error cargando simulaciones:', e)
+    } finally {
+      if (!cancelado.v) {
+        setCargandoSimulaciones(false)
       }
     }
   }
@@ -192,15 +236,19 @@ function App(): JSX.Element {
     }
   }, [])
 
-  // Slice 8: carga inicial de transacciones del perfil activo.
+  // Slice 8 + 11: carga de transacciones del perfil activo. Se
+  // re-dispara cuando cambia `perfilActivo` para que el aislamiento
+  // REQ-501 + REQ-603 se respete tanto para las transacciones como
+  // para las propuestas del Simulador.
   useEffect(() => {
     const cancelado = { v: false }
     refetchTransacciones(cancelado)
+    refetchSimulaciones(cancelado)
     return () => {
       cancelado.v = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [perfilActivo])
 
   // Slice 9: carga inicial de perfiles al montar.
   useEffect(() => {
@@ -261,6 +309,41 @@ function App(): JSX.Element {
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Error eliminando:', e)
+    }
+  }
+
+  // Slice 11: handler de upsert de propuesta del Simulador.
+  // El panel ya hace el debounce de 300 ms — acá sólo recibimos el
+  // último valor propuesto por el usuario. Refetch al final para que
+  // el state local refleje el id autoincrement + updated_at.
+  const handleUpsertSimulacion = async (
+    input: UpsertSimulacionInput,
+  ): Promise<void> => {
+    try {
+      const id = await upsertSimulacion(input)
+      // eslint-disable-next-line no-console
+      console.log('Simulacion upsert:', id)
+      await refetchSimulaciones()
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Error upsert simulacion:', e)
+    }
+  }
+
+  // Slice 11: handler de eliminar propuesta del Simulador. Sin
+  // confirmación nativa porque la acción es reversible (se puede
+  // mover el slider de nuevo) y barata.
+  const handleEliminarSimulacion = async (
+    transaccionId: number,
+  ): Promise<void> => {
+    try {
+      await eliminarSimulacion(transaccionId)
+      // eslint-disable-next-line no-console
+      console.log('Simulacion eliminada:', transaccionId)
+      await refetchSimulaciones()
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Error eliminando simulacion:', e)
     }
   }
 
@@ -356,6 +439,18 @@ function App(): JSX.Element {
             >
               Presupuesto
             </button>
+            <button
+              type="button"
+              data-testid="tab-simulador"
+              onClick={() => setTabActiva('simulador')}
+              className={`px-4 py-2 text-sm font-medium ${
+                tabActiva === 'simulador'
+                  ? 'border-b-2 border-slate-900 text-slate-900'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Simulador
+            </button>
           </nav>
 
           <div className="pt-4">
@@ -365,14 +460,25 @@ function App(): JSX.Element {
                 cargando={cargandoTransacciones}
                 onEliminar={handleEliminar}
               />
-            ) : (
+            ) : null}
+            {tabActiva === 'presupuesto' ? (
               <MatrizPresupuesto matriz={matriz} />
-            )}
+            ) : null}
+            {tabActiva === 'simulador' ? (
+              <SimuladorPanel
+                transacciones={transacciones}
+                categorias={categorias}
+                simulaciones={simulaciones}
+                cargando={cargandoSimulaciones}
+                onUpsert={handleUpsertSimulacion}
+                onEliminar={handleEliminarSimulacion}
+              />
+            ) : null}
           </div>
         </div>
 
         <p className="mt-4 text-center text-sm text-slate-400">
-          Épica 1 + Slices 2–10 · Wire IPC activo contra SQLite local
+          Épica 1 + Slices 2–11 · Wire IPC activo contra SQLite local
         </p>
       </section>
 

@@ -25,7 +25,7 @@
 // in spec.md §REQ-601.
 
 import { describe, it, expect } from 'vitest'
-import { parseAmount, toCentavos, formatCentavos } from '../money'
+import { parseAmount, toCentavos, formatCentavos, parsePesosInput } from '../money'
 
 describe('REQ-202: parser y formateador de montos (input de captura)', () => {
   describe('parseAmount — string con separadores localized', () => {
@@ -132,6 +132,49 @@ describe('REQ-202: parser y formateador de montos (input de captura)', () => {
       expect(formatCentavos(6166667)).toBe('61.666,67')
       expect(formatCentavos(2300000)).toBe('23.000')
       expect(formatCentavos(99)).toBe('0,99')
+    })
+  })
+
+  // ------------------------------------------------------------------------
+  // Slice 11 bugfix: `parsePesosInput` — helper para el Simulador.
+  //
+  // El bug original: el Simulador interpretaba el input del usuario como
+  // CENTAVOS literales, así que tipear "150000" mandaba 150.000 centavos
+  // (= $1.500) al backend en lugar de 15.000.000 centavos (= $150.000).
+  // Peor: el campo re-renderizaba con el valor formateado a pesos después
+  // del debounce, lo que borraba los dígitos que el usuario estaba
+  // tipeando (UX rota). El fix: este helper convierte PESOS → CENTAVOS
+  // (×100, redondeado) ANTES de mandar al backend. La regla de REQ-202
+  // ("multiplicar por 100 antes de persistir") ya existía en
+  // `toCentavos`; `parsePesosInput` la aplica en la frontera del input
+  // del Simulador.
+  // ------------------------------------------------------------------------
+
+  describe('parsePesosInput — PESOS → CENTAVOS (Simulador bugfix)', () => {
+    // Happy path: el usuario tipea PESOS (no centavos), el helper
+    // devuelve CENTAVOS. Cubrimos todos los formatos localized
+    // soportados (sin separador, con miles, con decimal, ambos).
+    it('parsePesosInput converts pesos to centavos with Math.round', () => {
+      // 1 peso = 100 centavos
+      expect(parsePesosInput('1')).toBe(100)
+      expect(parsePesosInput('1.5')).toBe(150)
+      // Sin separadores: "150000" pesos = 15.000.000 centavos.
+      expect(parsePesosInput('150000')).toBe(15_000_000)
+      // Punto como separador de miles: "150.000" = "150000" = 15M centavos.
+      expect(parsePesosInput('150.000')).toBe(15_000_000)
+      // Coma como separador decimal: "150000,50" pesos = 15.000.050 centavos.
+      expect(parsePesosInput('150000,50')).toBe(15_000_050)
+      // Ambos: "150.000,50" = "150000.50" pesos = 15.000.050 centavos.
+      expect(parsePesosInput('150.000,50')).toBe(15_000_050)
+    })
+
+    // Casos de input inválido: el helper DEBE devolver `null` para que
+    // el caller NO dispare el upsert. Esto evita corromper la propuesta
+    // del Simulador con un valor NaN o negativo.
+    it('parsePesosInput returns null for invalid input', () => {
+      expect(parsePesosInput('')).toBeNull()
+      expect(parsePesosInput('abc')).toBeNull()
+      expect(parsePesosInput('-1')).toBeNull()
     })
   })
 })

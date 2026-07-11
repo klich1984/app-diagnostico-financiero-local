@@ -66,6 +66,7 @@ import {
   upsertSimulacion,
   type CategoriaDto,
   type CrearPerfilInput,
+  type TransaccionCompletaDto,
   type TransaccionInputDto,
   type UsuarioDto,
 } from '../tauri-commands'
@@ -452,5 +453,79 @@ describe('REQ-602 / Slice 11: Simulador IPC wrappers', () => {
     const callArgs = invokeMock.mock.calls[0]
     expect(callArgs[0]).toBe('cmd_eliminar_simulacion')
     expect(callArgs[1]).toEqual({ transaccionId: 7 })
+  })
+})
+
+// ===========================================================================
+// Slice 11 bugfix: TransaccionCompletaDto fields accept `undefined` so the
+// DTO is assignable to `TransaccionMin` (which uses `undefined` instead of
+// `null` for `comportamiento` and `naturaleza_necesidad`).
+//
+// Root cause: the Rust side stores SQL `NULL` for the optional columns
+// (cross-column CHECK forces them to NULL for Ingreso), and serde deserializes
+// that as JSON `null`. The original TS DTO declared `comportamiento: 'Fijo' |
+// 'Variable' | null` — strict null — which made it incompatible with
+// `TransaccionMin`'s `'Fijo' | 'Variable' | undefined` and forced the
+// `calcularMatriz` call site to use `as never` casts.
+//
+// The fix widens the DTO to `| null | undefined`. The `undefined` is the
+// strict-TS-friendly "absent" marker that the agregador understands; `null`
+// is the JSON-deserialized marker that the backend actually emits. Both
+// must be assignable so the DTO can flow into the domain modules without
+// lossy casts.
+// ===========================================================================
+
+describe('REQ-602 / Slice 11 bugfix: TransaccionCompletaDto nullability contract', () => {
+  // The whole point of the bugfix: the DTO MUST accept `undefined` for
+  // the optional enum fields so it is structurally assignable to
+  // `TransaccionMin` (which uses `undefined`). If a future refactor
+  // narrows this back to `| null`, this test stops compiling — that's
+  // the regression guard.
+  //
+  // NOTE: we don't import the type dynamically (esbuild + Vitest do not
+  // support `import('...').type`). The top-level import already pulls
+  // the type in via the slice 11 fixture data; we just use the alias
+  // here. The compile-time check is what we care about.
+  it('TransaccionCompletaDto fields accept undefined for backward compat with TransaccionMin', () => {
+    const t: TransaccionCompletaDto = {
+      id: 1,
+      usuario_id: 1,
+      tipo_flujo: 'Gasto',
+      categoria_id: 5,
+      categoria_nombre: 'Hogar',
+      concepto: 'Arriendo',
+      frecuencia: 'Mensual',
+      // accept undefined (not just null) — key for TransaccionMin assignability
+      comportamiento: undefined,
+      naturaleza_necesidad: undefined,
+      valor_centavos: 1_700_000,
+      created_at: 1,
+      updated_at: 1,
+    }
+    // The test is mostly a typecheck — TS compiles if the contract works.
+    expect(t.comportamiento).toBeUndefined()
+    expect(t.naturaleza_necesidad).toBeUndefined()
+  })
+
+  // Belt-and-braces: `null` (the value Rust actually emits) MUST still be
+  // accepted. The DTO stays compatible with the raw JSON payload AND with
+  // the strict-TS domain type.
+  it('TransaccionCompletaDto fields still accept null (JSON null from Rust)', () => {
+    const t: TransaccionCompletaDto = {
+      id: 1,
+      usuario_id: 1,
+      tipo_flujo: 'Ingreso',
+      categoria_id: 1,
+      categoria_nombre: 'Salario',
+      concepto: 'Sueldo',
+      frecuencia: 'Mensual',
+      comportamiento: null,
+      naturaleza_necesidad: null,
+      valor_centavos: 15_000_000,
+      created_at: 1,
+      updated_at: 1,
+    }
+    expect(t.comportamiento).toBeNull()
+    expect(t.naturaleza_necesidad).toBeNull()
   })
 })

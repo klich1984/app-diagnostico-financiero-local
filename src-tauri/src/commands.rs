@@ -37,6 +37,7 @@
 //! `cmd_obtener_usuario_activo` sin tocar la API pública del comando.
 
 use crate::db;
+use crate::simulador::repo::SimulacionInput;
 use crate::transacciones::repo::{self, Transaccion, TransaccionInput};
 use rusqlite::Connection;
 
@@ -342,4 +343,202 @@ pub fn cmd_obtener_perfil_impl(conn: &Connection, id: i64) -> Result<UsuarioDto,
 pub async fn cmd_obtener_perfil(app: tauri::AppHandle, id: i64) -> Result<UsuarioDto, String> {
     let conn = db::abrir_conexion(&app)?;
     cmd_obtener_perfil_impl(&conn, id)
+}
+
+// ===========================================================================
+// Slice 11: REQ-602 (Simulador UI — CRUD de propuestas) + REQ-603
+// (soporte multi-perfil en la tabla `Simulador`).
+// ===========================================================================
+//
+// Tres comandos nuevos:
+//
+//   * `cmd_listar_simulaciones`  — devuelve todas las propuestas del
+//                                 `usuario_id` activo, JOINed con la
+//                                 transacción padre (espejo del
+//                                 repositorio `simulador::repo`).
+//   * `cmd_upsert_simulacion`    — idempotente: INSERT … ON CONFLICT
+//                                 DO UPDATE; valida que la transacción
+//                                 exista y pertenezca al usuario
+//                                 (defense in depth — la FK ya garantiza
+//                                 la primera mitad, pero el `usuario_id`
+//                                 del payload refuerza REQ-603).
+//   * `cmd_eliminar_simulacion`  — borra la propuesta para la
+//                                 `transaccion_id` (no afecta la
+//                                 transacción padre).
+//
+// Y un nuevo DTO público `SimulacionCompletaDto` — espejo 1-a-1 de las
+// columnas de la tabla `Simulador` (snake_case en JSON vía `serde` por
+// defecto, sin transformaciones en la frontera IPC).
+//
+// ===========================================================================
+
+/// DTO que la capa React consume para cada propuesta de Simulador.
+///
+/// Espejo 1-a-1 de la fila SQL `Simulador` (sin JOIN al TS porque la UI
+/// ya resuelve nombre+concepto por su cuenta via el array de
+/// transacciones y categorías). El naming snake_case se preserva en el
+/// JSON que cruza el IPC para que el binding TS pueda consumirlo sin
+/// transformaciones.
+#[derive(serde::Serialize, Clone, Debug)]
+pub struct SimulacionCompletaDto {
+    pub id: i64,
+    pub usuario_id: i64,
+    pub transaccion_id: i64,
+    pub nuevo_valor_centavos: i64,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+/// Devuelve TODAS las propuestas de Simulador para `usuario_id`.
+///
+/// Proyecta cada fila de `simulador::repo::Simulacion` a
+/// `SimulacionCompletaDto`. La consulta SQL del repo proyecta la fila
+/// JOINed pero NO expone `usuario_id` (lo usa sólo internamente via
+/// el `WHERE t.usuario_id = ?1`); acá lo añadimos con un JOIN
+/// explícito para que el DTO lleve el `usuario_id` que la UI necesita
+/// para correlacionar con `TransaccionCompletaDto` y (futuro) dibujar
+/// el chip de perfil activo.
+///
+/// Mantenemos `simulador::repo::list_by_user` como "fuente de verdad"
+/// para el resto de la lógica del repo; este comando es la única
+/// superficie del repo que necesita `usuario_id` proyectado.
+pub fn cmd_listar_simulaciones_impl(
+    conn: &Connection,
+    usuario_id: i64,
+) -> Result<Vec<SimulacionCompletaDto>, String> {
+    let mut stmt = conn
+        .prepare(
+            "SELECT s.id, s.usuario_id, s.transaccion_id,
+                    s.nuevo_valor_centavos, s.created_at, s.updated_at
+             FROM Simulador s
+             WHERE s.usuario_id = ?1
+             ORDER BY s.transaccion_id ASC",
+        )
+        .map_err(|e| format!("preparing SELECT Simulador: {e}"))?;
+
+    let rows = stmt
+        .query_map([usuario_id], |row| {
+            Ok(SimulacionCompletaDto {
+                id: row.get(0)?,
+                usuario_id: row.get(1)?,
+                transaccion_id: row.get(2)?,
+                nuevo_valor_centavos: row.get(3)?,
+                created_at: row.get(4)?,
+                updated_at: row.get(5)?,
+            })
+        })
+        .map_err(|e| format!("querying Simulador: {e}"))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("collecting Simulador rows: {e}"))?;
+
+    Ok(rows)
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_listar_simulaciones_impl`.
+#[tauri::command]
+pub async fn cmd_listar_simulaciones(
+    app: tauri::AppHandle,
+    usuario_id: i64,
+) -> Result<Vec<SimulacionCompletaDto>, String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_listar_simulaciones_impl(&conn, usuario_id)
+}
+
+/// Inserta (o actualiza) la propuesta del Simulador para
+/// `transaccion_id`.
+///
+/// Reglas (test plan §2 + REQ-602 + REQ-603):
+///   * La transacción padre DEBE existir; si no, se rechaza con error
+///     legible (la FK del SQL lo rechazaría, pero devolvemos un mensaje
+///     más claro para la UI).
+///   * La transacción padre DEBE pertenecer al `usuario_id` del payload
+///     (defense in depth — la FK no cubre este chequeo cross-table).
+///   * `nuevo_valor_centavos >= 0` se enforce con el CHECK del SQL;
+///     reventamos con `rusqlite::Error` que se propaga como `Err(_)`.
+///
+/// Firma posicional `(conn, transaccion_id, nuevo_valor_centavos, usuario_id)`
+/// pineada por el test RED (`commands_test.rs` §Slice 11 — el TS wrapper
+/// también la pinea como `input: UpsertSimulacionInput`).
+pub fn cmd_upsert_simulacion_impl(
+    conn: &Connection,
+    transaccion_id: i64,
+    nuevo_valor_centavos: i64,
+    usuario_id: i64,
+) -> Result<i64, String> {
+    // Defensa contra transacciones inexistentes y contra uso cruzado
+    // de `usuario_id` (cross-profile pollution, REQ-603).
+    let tx_user_id: i64 = conn
+        .query_row(
+            "SELECT usuario_id FROM Transacciones WHERE id = ?1",
+            [transaccion_id],
+            |row| row.get(0),
+        )
+        .map_err(|e| {
+            format!(
+                "upsert simulacion: transaccion {transaccion_id} no existe: {e}"
+            )
+        })?;
+
+    if tx_user_id != usuario_id {
+        return Err(format!(
+            "upsert simulacion: transaccion {transaccion_id} pertenece al usuario {tx_user_id}, no al usuario {usuario_id}"
+        ));
+    }
+
+    let simulacion_input = SimulacionInput {
+        transaccion_id,
+        nuevo_valor_centavos,
+    };
+    crate::simulador::repo::upsert(conn, &simulacion_input).map_err(|e| e.to_string())
+}
+
+/// Input del comando `cmd_upsert_simulacion`.
+///
+/// Modelo paralelo a `CrearPerfilInput`/`TransaccionInput`: el wrapper
+/// IPC recibe un único struct que Tauri v2 mapea desde el payload
+/// `{ input: ... }` del `invoke` del frontend. Las keys del payload
+/// deben llamarse `transaccionId`, `nuevoValorCentavos`, `usuarioId`
+/// (camelCase) — se pinean así en el test RED del slice 11. El
+/// `rename_all = "camelCase"` de `serde` mapea camelCase del JSON a
+/// los nombres snake_case de los campos Rust sin duplicación.
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpsertSimulacionInput {
+    pub transaccion_id: i64,
+    pub nuevo_valor_centavos: i64,
+    pub usuario_id: i64,
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_upsert_simulacion_impl`.
+#[tauri::command]
+pub async fn cmd_upsert_simulacion(
+    app: tauri::AppHandle,
+    input: UpsertSimulacionInput,
+) -> Result<i64, String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_upsert_simulacion_impl(&conn, input.transaccion_id, input.nuevo_valor_centavos, input.usuario_id)
+}
+
+/// Elimina la propuesta del Simulador para la transacción dada.
+///
+/// No-op si no existe (la semántica de `repo::delete` usa `execute` que
+/// devuelve 0 filas afectadas sin error — es coherente con el contrato
+/// "idempotente" del CRUD del Simulador). La UI debe refrescar la lista
+/// después de la llamada para reflejar el cambio.
+pub fn cmd_eliminar_simulacion_impl(
+    conn: &Connection,
+    transaccion_id: i64,
+) -> Result<(), String> {
+    crate::simulador::repo::delete(conn, transaccion_id)
+        .map_err(|e| format!("eliminando simulacion: {e}"))
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_eliminar_simulacion_impl`.
+#[tauri::command]
+pub async fn cmd_eliminar_simulacion(
+    app: tauri::AppHandle,
+    transaccion_id: i64,
+) -> Result<(), String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_eliminar_simulacion_impl(&conn, transaccion_id)
 }

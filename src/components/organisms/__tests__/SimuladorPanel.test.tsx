@@ -218,13 +218,21 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
   // upsert with the new value, and the parent uses the callback to
   // hit the IPC.
   //
+  // ## Slice 11 bugfix — input is PESOS, payload is CENTAVOS
+  //
+  // The user types PESOS (so they see and edit "$50.000" as "50000",
+  // NOT as "5000000"). The panel converts PESOS → CENTAVOS (×100) via
+  // `parsePesosInput` before sending to the backend. The IPC contract
+  // (`nuevoValorCentavos` is INTEGER centavos) is unchanged — only the
+  // UI interpretation of the input string was fixed.
+  //
   // Given:  one No-tan-necesario transaction (id=1) + a `vi.fn()`
   //         resolving for `onUpsert`.
-  // When:   the user types `50000` into the input for id=1
+  // When:   the user types `50000` (PESOS) into the input for id=1
   //         (`data-testid="simulador-input-1"`).
   // Then:   after waiting > debounce window, `onUpsert` is called
-  //         with `{ transaccionId: 1, nuevoValorCentavos: 50000,
-  //         usuarioId: 1 }`.
+  //         with `{ transaccionId: 1, nuevoValorCentavos: 5_000_000,
+  //         usuarioId: 1 }` (50.000 pesos = 5.000.000 centavos).
   it('calls onUpsert when an input changes', async () => {
     const onUpsert = vi.fn().mockResolvedValue(undefined)
     render(sampleTransacciones, { onUpsert })
@@ -236,11 +244,16 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
     if (!input) throw new Error('simulador-input-1 not present in the DOM')
 
     // Real DOM input event — `act` ensures React flushes state before
-    // we move on.
+    // we move on. Use the React-aware value setter so the controlled
+    // component sees the change (slice 11 bugfix: the input is now
+    // CONTROLLED, not uncontrolled with `defaultValue`).
     await act(async () => {
-      input.value = '50000'
+      const nativeSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        'value',
+      )?.set
+      nativeSetter?.call(input, '50000')
       input.dispatchEvent(new Event('input', { bubbles: true }))
-      input.dispatchEvent(new Event('change', { bubbles: true }))
     })
 
     // > 300ms (slice 5's `createDebouncedCallback` default delay) to
@@ -251,7 +264,8 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
     expect(onUpsert).toHaveBeenCalled()
     expect(onUpsert).toHaveBeenCalledWith({
       transaccionId: 1,
-      nuevoValorCentavos: 50_000,
+      // 50.000 pesos = 5.000.000 centavos (PESOS → CENTAVOS ×100)
+      nuevoValorCentavos: 5_000_000,
       usuarioId: 1,
     })
   })
