@@ -111,4 +111,85 @@ export function formatCentavos(centavos: number): string {
   return `${intPart < 0 ? '-' : ''}${intStr},${centsStr}`
 }
 
+/**
+ * Convierte un string de pesos (input del usuario en un `<input>`) a
+ * centavos enteros. Acepta los formatos localized de REQ-601 / REQ-202:
+ *
+ *   - `"150000"`     → 15_000_000 centavos (= $150.000,00)
+ *   - `"150.000"`    → 15_000_000 centavos (punto como separador de miles)
+ *   - `"150000,50"`  → 15_000_050 centavos (coma como separador decimal)
+ *   - `"150.000,50"` → 15_000_050 centavos (ambos)
+ *   - `"1.5"`        → 150 centavos (punto como decimal cuando NO hay coma)
+ *   - `"1,5"`        → 150 centavos (coma como decimal)
+ *
+ * Regla de parsing (misma que `parseAmount`): el ÚLTIMO separador entre
+ * `.` y `,` se interpreta como decimal; cualquier otro se interpreta como
+ * miles. Esto resuelve la ambigüedad entre "1.5" (1 peso con 50 centavos)
+ * y "1.500" (mil quinientos pesos) por contexto posicional.
+ *
+ * A diferencia de `parseAmount` (que sólo normaliza a `number`), este
+ * helper aplica la regla dura del proyecto: multiplicar por 100 + redondear
+ * para producir el INTEGER de centavos que la columna `valor_centavos`
+ * exige (REQ-202). El resultado se redondea con `Math.round` (no Decimal)
+ * porque la entrada del usuario es a lo sumo 2 decimales y un
+ * `Number` × 100 + `Math.round` es exacto para esa escala; el uso de
+ * `Decimal` para el formateo de UI ya está cubierto por `formatCentavos`.
+ *
+ * Retorna `null` si el input es inválido (vacío, no-numérico, negativo).
+ * El caller es responsable de no invocar `upsert` con `null`.
+ */
+export function parsePesosInput(raw: string): number | null {
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (trimmed === '') return null
+
+  // Detectar separadores localized. Heurística de convención española
+  // (europea) para distinguir "1.5" (1 peso con 50 centavos) de
+  // "1.500" (mil quinientos pesos):
+  //   * Si hay una coma presente, la coma es el separador decimal y
+  //     los puntos son separadores de miles (regla inequívoca).
+  //   * Si NO hay coma, un punto con EXACTAMENTE 1 o 2 dígitos después
+  //     se interpreta como decimal; un punto con 3+ dígitos (o varios
+  //     puntos) se interpreta como separador de miles.
+  //   * Sin separadores: el string es la representación entera.
+  const hasComma = trimmed.includes(',')
+  const dots = (trimmed.match(/\./g) ?? []).length
+
+  let normalized: string
+  if (hasComma) {
+    // coma = decimal, puntos = miles.
+    normalized = trimmed.replace(/\./g, '').replace(',', '.')
+  } else if (dots === 0) {
+    // Sin separadores: el string es la representación entera.
+    normalized = trimmed
+  } else {
+    // Sólo puntos, sin coma. Decidir según los dígitos después del
+    // ÚLTIMO punto: 1-2 → decimal, 3+ → miles.
+    const lastDotIdx = trimmed.lastIndexOf('.')
+    const digitsAfterLastDot = trimmed.length - lastDotIdx - 1
+    if (digitsAfterLastDot === 1 || digitsAfterLastDot === 2) {
+      // Decimal: un solo punto con 1-2 dígitos → interpretarlo como
+      // punto decimal. Quitamos los separadores de miles (si hay otros
+      // puntos antes) y dejamos ESTE punto como decimal.
+      const beforeLastDot = trimmed.slice(0, lastDotIdx).replace(/\./g, '')
+      const afterLastDot = trimmed.slice(lastDotIdx + 1)
+      normalized = `${beforeLastDot}.${afterLastDot}`
+    } else {
+      // Miles: 3+ dígitos después del último punto, o múltiples
+      // puntos → todos son separadores de miles.
+      normalized = trimmed.replace(/\./g, '')
+    }
+  }
+
+  const parsed = Number(normalized)
+  if (!Number.isFinite(parsed) || parsed < 0) return null
+  // pesos → centavos (×100, redondeado al entero más cercano).
+  // Usamos `Decimal` para la multiplicación porque `Number` × 100 puede
+  // introducir drift de IEEE 754 (ej. `1.005 * 100 === 100.49999...`).
+  // El módulo `Decimal` ya está configurado a 32 dígitos +
+  // ROUND_HALF_EVEN en el header del archivo; para redondear a 0
+  // decimales (centavos enteros) usamos `.toDecimalPlaces(0)`.
+  return new Decimal(parsed).mul(100).toDecimalPlaces(0).toNumber()
+}
+
 export { Decimal }

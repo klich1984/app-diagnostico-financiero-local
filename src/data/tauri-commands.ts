@@ -80,8 +80,14 @@ export interface TransaccionCompletaDto {
   categoria_nombre: string
   concepto: string
   frecuencia: 'Mensual' | 'Bimensual' | 'Trimestral' | 'Semestral' | 'Anual'
-  comportamiento: 'Fijo' | 'Variable' | null
-  naturaleza_necesidad: 'Necesario' | 'No tan necesario' | 'No necesario' | null
+  // `| null | undefined` accepts BOTH the JSON `null` that the Rust
+  // backend emits (rusqlite projects SQL `NULL` as serde null) AND the
+  // strict-TS `undefined` that `TransaccionMin` (in
+  // `domain/agregaciones/matriz.ts`) uses for "absent". This makes the
+  // DTO assignable to `TransaccionMin` without `as never` casts at the
+  // call sites (REQ-602 / slice 11 bugfix).
+  comportamiento: 'Fijo' | 'Variable' | null | undefined
+  naturaleza_necesidad: 'Necesario' | 'No tan necesario' | 'No necesario' | null | undefined
   valor_centavos: number
   created_at: number
   updated_at: number
@@ -217,4 +223,102 @@ export async function crearPerfil(input: CrearPerfilInput): Promise<number> {
  */
 export async function obtenerPerfil(id: number): Promise<UsuarioDto> {
   return invoke<UsuarioDto>('cmd_obtener_perfil', { id })
+}
+
+// ===========================================================================
+// Slice 11: REQ-602 + REQ-603 — wrappers para los 3 comandos del Simulador.
+//
+// Las keys de payload usan camelCase para `input` (renombrado por serde
+// en el struct `UpsertSimulacionInput` del lado Rust) y top-level snake_case
+// o camelCase según el binding del comando:
+//   * `obtenerSimulaciones(usuarioId)`   → `{ usuarioId }`   (camelCase)
+//   * `upsertSimulacion(input)`          → `{ input: {...} }` (camelCase)
+//   * `eliminarSimulacion(transaccionId)` → `{ transaccionId }` (camelCase)
+//
+// Los nombres en camelCase se pinean en el test de slice 11
+// (`tauri-commands.test.ts` §REQ-602) — coinciden con la convención
+// que `serde` aplica automáticamente al deserializar `UpsertSimulacionInput`.
+// ===========================================================================
+
+/**
+ * Fila de la tabla `Simulador` (propuesta) proyectada al frontend.
+ *
+ * Incluye `usuario_id` (espejo de la FK, sin JOIN en TS) para que la UI
+ * pueda correlacionar la propuesta con el `transaccion_id` padre sin
+ * pedirlo aparte. `created_at`/`updated_at` son epoch UNIX en segundos
+ * (mismo formato que `Transacciones.created_at/updated_at`).
+ */
+export interface SimulacionCompletaDto {
+  id: number
+  usuario_id: number
+  transaccion_id: number
+  nuevo_valor_centavos: number
+  created_at: number
+  updated_at: number
+}
+
+/**
+ * Input que la UI envía al backend al crear o actualizar una propuesta
+ * del Simulador.
+ *
+ * El backend (`UpsertSimulacionInput` en `commands.rs`) acepta un
+ * struct `serde(Deserialize, rename_all = "camelCase")`, así que las
+ * keys del payload son camelCase — eso es lo que llega al backend vía
+ * la frontera IPC de Tauri v2.
+ */
+export interface UpsertSimulacionInput {
+  transaccionId: number
+  nuevoValorCentavos: number
+  usuarioId: number
+}
+
+/**
+ * Lista todas las propuestas de Simulador del usuario indicado.
+ *
+ * Devuelve un array vacío si el usuario todavía no creó ninguna
+ * propuesta (estado inicial habitual). El backend ordena por
+ * `transaccion_id ASC` para mantener un orden estable.
+ *
+ * Contrato IPC: `invoke('cmd_listar_simulaciones', { usuarioId })`
+ * con `usuarioId` como top-level key.
+ */
+export async function obtenerSimulaciones(
+  usuarioId: number,
+): Promise<SimulacionCompletaDto[]> {
+  return invoke<SimulacionCompletaDto[]>('cmd_listar_simulaciones', {
+    usuarioId,
+  })
+}
+
+/**
+ * Crea o actualiza la propuesta del Simulador para una transacción.
+ *
+ * Si ya existe una propuesta para `input.transaccionId`, el backend
+ * hace un UPSERT (`ON CONFLICT DO UPDATE`) — el mismo `id` se mantiene
+ * y solo se refresca `nuevoValorCentavos` + `updated_at`. La UI debe
+ * refrescar la lista después para reflejar el cambio.
+ *
+ * Devuelve el `id` autoincrement de la propuesta (útil si la UI
+ * quiere optimista-tracking antes del refetch).
+ *
+ * Contrato IPC: `invoke('cmd_upsert_simulacion', { input: {...} })`
+ * con `input` envuelto bajo la key `input`, mismo shape que
+ * `insertarTransaccion` y `crearPerfil`.
+ */
+export async function upsertSimulacion(input: UpsertSimulacionInput): Promise<number> {
+  return invoke<number>('cmd_upsert_simulacion', { input })
+}
+
+/**
+ * Elimina la propuesta del Simulador para la transacción dada.
+ *
+ * Es no-op si no existe propuesta para esa transacción (la semántica
+ * de `repo::delete` es "0 filas = éxito válido"). La UI debe refrescar
+ * la lista para reflejar el cambio.
+ *
+ * Contrato IPC: `invoke('cmd_eliminar_simulacion', { transaccionId })`
+ * con `transaccionId` como top-level key.
+ */
+export async function eliminarSimulacion(transaccionId: number): Promise<void> {
+  await invoke<void>('cmd_eliminar_simulacion', { transaccionId })
 }
