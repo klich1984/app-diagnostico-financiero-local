@@ -53,7 +53,12 @@ import { ListaTransacciones } from './components/organisms/ListaTransacciones'
 import { SelectorPerfil } from './components/organisms/SelectorPerfil'
 import { MatrizPresupuesto } from './components/organisms/MatrizPresupuesto'
 import { SimuladorPanel } from './components/organisms/SimuladorPanel'
+import { DistribucionChart } from './components/organisms/DistribucionChart'
 import { calcularMatriz, type CategoriaMin } from './domain/agregaciones/matriz'
+import {
+  distribucionGastosPorCategoria,
+  distribucionIngresosPorCategoria,
+} from './domain/agregaciones/graficos'
 
 function App(): JSX.Element {
   const [categorias, setCategorias] = useState<CategoriaDto[]>([])
@@ -127,6 +132,37 @@ function App(): JSX.Element {
       }))
       return calcularMatriz(transacciones, catsMin)
     },
+    [transacciones, categorias],
+  )
+
+  // Slice 13 (REQ-302): distribuciones porcentuales para alimentar los
+  // dos `DistribucionChart` que viven debajo de la matriz en la pestaña
+  // Presupuesto. Mismo casteo DTO → `CategoriaMin` que `matriz`:
+  // `grupo_pertenencia` se normaliza a 'INGRESO' | 'GASTO' (uppercase)
+  // porque así lo espera `domain/agregaciones/graficos`. Los `as never`
+  // evitan que TypeScript se queje del shape del DTO completo (que trae
+  // campos extra irrelevantes para el agregador).
+  const distribucionIngresos = useMemo(
+    () =>
+      distribucionIngresosPorCategoria(
+        transacciones as never,
+        categorias.map((c) => ({
+          ...c,
+          grupo_pertenencia: c.grupo_pertenencia.toUpperCase() === 'INGRESO' ? 'INGRESO' : 'GASTO',
+        })) as never,
+      ),
+    [transacciones, categorias],
+  )
+
+  const distribucionGastos = useMemo(
+    () =>
+      distribucionGastosPorCategoria(
+        transacciones as never,
+        categorias.map((c) => ({
+          ...c,
+          grupo_pertenencia: c.grupo_pertenencia.toUpperCase() === 'INGRESO' ? 'INGRESO' : 'GASTO',
+        })) as never,
+      ),
     [transacciones, categorias],
   )
 
@@ -462,7 +498,19 @@ function App(): JSX.Element {
               />
             ) : null}
             {tabActiva === 'presupuesto' ? (
-              <MatrizPresupuesto matriz={matriz} />
+              <>
+                <MatrizPresupuesto matriz={matriz} />
+                <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <DistribucionChart
+                    distribucion={distribucionIngresos}
+                    titulo="Distribución de Ingresos"
+                  />
+                  <DistribucionChart
+                    distribucion={distribucionGastos}
+                    titulo="Distribución de Gastos"
+                  />
+                </div>
+              </>
             ) : null}
             {tabActiva === 'simulador' ? (
               <SimuladorPanel
