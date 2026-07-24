@@ -138,8 +138,23 @@ import {
   calcularLadoMejorado,
 } from '..'
 
-// ---------------------------------------------------------------------------
-// 32-row fixture (identical to the one in slice-5 `matriz-mejorada.test.ts`
+  it('calcularEstadoResultados accepts undefined salarioObjetivoCentavos (treated as null)', () => {
+    const cats: CategoriaMin[] = [
+      { id: 1, nombre: 'Salario', grupo_pertenencia: 'INGRESO' },
+    ]
+    const txs: Array<TransaccionMin & { id: number }> = [
+      {
+        id: 1,
+        tipo_flujo: 'Ingreso',
+        categoria_id: 1,
+        frecuencia: 'Mensual',
+        valor_centavos: 1_000_000,
+      },
+    ]
+    const resultado = calcularEstadoResultados(txs, cats, [], undefined)
+    expect(resultado.inicial.flujo_ahorro_2.toNumber()).toBe(1_000_000)
+  })
+
 // and slice-4 `golden-mvp.test.ts`).
 // ---------------------------------------------------------------------------
 
