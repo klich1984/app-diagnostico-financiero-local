@@ -268,11 +268,12 @@ export function calcularLadoMejorado(
   transacciones: Array<TransaccionMin & { id: number }>,
   categorias: CategoriaMin[],
   simulaciones: Simulacion[],
-  salarioObjetivoCentavos: number | null,
+  // Accept undefined too — caller may not always pass it explicitly.
+  salarioObjetivoCentavos: number | null | undefined,
 ): LadoEstado {
   const deudaIds = categoriasDeuda(categorias)
   const matriz = calcularMatrizMejorada(transacciones, categorias, simulaciones)
-  const salario = salarioObjetivoCentavos === null
+  const salario = salarioObjetivoCentavos === null || salarioObjetivoCentavos === undefined
     ? null
     : new Decimal(salarioObjetivoCentavos)
   return componerLado(matriz, categorias, deudaIds, salario)
@@ -291,7 +292,7 @@ export function calcularEstadoResultados(
   transacciones: Array<TransaccionMin & { id: number }>,
   categorias: CategoriaMin[],
   simulaciones: Simulacion[],
-  salarioObjetivoCentavos: number | null,
+  salarioObjetivoCentavos?: number | null,
 ): EstadoResultados {
   const inicial = calcularLadoInicial(transacciones, categorias)
   const mejorado = calcularLadoMejorado(

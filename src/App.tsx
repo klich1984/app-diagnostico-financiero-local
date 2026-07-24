@@ -31,6 +31,7 @@
 // debugging — there are 4 of them, see below.
 
 import { useEffect, useMemo, useState } from 'react'
+import { Component, type ReactNode } from 'react'
 import {
   eliminarSimulacion,
   eliminarTransaccion,
@@ -56,9 +57,50 @@ import { SimuladorPanel } from './components/organisms/SimuladorPanel'
 import { DistribucionChart } from './components/organisms/DistribucionChart'
 import { calcularMatriz, type CategoriaMin } from './domain/agregaciones/matriz'
 import {
+  calcularEstadoResultados,
+  type EstadoResultados,
+} from './domain/kpis'
+import { EstadoResultadosPanel } from './components/organisms/EstadoResultadosPanel'
+import {
   distribucionGastosPorCategoria,
   distribucionIngresosPorCategoria,
 } from './domain/agregaciones/graficos'
+
+class AppErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null as Error | null }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+
+  componentDidCatch(error: Error, info: { componentStack: string }) {
+    console.error('App error boundary caught:', error, info)
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="min-h-screen bg-slate-50 p-8">
+          <div className="mx-auto max-w-lg rounded-md border border-red-200 bg-white p-6">
+            <h1 className="text-lg font-semibold text-red-700">Error</h1>
+            <p className="mt-2 text-sm text-slate-700">{this.state.error.message}</p>
+            <button
+              type="button"
+              onClick={() => this.setState({ error: null })}
+              className="mt-4 rounded-md bg-slate-900 px-3 py-1 text-sm text-white"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 function App(): JSX.Element {
   const [categorias, setCategorias] = useState<CategoriaDto[]>([])
@@ -104,8 +146,10 @@ function App(): JSX.Element {
   //     del Simulador (sliders + matriz mejorada).
   // El estado es local; no se persiste — al reabrir la app volvemos a
   // 'transacciones' (es el flujo principal del usuario).
-  type TabActiva = 'transacciones' | 'presupuesto' | 'simulador'
+  type TabActiva = 'transacciones' | 'presupuesto' | 'simulador' | 'resultados'
   const [tabActiva, setTabActiva] = useState<TabActiva>('transacciones')
+
+  const [salarioObjetivoCentavos, setSalarioObjetivoCentavos] = useState<number | null>(null)
 
   // Slice 11: estado del panel del Simulador. Se carga cuando cambia
   // el perfil activo (no al montar — el selector ya filtró por perfil).
@@ -113,6 +157,20 @@ function App(): JSX.Element {
     [],
   )
   const [cargandoSimulaciones, setCargandoSimulaciones] = useState(true)
+
+  const estadoResultado = useMemo<EstadoResultados | null>(() => {
+    if (transacciones.length === 0) return null
+    return calcularEstadoResultados(
+      transacciones as never,
+      categorias.map((c) => ({
+        ...c,
+        grupo_pertenencia:
+          c.grupo_pertenencia.toUpperCase() === 'INGRESO' ? 'INGRESO' : 'GASTO',
+      })) as never,
+      simulaciones as never,
+      salarioObjetivoCentavos,
+    )
+  }, [transacciones, categorias, simulaciones, salarioObjetivoCentavos])
 
   // Slice 10: matriz de presupuesto derivada de las transacciones
   // cargadas. `useMemo` evita recalcularla en cada render — sólo se
@@ -291,6 +349,15 @@ function App(): JSX.Element {
     void cargarPerfiles()
   }, [])
 
+  useEffect(() => {
+    if (perfilActivo === null) {
+      setSalarioObjetivoCentavos(null)
+      return
+    }
+    const perfil = perfiles.find((p) => p.id === perfilActivo)
+    setSalarioObjetivoCentavos(perfil?.salario_personal_objetivo_centavos ?? null)
+  }, [perfilActivo, perfiles])
+
   // Slice 9: handler de selección de perfil. Persiste el id en
   // localStorage y oculta el overlay.
   const handleSeleccionarPerfil = (id: number): void => {
@@ -390,7 +457,8 @@ function App(): JSX.Element {
       : null
 
   return (
-    <main className="min-h-screen bg-slate-50 p-8">
+    <AppErrorBoundary>
+      <main className="min-h-screen bg-slate-50 p-8">
       <section className="mx-auto max-w-2xl">
         <h1 className="mb-2 text-3xl font-bold text-slate-900">Diagnostico Financiero Local</h1>
         <p className="mb-8 text-slate-600">
@@ -487,6 +555,18 @@ function App(): JSX.Element {
             >
               Simulador
             </button>
+            <button
+              type="button"
+              data-testid="tab-resultados"
+              onClick={() => setTabActiva('resultados')}
+              className={`px-4 py-2 text-sm font-medium ${
+                tabActiva === 'resultados'
+                  ? 'border-b-2 border-slate-900 text-slate-900'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Resultados
+            </button>
           </nav>
 
           <div className="pt-4">
@@ -522,6 +602,16 @@ function App(): JSX.Element {
                 onEliminar={handleEliminarSimulacion}
               />
             ) : null}
+            {tabActiva === 'resultados' ? (
+              estadoResultado ? (
+                <EstadoResultadosPanel
+                  estado={estadoResultado}
+                  salarioObjetivoCentavos={salarioObjetivoCentavos}
+                />
+              ) : (
+                <p className="p-4 text-sm text-slate-500">Cargando estado de resultados…</p>
+              )
+            ) : null}
           </div>
         </div>
 
@@ -540,7 +630,8 @@ function App(): JSX.Element {
           cargando={cargandoPerfiles}
         />
       ) : null}
-    </main>
+      </main>
+    </AppErrorBoundary>
   )
 }
 
