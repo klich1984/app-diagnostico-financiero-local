@@ -607,6 +607,10 @@ function App(): JSX.Element {
                 <EstadoResultadosPanel
                   estado={estadoResultado}
                   salarioObjetivoCentavos={salarioObjetivoCentavos}
+                  perfilActivoId={perfilActivo}
+                  onSalarioGuardado={async (centavos) => {
+                    setSalarioObjetivoCentavos(centavos)
+                  }}
                 />
               ) : (
                 <p className="p-4 text-sm text-slate-500">Cargando estado de resultados…</p>
