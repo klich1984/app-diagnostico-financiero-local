@@ -1,9 +1,13 @@
+import { useState } from 'react'
 import type { EstadoResultados } from '../../domain/kpis'
 import { formatCentavos } from '../../domain/precision/money'
+import { ModalSalarioObjetivo } from './ModalSalarioObjetivo'
 
 export interface EstadoResultadosPanelProps {
   estado: EstadoResultados
   salarioObjetivoCentavos: number | null
+  perfilActivoId: number | null
+  onSalarioGuardado: (centavos: number) => Promise<void>
 }
 
 interface KpiRow {
@@ -34,7 +38,18 @@ const KPI_ROWS: KpiRow[] = [
 export function EstadoResultadosPanel({
   estado,
   salarioObjetivoCentavos,
+  perfilActivoId,
+  onSalarioGuardado,
 }: EstadoResultadosPanelProps): JSX.Element {
+  const [modalAbierto, setModalAbierto] = useState(false)
+
+  const mostrarBotonEditar = perfilActivoId !== null && salarioObjetivoCentavos !== null
+
+  async function handleGuardar(centavos: number): Promise<void> {
+    await onSalarioGuardado(centavos)
+    setModalAbierto(false)
+  }
+
   return (
     <div data-testid="estado-resultados" className="space-y-4 p-4">
       <div>
@@ -43,6 +58,16 @@ export function EstadoResultadosPanel({
           <p className="mt-1 text-xs text-slate-500">
             Salario personal objetivo: {formatCentavos(salarioObjetivoCentavos)}
           </p>
+        ) : null}
+        {mostrarBotonEditar ? (
+          <button
+            type="button"
+            data-testid="btn-editar-salario"
+            onClick={() => setModalAbierto(true)}
+            className="mt-2 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-slate-500"
+          >
+            Editar salario
+          </button>
         ) : null}
       </div>
 
@@ -80,6 +105,15 @@ export function EstadoResultadosPanel({
           })}
         </tbody>
       </table>
+
+      {modalAbierto ? (
+        <ModalSalarioObjetivo
+          perfilActivoId={perfilActivoId}
+          salarioActualCentavos={salarioObjetivoCentavos}
+          onGuardar={handleGuardar}
+          onCancelar={() => setModalAbierto(false)}
+        />
+      ) : null}
     </div>
   )
 }

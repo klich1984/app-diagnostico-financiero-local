@@ -11,8 +11,11 @@
 // Tasks:   T-501, T-502, T-503 (HU-501/502, Slice 14 del roadmap
 //          post-MVP, HU-501/502). El organism es la parte de UI del
 //          T-501; el motor de cálculo está en `src/domain/kpis`.
+// Tasks:   T-503 (change `mvp-cierre-modal-y-tab5`): botón "Editar
+//          salario" visible cuando perfilActivoId !== null Y
+//          salarioObjetivoCentavos !== null; NO visible si null.
 // Test #:  slice 14 / frontend / EstadoResultadosPanel organism
-//          (3 tests).
+//          (3 tests base + 2 tests T-503 = 5 total).
 //
 // RED PHASE: this file imports `EstadoResultadosPanel` from
 // `../EstadoResultadosPanel`, which does NOT exist yet. `pnpm test`
@@ -154,12 +157,16 @@ afterEach(() => {
 function render(
   estado: EstadoResultados,
   salarioObjetivoCentavos: number | null,
+  perfilActivoId?: number | null,
+  onSalarioGuardado?: (centavos: number) => Promise<void>,
 ): void {
   act(() => {
     root.render(
       <EstadoResultadosPanel
         estado={estado}
         salarioObjetivoCentavos={salarioObjetivoCentavos}
+        perfilActivoId={perfilActivoId ?? null}
+        onSalarioGuardado={onSalarioGuardado ?? (() => Promise.resolve())}
       />,
     )
   })
@@ -226,5 +233,37 @@ describe('REQ-501 + REQ-502 / Slice 14: EstadoResultadosPanel organism', () => {
     expect(
       container.querySelector('[data-testid="estado-resultados"]'),
     ).not.toBeNull()
+  })
+
+  // REQ-502-D1-1 / T-503 RED:
+  // El botón "Editar salario" DEBE ser visible cuando:
+  //   - perfilActivoId !== null (hay un perfil activo)
+  //   - salarioObjetivoCentavos !== null (el salario ya fue configurado)
+  //
+  // Given:  perfil activo (id=1) + salario configurado ($7.200.000).
+  // When:   el panel es rendereado.
+  // Then:   existe un elemento con data-testid="btn-editar-salario"
+  //         en el DOM.
+  it('slice14_T503_editar_salario_btn_visible_with_perfil_and_salario', () => {
+    render(sampleEstado, 720_000_000, 1)
+
+    expect(
+      container.querySelector('[data-testid="btn-editar-salario"]'),
+    ).not.toBeNull()
+  })
+
+  // REQ-502-D1-11 / T-503 RED:
+  // El botón "Editar salario" NO debe renderizarse cuando
+  // salarioObjetivoCentavos es null (salario no configurado).
+  //
+  // Given:  perfil activo (id=1) + salario null.
+  // When:   el panel es rendereado.
+  // Then:   NO existe ningún elemento con data-testid="btn-editar-salario".
+  it('slice14_T503_editar_salario_btn_hidden_when_salario_null', () => {
+    render(sampleEstado, null, 1)
+
+    expect(
+      container.querySelector('[data-testid="btn-editar-salario"]'),
+    ).toBeNull()
   })
 })

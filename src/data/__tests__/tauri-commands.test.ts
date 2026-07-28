@@ -7,9 +7,12 @@
 // Design:  `openspec/changes/mvp-financiero-local-first/design.md` §7
 //          (React layer) + §11 (seccion multi-profile).
 // Tasks:   T-501 (frontend wrappers) + T-901 (single-profile lookup).
+//          T-505 (change `mvp-cierre-modal-y-tab5`): wrapper
+//          `actualizarSalarioObjetivo` — pineado en design.md R-1.
 // Test #:  slice 9 / frontend / REQ-501 wrappers (3 tests) +
 //          slice 7 / REQ-202 wrappers (pre-existing 6 tests, slice 8
-//          `eliminarTransaccion` wrapper at the bottom).
+//          `eliminarTransaccion` wrapper at the bottom) +
+//          T-505 / REQ-502-D1-3 wrapper (1 test).
 //
 // RED PHASE: this file imports `obtenerPerfiles`, `crearPerfil`, and
 // `obtenerPerfil`, and the types `UsuarioDto` / `CrearPerfilInput`,
@@ -54,6 +57,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 // the intent obvious.)
 import { invoke } from '@tauri-apps/api/core'
 import {
+  actualizarSalarioObjetivo,
   crearPerfil,
   eliminarSimulacion,
   eliminarTransaccion,
@@ -64,6 +68,7 @@ import {
   obtenerPerfiles,
   obtenerSimulaciones,
   upsertSimulacion,
+  type ActualizarSalarioObjetivoInput,
   type CategoriaDto,
   type CrearPerfilInput,
   type TransaccionCompletaDto,
@@ -527,5 +532,63 @@ describe('REQ-602 / Slice 11 bugfix: TransaccionCompletaDto nullability contract
     }
     expect(t.comportamiento).toBeNull()
     expect(t.naturaleza_necesidad).toBeNull()
+  })
+})
+
+// ===========================================================================
+// T-505 RED: REQ-502-D1-3 — wrapper `actualizarSalarioObjetivo`
+//
+// Shape pineado en design.md R-1:
+//   command : 'cmd_update_salario_objetivo'
+//   payload : { input: { perfil_id: number, salario_objetivo_centavos: number } }
+//
+// El wrapper exporta:
+//   export interface ActualizarSalarioObjetivoInput {
+//     perfil_id: number
+//     salario_objetivo_centavos: number
+//   }
+//   export async function actualizarSalarioObjetivo(
+//     input: ActualizarSalarioObjetivoInput,
+//   ): Promise<void>
+// ===========================================================================
+
+describe('REQ-502-D1-3 / T-505: actualizarSalarioObjetivo IPC wrapper', () => {
+  // REQ-502-D1-3 / T-505:
+  // `actualizarSalarioObjetivo(input)` MUST call
+  // `cmd_update_salario_objetivo` con el payload envuelto bajo la clave
+  // `input` (convención del proyecto: `{ input: { ...fields } }`).
+  // El shape interno usa snake_case: `perfil_id` y
+  // `salario_objetivo_centavos` — pineado en design.md R-1.
+  //
+  // Given:  un mock que resuelve a `undefined` (el command Rust
+  //         devuelve `()` / void).
+  //         Input: perfil_id=1, salario_objetivo_centavos=720_000_000.
+  // When:   `actualizarSalarioObjetivo({ perfil_id: 1, salario_objetivo_centavos: 720_000_000 })`
+  //         es invocado.
+  // Then:   `invoke` es llamado exactamente una vez con
+  //         `'cmd_update_salario_objetivo'` y
+  //         `{ input: { perfil_id: 1, salario_objetivo_centavos: 720_000_000 } }`.
+  //         El payload NO debe tener `perfil_id` ni
+  //         `salario_objetivo_centavos` en el nivel raíz.
+  it('actualizarSalarioObjetivo invokes cmd_update_salario_objetivo with wrapped input', async () => {
+    invokeMock.mockResolvedValueOnce(undefined)
+
+    const input: ActualizarSalarioObjetivoInput = {
+      perfil_id: 1,
+      salario_objetivo_centavos: 720_000_000,
+    }
+
+    await actualizarSalarioObjetivo(input)
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_update_salario_objetivo', {
+      input: { perfil_id: 1, salario_objetivo_centavos: 720_000_000 },
+    })
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_update_salario_objetivo')
+    expect(callArgs[1]).toEqual({ input })
+    // El payload NO debe ser plano (regla del proyecto).
+    expect(callArgs[1]).not.toHaveProperty('perfil_id')
+    expect(callArgs[1]).not.toHaveProperty('salario_objetivo_centavos')
   })
 })

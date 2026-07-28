@@ -35,6 +35,7 @@ import { Component, type ReactNode } from 'react'
 import {
   eliminarSimulacion,
   eliminarTransaccion,
+  actualizarSalarioObjetivo,
   insertarTransaccion,
   listarTransacciones,
   obtenerCategorias,
@@ -607,6 +608,15 @@ function App(): JSX.Element {
                 <EstadoResultadosPanel
                   estado={estadoResultado}
                   salarioObjetivoCentavos={salarioObjetivoCentavos}
+                  perfilActivoId={perfilActivo}
+                  onSalarioGuardado={async (centavos) => {
+                    if (perfilActivo === null) return
+                    await actualizarSalarioObjetivo({
+                      perfil_id: perfilActivo,
+                      salario_objetivo_centavos: centavos,
+                    })
+                    setSalarioObjetivoCentavos(centavos)
+                  }}
                 />
               ) : (
                 <p className="p-4 text-sm text-slate-500">Cargando estado de resultados…</p>

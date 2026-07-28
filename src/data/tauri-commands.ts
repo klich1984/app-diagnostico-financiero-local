@@ -322,3 +322,32 @@ export async function upsertSimulacion(input: UpsertSimulacionInput): Promise<nu
 export async function eliminarSimulacion(transaccionId: number): Promise<void> {
   await invoke<void>('cmd_eliminar_simulacion', { transaccionId })
 }
+
+/**
+ * Input para actualizar el salario personal objetivo de un perfil.
+ *
+ * Todos los campos en snake_case para que el serializer IPC de Tauri
+ * los mapee 1-a-1 con los parámetros del comando Rust
+ * `cmd_update_salario_objetivo`. Pineado en design.md R-1.
+ */
+export interface ActualizarSalarioObjetivoInput {
+  perfil_id: number
+  salario_objetivo_centavos: number
+}
+
+/**
+ * Persiste el salario personal objetivo del perfil activo en la base de datos.
+ *
+ * Devuelve `void`. El backend valida que el valor sea >= 0 y <= 100_000_000_000
+ * centavos ($1.000.000.000 pesos) — la UI también valida de forma síncrona
+ * (defensa en profundidad).
+ *
+ * Contrato IPC: `invoke('cmd_update_salario_objetivo', { input: { perfil_id, salario_objetivo_centavos } })`
+ * con el payload envuelto bajo la key `input`, igual que `insertarTransaccion`
+ * y `crearPerfil`.
+ */
+export async function actualizarSalarioObjetivo(
+  input: ActualizarSalarioObjetivoInput,
+): Promise<void> {
+  await invoke<void>('cmd_update_salario_objetivo', { input })
+}
