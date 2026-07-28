@@ -35,6 +35,7 @@ import { Component, type ReactNode } from 'react'
 import {
   eliminarSimulacion,
   eliminarTransaccion,
+  actualizarSalarioObjetivo,
   insertarTransaccion,
   listarTransacciones,
   obtenerCategorias,
@@ -609,6 +610,11 @@ function App(): JSX.Element {
                   salarioObjetivoCentavos={salarioObjetivoCentavos}
                   perfilActivoId={perfilActivo}
                   onSalarioGuardado={async (centavos) => {
+                    if (perfilActivo === null) return
+                    await actualizarSalarioObjetivo({
+                      perfil_id: perfilActivo,
+                      salario_objetivo_centavos: centavos,
+                    })
                     setSalarioObjetivoCentavos(centavos)
                   }}
                 />
