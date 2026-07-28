@@ -542,3 +542,65 @@ pub async fn cmd_eliminar_simulacion(
     let conn = db::abrir_conexion(&app)?;
     cmd_eliminar_simulacion_impl(&conn, transaccion_id)
 }
+
+/// Input del comando `cmd_update_salario_objetivo`.
+///
+/// El wrapper TS envía `{ input: { perfil_id, salario_objetivo_centavos } }`
+/// (snake_case, sin `rename_all`) — pineado en design.md R-1 y en el
+/// test RED del wrapper TS (T-505).
+#[derive(serde::Deserialize)]
+pub struct UpdateSalarioObjetivoInput {
+    pub perfil_id: i64,
+    pub salario_objetivo_centavos: i64,
+}
+
+/// Persiste el salario personal objetivo de un perfil en la DB.
+///
+/// Validaciones (defensa en profundidad — la UI también valida):
+///   * `salario_objetivo_centavos >= 0` (el schema también tiene CHECK)
+///   * `salario_objetivo_centavos <= 100_000_000_000` ($1.000.000.000 pesos)
+///   * `perfil_id` debe existir — si el UPDATE no afecta ninguna fila,
+///     retorna `Err` con mensaje descriptivo.
+pub fn cmd_update_salario_objetivo_impl(
+    conn: &Connection,
+    input: &UpdateSalarioObjetivoInput,
+) -> Result<(), String> {
+    if input.salario_objetivo_centavos < 0 {
+        return Err(format!(
+            "salario_objetivo_centavos no puede ser negativo: {}",
+            input.salario_objetivo_centavos
+        ));
+    }
+    if input.salario_objetivo_centavos > 100_000_000_000 {
+        return Err(format!(
+            "salario_objetivo_centavos excede el máximo permitido ($1.000.000.000): {}",
+            input.salario_objetivo_centavos
+        ));
+    }
+
+    let rows_affected = conn
+        .execute(
+            "UPDATE Usuarios SET salario_personal_objetivo_centavos = ?1 WHERE id = ?2",
+            rusqlite::params![input.salario_objetivo_centavos, input.perfil_id],
+        )
+        .map_err(|e| format!("actualizando salario objetivo: {e}"))?;
+
+    if rows_affected == 0 {
+        return Err(format!(
+            "perfil_id {} no encontrado en la base de datos",
+            input.perfil_id
+        ));
+    }
+
+    Ok(())
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_update_salario_objetivo_impl`.
+#[tauri::command]
+pub async fn cmd_update_salario_objetivo(
+    app: tauri::AppHandle,
+    input: UpdateSalarioObjetivoInput,
+) -> Result<(), String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_update_salario_objetivo_impl(&conn, &input)
+}
