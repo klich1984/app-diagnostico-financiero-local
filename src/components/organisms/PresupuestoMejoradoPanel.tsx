@@ -47,17 +47,27 @@ export function PresupuestoMejoradoPanel({
     )
   }
 
-  // Mapeamos los DTOs completos a los tipos Min que pide el dominio.
-  // El left join está validado para tolerar campos extra pero Typescript
-  // pide aserción.
+  // Normaliza grupo_pertenencia al formato que espera el dominio
+  // ('INGRESO' | 'GASTO'), ya que el DTO del IPC viene en TitleCase
+  // ('Ingreso' | 'Gasto'). Mismo patrón que App.tsx.
+  const catsNormalizadas = useMemo(
+    () =>
+      categorias.map((c) => ({
+        ...c,
+        grupo_pertenencia:
+          c.grupo_pertenencia.toUpperCase() === 'INGRESO' ? 'INGRESO' : 'GASTO',
+      })) as any,
+    [categorias],
+  )
+
   const matrizInicial = useMemo(
-    () => calcularMatriz(transacciones as any, categorias as any),
-    [transacciones, categorias],
+    () => calcularMatriz(transacciones as any, catsNormalizadas),
+    [transacciones, catsNormalizadas],
   )
 
   const matrizMejorada = useMemo(
-    () => calcularMatrizMejorada(transacciones as any, categorias as any, simulaciones),
-    [transacciones, categorias, simulaciones],
+    () => calcularMatrizMejorada(transacciones as any, catsNormalizadas, simulaciones),
+    [transacciones, catsNormalizadas, simulaciones],
   )
 
   const totalGastosMejorado = matrizMejorada.totalGastos
@@ -93,43 +103,43 @@ export function PresupuestoMejoradoPanel({
           Resumen Mejorado
         </h2>
         <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4">
-          <div>
+          <div className="flex flex-col justify-between gap-1">
             <dt className="text-xs uppercase text-slate-500">
               Total Gastos Actual
             </dt>
-            <dd className="text-lg font-mono font-medium text-slate-600">
+            <dd className="font-mono text-base font-medium text-slate-600">
               {formatCentavosConDecimales(matrizInicial.totalGastos.toNumber())}
             </dd>
           </div>
-          <div>
+          <div className="flex flex-col justify-between gap-1">
             <dt className="text-xs uppercase text-slate-500">
               Total Gastos Mejorado
             </dt>
             <dd
               data-testid="kpi-total-gastos-mejorado"
-              className="text-lg font-mono font-bold text-slate-900"
+              className="font-mono text-base font-medium text-slate-900"
             >
               {formatCentavosConDecimales(totalGastosMejorado.toNumber())}
             </dd>
           </div>
-          <div>
+          <div className="flex flex-col justify-between gap-1">
             <dt className="text-xs uppercase text-slate-500">
               Ahorro Estimado (Delta)
             </dt>
             <dd
-              className={`text-lg font-mono font-bold ${
+              className={`font-mono text-base font-medium ${
                 deltaAhorro.isPositive() ? 'text-green-600' : 'text-slate-600'
               }`}
             >
               {formatCentavosConDecimales(deltaAhorro.toNumber())}
             </dd>
           </div>
-          <div>
+          <div className="flex flex-col justify-between gap-1">
             <dt className="text-xs uppercase text-slate-500">
               FCL Mejorado
             </dt>
             <dd
-              className={`text-lg font-mono font-bold ${
+              className={`font-mono text-base font-medium ${
                 matrizMejorada.flujoCajaLibre.isNegative()
                   ? 'text-red-600'
                   : 'text-green-600'
