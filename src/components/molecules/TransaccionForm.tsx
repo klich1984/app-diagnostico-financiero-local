@@ -282,13 +282,23 @@ export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps):
         <label htmlFor="valor" className="block text-sm font-medium text-slate-700">
           Valor (en pesos)
         </label>
+        <p className="text-xs text-slate-400">
+          Usá punto como separador de miles y coma para decimales.{' '}
+          <span className="font-medium text-slate-500">Ej: 1.500.000 o 1.500.000,50</span>
+        </p>
         <input
           id="valor"
           name="valor"
           type="text"
           inputMode="decimal"
           value={valorRaw}
-          onChange={(e) => setValorRaw(e.target.value)}
+          onChange={(e) => {
+              // Only allow digits, dots (thousands separator), commas
+              // (decimal separator) and minus sign. Everything else is
+              // stripped silently so the user never sees invalid chars.
+              const sanitized = e.target.value.replace(/[^0-9.,\-]/g, '')
+              setValorRaw(sanitized)
+            }}
           placeholder="1.500.000,50"
           className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
           aria-invalid={Boolean(errors.valor)}
