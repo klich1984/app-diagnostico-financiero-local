@@ -55,6 +55,7 @@ import { ListaTransacciones } from './components/organisms/ListaTransacciones'
 import { SelectorPerfil } from './components/organisms/SelectorPerfil'
 import { MatrizPresupuesto } from './components/organisms/MatrizPresupuesto'
 import { SimuladorPanel } from './components/organisms/SimuladorPanel'
+import { PresupuestoMejoradoPanel } from './components/organisms/PresupuestoMejoradoPanel'
 import { DistribucionChart } from './components/organisms/DistribucionChart'
 import { calcularMatriz, type CategoriaMin } from './domain/agregaciones/matriz'
 import {
@@ -147,7 +148,7 @@ function App(): JSX.Element {
   //     del Simulador (sliders + matriz mejorada).
   // El estado es local; no se persiste — al reabrir la app volvemos a
   // 'transacciones' (es el flujo principal del usuario).
-  type TabActiva = 'transacciones' | 'presupuesto' | 'simulador' | 'resultados'
+  type TabActiva = 'transacciones' | 'presupuesto' | 'simulador' | 'presupuesto-mejorado' | 'resultados'
   const [tabActiva, setTabActiva] = useState<TabActiva>('transacciones')
 
   const [salarioObjetivoCentavos, setSalarioObjetivoCentavos] = useState<number | null>(null)
@@ -558,6 +559,18 @@ function App(): JSX.Element {
             </button>
             <button
               type="button"
+              data-testid="tab-presupuesto-mejorado"
+              onClick={() => setTabActiva('presupuesto-mejorado')}
+              className={`px-4 py-2 text-sm font-medium ${
+                tabActiva === 'presupuesto-mejorado'
+                  ? 'border-b-2 border-slate-900 text-slate-900'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Presupuesto Mejorado
+            </button>
+            <button
+              type="button"
               data-testid="tab-resultados"
               onClick={() => setTabActiva('resultados')}
               className={`px-4 py-2 text-sm font-medium ${
@@ -601,6 +614,14 @@ function App(): JSX.Element {
                 cargando={cargandoSimulaciones}
                 onUpsert={handleUpsertSimulacion}
                 onEliminar={handleEliminarSimulacion}
+              />
+            ) : null}
+            {tabActiva === 'presupuesto-mejorado' && perfilActivo !== null ? (
+              <PresupuestoMejoradoPanel
+                transacciones={transacciones}
+                categorias={categorias}
+                simulaciones={simulaciones}
+                onIrATransacciones={() => setTabActiva('transacciones')}
               />
             ) : null}
             {tabActiva === 'resultados' ? (
