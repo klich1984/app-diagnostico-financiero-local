@@ -81,7 +81,7 @@ export function ModalSalarioObjetivo({
   }
 
   function onChangeInput(e: React.ChangeEvent<HTMLInputElement>): void {
-    const texto = e.target.value
+    const texto = e.target.value.replace(/[^0-9.,\-]/g, '')
     setInputTexto(texto)
     // Limpia el error de IPC al re-editar (REQ-502-D1-9 no lo pinea pero
     // es UX consistente).
