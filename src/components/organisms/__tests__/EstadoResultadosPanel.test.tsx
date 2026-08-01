@@ -99,6 +99,14 @@ import type { EstadoResultados, LadoEstado } from '../../../domain/kpis'
 // completo.)
 const sampleLado: LadoEstado = {
   total_ingresos: new Decimal(720_000_000),
+  ingresos_fijos: new Decimal(720_000_000),
+  ingresos_variables: new Decimal(0),
+  gastos_fijos_total: new Decimal(380_000_000),
+  gastos_fijos_necesarios: new Decimal(380_000_000),
+  gastos_fijos_provisiones: new Decimal(0),
+  deudas_total: new Decimal(244_500_000),
+  cuota_deudas_entidades: new Decimal(244_500_000),
+  cuota_deudas_conocidos: new Decimal(0),
   gastos_necesarios: new Decimal(380_000_000),
   gastos_no_tan_necesarios: new Decimal(150_000_000),
   gastos_no_necesarios: new Decimal(60_000_000),
@@ -176,46 +184,49 @@ function render(
 // Tests.
 // ---------------------------------------------------------------------------
 
-describe('REQ-501 + REQ-502 / Slice 14: EstadoResultadosPanel organism', () => {
-  // REQ-501 / UI: el comparativo MUST ser una tabla de 3 columnas:
-  // Inicial | Delta | Mejorado. Los nombres exactos de los headers
-  // pueden variar ligeramente ("Variación", "Δ", "Cambio"), pero
-  // "Inicial" + "Mejorado" son contratos duros (etiquetas visibles
-  // que el PRD HU-501 menciona textualmente). Verificamos las 3
-  // columnas con regex tolerante para el header central.
+describe('REQ-501 + REQ-502 / Slice 14 + REQ-V2-105: EstadoResultadosPanel organism', () => {
+  // REQ-V2-105 / UI: el comparativo es una tabla con los headers
+  // CONCEPTO | INICIAL | MEJORADO.
   //
   // Given:  un EstadoResultados dual (Inicial vs Mejorado).
   // When:   el organism es rendereado.
-  // Then:   el DOM contiene los headers "Inicial", "Mejorado" y un
-  //         tercer header de Delta (regex `/delta|variación|cambio/i`).
+  // Then:   el DOM contiene los headers "CONCEPTO", "INICIAL" y "MEJORADO".
   it('slice14_estado_resultados_renders_3_columns', () => {
     render(sampleEstado, null)
 
     const text = container.textContent ?? ''
-    expect(text).toContain('Inicial')
-    expect(text).toContain('Mejorado')
-    // El header central puede llamarse "Delta", "Variación" o
-    // "Cambio" — todos equivalentes en español neutro. El regex
-    // acepta cualquiera de las tres variantes.
-    expect(text).toMatch(/delta|variaci[oó]n|cambio/i)
+    expect(text).toContain('CONCEPTO')
+    expect(text).toContain('INICIAL')
+    expect(text).toContain('MEJORADO')
   })
 
-  // REQ-501 / UI: el panel MUST exponer una fila por KPI (Ingresos,
-  // Gastos, FA1, FA2, Cap.Inversión, más las versiones anuales).
-  // Verificamos que las 4 filas mensuales aparecen en el DOM.
+  // REQ-V2-105 / UI: el panel DEBE exponer las filas del desglose 1:1 contra Excel:
+  // INGRESOS MENSUALES, GASTOS FIJOS, DEUDAS, FLUJO DE AHORRO 1,
+  // SALARIO PERSONAL, GASTOS VARIABLES, FLUJO DE AHORRO 2, Capacidad inversión.
   //
   // Given:  un EstadoResultados dual.
   // When:   el organism es rendereado.
-  // Then:   el DOM contiene las etiquetas "Ingresos", "Gastos",
-  //         "FA1" y "FA2" — los KPIs mensuales principales.
+  // Then:   el DOM contiene las etiquetas del desglose completo.
   it('slice14_estado_resultados_renders_one_row_per_kpi', () => {
     render(sampleEstado, null)
 
     const text = container.textContent ?? ''
-    expect(text).toContain('Ingresos')
-    expect(text).toContain('Gastos')
-    expect(text).toContain('FA1')
-    expect(text).toContain('FA2')
+    expect(text).toContain('INGRESOS MENSUALES')
+    expect(text).toContain('Ingresos fijos')
+    expect(text).toContain('Ingresos variables')
+    expect(text).toContain('GASTOS FIJOS')
+    expect(text).toContain('Gastos fijos necesarios')
+    expect(text).toContain('Gastos fijos provisiones')
+    expect(text).toContain('DEUDAS')
+    expect(text).toContain('Cuota deudas entidades')
+    expect(text).toContain('Cuota deudas conocidos')
+    expect(text).toContain('FLUJO DE AHORRO 1')
+    expect(text).toContain('SALARIO PERSONAL')
+    expect(text).toContain('GASTOS VARIABLES')
+    expect(text).toContain('Gastos no tan necesarios')
+    expect(text).toContain('Gastos no necesarios')
+    expect(text).toContain('FLUJO DE AHORRO 2')
+    expect(text).toContain('Capacidad inversión')
   })
 
   // REQ-501 / UI (contrato de tooling): el panel MUST exponer un
