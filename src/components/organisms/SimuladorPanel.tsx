@@ -264,13 +264,17 @@ export function SimuladorPanel({
       actual += t.valor_centavos / factorMensual(t.frecuencia)
     }
     let simulado = 0
-    for (const s of previewSimulaciones) {
-      const tx = txById.get(s.transaccion_id)
-      if (!tx) continue
-      simulado += s.nuevo_valor_centavos / factorMensual(tx.frecuencia)
+    for (const t of gastosNoEsenciales) {
+      const id = t.id as number
+      const sim = previewSimulaciones.find((s) => s.transaccion_id === id)
+      if (sim) {
+        simulado += sim.nuevo_valor_centavos
+      } else {
+        simulado += t.valor_centavos / factorMensual(t.frecuencia)
+      }
     }
     return actual - simulado
-  }, [gastosNoEsenciales, previewSimulaciones, txById])
+  }, [gastosNoEsenciales, previewSimulaciones])
 
   // Flag global: ¿hay alguna fila con cambios sin aplicar? Lo usamos
   // para anotar la sección de Resultados con un "(preview)" sutil que
@@ -310,14 +314,12 @@ export function SimuladorPanel({
 
         <ul className="mt-4 space-y-2">
           {gastosNoEsenciales.map((t) => {
-            // `t.id` is optional on `TransaccionMin` pero SIEMPRE está
-            // presente en las filas que devuelve `listarTransacciones`
-            // (la PK autoincrement nunca es NULL). El `!` es seguro
-            // porque el origen es el DTO del IPC, no input del usuario.
             const id = t.id as number
             const dto = txById.get(id)
             const sim = simulaciones.find((s) => s.transaccion_id === id)
-            const currentValue = sim ? sim.nuevo_valor_centavos : t.valor_centavos
+            const currentValue = sim
+              ? sim.nuevo_valor_centavos
+              : Math.round(t.valor_centavos / factorMensual(t.frecuencia))
             return (
               <li
                 key={id}
@@ -329,7 +331,8 @@ export function SimuladorPanel({
                     {dto?.concepto ?? t.concepto}
                   </div>
                   <div className="text-xs text-slate-500">
-                    {dto?.categoria_nombre ?? '—'} · {t.frecuencia} ·{' '}
+                    {dto?.categoria_nombre ?? '—'} ·{' '}
+                    {t.frecuencia === 'Mensual' ? 'Mensual' : `Mensual (${t.frecuencia} orig.)`} ·{' '}
                     {dto?.naturaleza_necesidad ?? '—'}
                   </div>
                 </div>
@@ -338,12 +341,6 @@ export function SimuladorPanel({
                     type="text"
                     inputMode="decimal"
                     data-testid={`simulador-input-${id}`}
-                    // CONTROLADO: el value SIEMPRE refleja el state local
-                    // (lo que el usuario tipeó). El `valueFor` cae al
-                    // formateo en PESOS solo en la inicialización, así el
-                    // re-render del padre no pisa lo que el usuario está
-                    // escribiendo.
-                    //
                     // Slice 12 (REQ-402): el onChange SOLO actualiza el
                     // state local — ya NO dispara el debounce. El commit
                     // a SQLite queda en manos del botón "Aplicar" →
@@ -351,7 +348,7 @@ export function SimuladorPanel({
                     // usuario edita.
                     value={valueFor(id, currentValue)}
                     onChange={(e) => {
-                      const raw = e.target.value
+                      const raw = e.target.value.replace(/[^0-9.,\-]/g, '')
                       setInputValues((prev) => ({ ...prev, [id]: raw }))
                     }}
                     aria-label={`Nuevo valor propuesto para ${dto?.concepto ?? t.concepto}`}

@@ -394,4 +394,27 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
 
     expect(onUpsert).not.toHaveBeenCalled()
   })
+
+  // REQ-V2-104 / UI: typing non-numeric characters (like letters 'cc')
+  // into the input MUST strip them out immediately.
+  it('REQ-V2-104: strips non-numeric characters from input value', async () => {
+    render(sampleTransacciones)
+
+    const input = container.querySelector<HTMLInputElement>(
+      '[data-testid="simulador-input-1"]',
+    )
+    expect(input).not.toBeNull()
+    if (!input) throw new Error('simulador-input-1 not present in the DOM')
+
+    await act(async () => {
+      const nativeSetter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        'value',
+      )?.set
+      nativeSetter?.call(input, 'cc150000')
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    expect(input.value).toBe('150000')
+  })
 })
