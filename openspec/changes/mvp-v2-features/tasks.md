@@ -31,19 +31,20 @@ Chain strategy: feature-branch-chain
 
 ## Phase 1: Edición de transacciones
 
-- [ ] 1.1 RED: en `src-tauri/tests/commands_test.rs`, probar update exitoso sin duplicar, rechazo de `id` ajeno e `usuario_id` preservado.
-- [ ] 1.2 GREEN: agregar `cmd_update_transaccion_impl`, wrapper Tauri y registro en `src-tauri/src/commands.rs`, `repo.rs`, `lib.rs`.
-- [ ] 1.3 RED: en `src/data/__tests__/tauri-commands.test.ts`, exigir `cmd_update_transaccion` con `{ id, input }`.
-- [ ] 1.4 GREEN: exportar `actualizarTransaccion` desde `src/data/tauri-commands.ts`.
-- [ ] 1.5 RED: probar `ListaTransacciones`/`TransaccionForm` para editar, precargar, cancelar y validar datos inválidos.
-- [ ] 1.6 GREEN: cablear edición en `src/App.tsx`, `ListaTransacciones.tsx` y `TransaccionForm.tsx` con refetch.
+- [x] 1.1 RED: en `src-tauri/tests/commands_test.rs`, probar update exitoso sin duplicar, rechazo de `id` ajeno e `usuario_id` preservado.
+- [x] 1.2 GREEN: agregar `cmd_update_transaccion_impl`, wrapper Tauri y registro en `src-tauri/src/commands.rs`, `repo.rs`, `lib.rs`.
+- [x] 1.3 RED: en `src/data/__tests__/tauri-commands.test.ts`, exigir `cmd_update_transaccion` con `{ id, input }`.
+- [x] 1.4 GREEN: exportar `actualizarTransaccion` desde `src/data/tauri-commands.ts`.
+- [x] 1.5 RED: probar `ListaTransacciones`/`TransaccionForm` para editar, precargar, cancelar y validar datos inválidos.
+- [x] 1.6 GREEN: cablear edición en `src/App.tsx`, `ListaTransacciones.tsx` y `TransaccionForm.tsx` con refetch.
 
 ## Phase 2: Perfiles
 
-- [ ] 2.1 RED: backend para renombrar, eliminar con protección y filtrar mutations/listados por perfil activo.
-- [ ] 2.2 GREEN: implementar comandos de perfil e impedir cruces de `usuario_id` en `commands.rs`/repos.
+- [x] 2.1 RED: backend para renombrar, eliminar con protección y filtrar mutations/listados por perfil activo.
+- [x] 2.2 GREEN: implementar comandos de perfil e impedir cruces de `usuario_id` en `commands.rs`/repos.
 - [ ] 2.3 RED: wrappers TS y `SelectorPerfil` para crear, seleccionar, renombrar y cancelar eliminación.
 - [ ] 2.4 GREEN: actualizar `src/data/tauri-commands.ts`, `SelectorPerfil.tsx` y `App.tsx` usando `localStorage` como perfil activo.
+
 
 ## Phase 3: Modo mejorado
 
