@@ -34,7 +34,8 @@ pub fn run() {
             commands::cmd_eliminar_simulacion,
             commands::cmd_update_salario_objetivo,
             commands::cmd_update_transaccion,
-
+            commands::cmd_update_perfil,
+            commands::cmd_eliminar_perfil,
         ])
         .run(tauri::generate_context!())
         .expect("error al iniciar MVP Financiero");

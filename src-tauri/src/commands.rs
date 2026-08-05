@@ -316,6 +316,55 @@ pub async fn cmd_crear_perfil(
     cmd_crear_perfil_impl(&conn, input.nombre, input.salario_personal_objetivo_centavos)
 }
 
+/// Actualiza el nombre de un perfil existente.
+///
+/// Rechaza nombres vacíos o de solo espacios. Si el ID no existe, retorna Err.
+pub fn cmd_update_perfil_impl(conn: &Connection, id: i64, nombre: String) -> Result<(), String> {
+    let nombre = nombre.trim().to_string();
+    if nombre.is_empty() {
+        return Err("El nombre del perfil no puede estar vacío.".to_string());
+    }
+
+    let rows_affected = conn
+        .execute(
+            "UPDATE Usuarios SET nombre = ?1 WHERE id = ?2",
+            rusqlite::params![nombre, id],
+        )
+        .map_err(|e| format!("actualizando nombre de perfil: {e}"))?;
+
+    if rows_affected == 0 {
+        return Err(format!("perfil_id {} no encontrado", id));
+    }
+
+    Ok(())
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_update_perfil_impl`.
+#[tauri::command]
+pub async fn cmd_update_perfil(
+    app: tauri::AppHandle,
+    id: i64,
+    nombre: String,
+) -> Result<(), String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_update_perfil_impl(&conn, id, nombre)
+}
+
+/// Elimina un perfil y, por ON DELETE CASCADE en SQLite, todas sus
+/// transacciones y simulaciones asociadas.
+pub fn cmd_eliminar_perfil_impl(conn: &Connection, id: i64) -> Result<(), String> {
+    conn.execute("DELETE FROM Usuarios WHERE id = ?1", rusqlite::params![id])
+        .map_err(|e| format!("eliminando perfil: {e}"))?;
+    Ok(())
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_eliminar_perfil_impl`.
+#[tauri::command]
+pub async fn cmd_eliminar_perfil(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_eliminar_perfil_impl(&conn, id)
+}
+
 /// Devuelve UN perfil por id (lookup 1-a-1).
 ///
 /// `query_row` devuelve `Err` si no encuentra fila — eso se propaga como
