@@ -58,6 +58,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 import { invoke } from '@tauri-apps/api/core'
 import {
   actualizarSalarioObjetivo,
+  actualizarTransaccion,
   crearPerfil,
   eliminarSimulacion,
   eliminarTransaccion,
@@ -69,6 +70,7 @@ import {
   obtenerSimulaciones,
   upsertSimulacion,
   type ActualizarSalarioObjetivoInput,
+  type ActualizarTransaccionInput,
   type CategoriaDto,
   type CrearPerfilInput,
   type TransaccionCompletaDto,
@@ -590,5 +592,115 @@ describe('REQ-502-D1-3 / T-505: actualizarSalarioObjetivo IPC wrapper', () => {
     // El payload NO debe ser plano (regla del proyecto).
     expect(callArgs[1]).not.toHaveProperty('perfil_id')
     expect(callArgs[1]).not.toHaveProperty('salario_objetivo_centavos')
+  })
+})
+
+// ===========================================================================
+// Slice 12 (mvp-v2): REQ-V2-101 — wrapper `actualizarTransaccion`
+//
+// Shape pineado en design.md (contratos IPC):
+//   command : 'cmd_update_transaccion'
+//   payload : { payload: { id: number, usuarioId: number, input: TransaccionInputDto } }
+//
+// El Rust struct `UpdateTransaccionInput` usa `#[serde(rename_all = "camelCase")]`,
+// por lo que `usuario_id` → `usuarioId` en el JSON que cruza el IPC.
+//
+// El wrapper exporta:
+//   export interface ActualizarTransaccionInput {
+//     id: number
+//     usuarioId: number
+//     input: TransaccionInputDto
+//   }
+//   export async function actualizarTransaccion(
+//     payload: ActualizarTransaccionInput,
+//   ): Promise<TransaccionCompletaDto>
+//
+// RED PHASE: `actualizarTransaccion` y `ActualizarTransaccionInput` NO
+// existen aún en `../tauri-commands`. `pnpm test` DEBE fallar en el
+// typecheck de este módulo. Ese es el estado RED esperado.
+// ===========================================================================
+
+describe('REQ-V2-101 / Slice 12: actualizarTransaccion IPC wrapper', () => {
+  // REQ-V2-101 (Scenario "Edición exitosa"):
+  // `actualizarTransaccion(payload)` MUST call `cmd_update_transaccion`
+  // with the full payload wrapped under the `payload` key (matching the
+  // Rust `#[tauri::command] pub async fn cmd_update_transaccion(payload: UpdateTransaccionInput)`).
+  // The Rust struct fields are camelCase in the JSON (`usuarioId`, not `usuario_id`)
+  // because the struct is annotated with `#[serde(rename_all = "camelCase")]`.
+  //
+  // Given: a valid ActualizarTransaccionInput and a mock that resolves
+  //        to a hydrated TransaccionCompletaDto.
+  // When:  `actualizarTransaccion({ id, usuarioId, input })` is invoked.
+  // Then:  `invoke` is called exactly once with `'cmd_update_transaccion'`
+  //        and `{ payload: { id, usuarioId, input } }`.
+  it('actualizarTransaccion invokes cmd_update_transaccion with wrapped payload', async () => {
+    const inputDto: TransaccionInputDto = {
+      tipo_flujo: 'Gasto',
+      categoria_id: 6,
+      concepto: 'Internet actualizado',
+      frecuencia: 'Mensual',
+      comportamiento: 'Fijo',
+      naturaleza_necesidad: 'Necesario',
+      valor_centavos: 999_000,
+    }
+    const fakeDto: TransaccionCompletaDto = {
+      id: 7,
+      usuario_id: 1,
+      tipo_flujo: 'Gasto',
+      categoria_id: 6,
+      categoria_nombre: 'Hogar',
+      concepto: 'Internet actualizado',
+      frecuencia: 'Mensual',
+      comportamiento: 'Fijo',
+      naturaleza_necesidad: 'Necesario',
+      valor_centavos: 999_000,
+      created_at: 1700000000,
+      updated_at: 1700000001,
+    }
+    invokeMock.mockResolvedValueOnce(fakeDto)
+
+    const payload: ActualizarTransaccionInput = { id: 7, usuarioId: 1, input: inputDto }
+    const result = await actualizarTransaccion(payload)
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_update_transaccion', { payload })
+    const callArgs = invokeMock.mock.calls[0]
+    expect(callArgs[0]).toBe('cmd_update_transaccion')
+    expect(callArgs[1]).toEqual({ payload })
+    // Payload MUST NOT be flattened at the root level.
+    expect(callArgs[1]).not.toHaveProperty('id')
+    expect(callArgs[1]).not.toHaveProperty('usuarioId')
+    expect(result).toEqual(fakeDto)
+    expect(result.valor_centavos).toBe(999_000)
+  })
+
+  // REQ-V2-101 (error propagation):
+  // `actualizarTransaccion` MUST propagate the Err from the backend
+  // (e.g. foreign-id rejection) without swallowing it.
+  //
+  // Given: a mock that rejects with an ownership error string.
+  // When:  `actualizarTransaccion` is called.
+  // Then:  the returned Promise rejects with the same error.
+  it('actualizarTransaccion propagates backend errors', async () => {
+    const boom = new Error('update transaccion: id=7 pertenece al usuario 2, no al usuario 1')
+    invokeMock.mockRejectedValueOnce(boom)
+
+    const payload: ActualizarTransaccionInput = {
+      id: 7,
+      usuarioId: 1,
+      input: {
+        tipo_flujo: 'Gasto',
+        categoria_id: 6,
+        concepto: 'Internet',
+        frecuencia: 'Mensual',
+        comportamiento: 'Fijo',
+        naturaleza_necesidad: 'Necesario',
+        valor_centavos: 1,
+      },
+    }
+
+    await expect(actualizarTransaccion(payload)).rejects.toBe(boom)
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_update_transaccion', { payload })
   })
 })
