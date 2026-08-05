@@ -33,6 +33,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Component, type ReactNode } from 'react'
 import {
+  actualizarTransaccion,
   eliminarSimulacion,
   eliminarTransaccion,
   actualizarSalarioObjetivo,
@@ -234,6 +235,9 @@ function App(): JSX.Element {
   // siguiente entrada arranca pre-llenada (bug UX).
   const [formKey, setFormKey] = useState<number>(0)
 
+  // Slice 12 (REQ-V2-101): transacción en edición. `null` = modo creación.
+  const [transaccionEditando, setTransaccionEditando] = useState<TransaccionCompletaDto | null>(null)
+
   // Slice 8: refetch helper. Reutilizado en mount + post-insert + post-delete.
   // El flag `cancelado` evita `setState` si el componente se desmonta
   // mientras la promesa está en vuelo (cleanup del `useEffect`).
@@ -417,6 +421,42 @@ function App(): JSX.Element {
     }
   }
 
+  // Slice 12 (REQ-V2-101): handler de editar. Carga la transacción en el
+  // form sin IPC — los datos ya están en `transacciones`.
+  const handleEditar = (id: number): void => {
+    const tx = transacciones.find((t) => t.id === id) ?? null
+    setTransaccionEditando(tx)
+    // Scroll suave al form para que el usuario vea que se pre-llenó.
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Slice 12 (REQ-V2-101): handler de guardar edición. Llama al IPC de
+  // update, refresca la lista y vuelve al modo creación.
+  const handleGuardarEdicion = async (input: TransaccionInput): Promise<void> => {
+    if (transaccionEditando === null || perfilActivo === null) return
+    try {
+      await actualizarTransaccion({
+        id: transaccionEditando.id,
+        usuarioId: perfilActivo,
+        input: input as TransaccionInputDto,
+      })
+      // eslint-disable-next-line no-console
+      console.log('Transaccion actualizada:', transaccionEditando.id)
+      setTransaccionEditando(null)
+      setFormKey((k) => k + 1)
+      await refetchTransacciones()
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Error actualizando transacción:', e)
+    }
+  }
+
+  // Slice 12 (REQ-V2-101): handler de cancelar edición.
+  const handleCancelarEdicion = (): void => {
+    setTransaccionEditando(null)
+    setFormKey((k) => k + 1)
+  }
+
   // Slice 11: handler de upsert de propuesta del Simulador.
   // El panel ya hace el debounce de 300 ms — acá sólo recibimos el
   // último valor propuesto por el usuario. Refetch al final para que
@@ -488,8 +528,16 @@ function App(): JSX.Element {
         ) : null}
 
         <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="mb-4 text-xl font-semibold text-slate-800">Nueva transacción</h2>
-          <TransaccionForm key={formKey} categorias={categoriasParaForm} onSubmit={handleSubmit} />
+          <h2 className="mb-4 text-xl font-semibold text-slate-800">
+            {transaccionEditando ? 'Editar transacción' : 'Nueva transacción'}
+          </h2>
+          <TransaccionForm
+            key={formKey}
+            categorias={categoriasParaForm}
+            onSubmit={transaccionEditando ? handleGuardarEdicion : handleSubmit}
+            initialValue={transaccionEditando ?? undefined}
+            onCancelar={transaccionEditando ? handleCancelarEdicion : undefined}
+          />
         </div>
 
         {/* Status panel: feedback inmediato al usuario sobre el submit. */}
@@ -589,6 +637,7 @@ function App(): JSX.Element {
                 transacciones={transacciones}
                 cargando={cargandoTransacciones}
                 onEliminar={handleEliminar}
+                onEditar={handleEditar}
               />
             ) : null}
             {tabActiva === 'presupuesto' ? (

@@ -29,12 +29,14 @@ interface ListaTransaccionesProps {
   transacciones: TransaccionCompletaDto[]
   cargando: boolean
   onEliminar: (id: number) => Promise<void> | void
+  onEditar: (id: number) => void
 }
 
 export function ListaTransacciones({
   transacciones,
   cargando,
   onEliminar,
+  onEditar,
 }: ListaTransaccionesProps): JSX.Element {
   if (cargando) {
     return (
@@ -104,6 +106,14 @@ export function ListaTransacciones({
               </td>
               <td className="px-4 py-2 text-sm text-slate-600">{t.categoria_nombre}</td>
               <td className="px-4 py-2 text-right">
+                <button
+                  type="button"
+                  data-testid={`editar-${t.id}`}
+                  onClick={() => onEditar(t.id)}
+                  className="mr-3 text-xs text-slate-600 hover:text-slate-900"
+                >
+                  Editar
+                </button>
                 <button
                   type="button"
                   data-testid={`eliminar-${t.id}`}
