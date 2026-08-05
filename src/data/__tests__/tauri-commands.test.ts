@@ -139,14 +139,15 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     expect(newId).toBe(42)
   })
 
-  it('slice7_insertar_transaccion_wraps_payload_in_input_key_not_flattened', async () => {
+  it('slice7_insertar_transaccion_wraps_input_in_payload_object', async () => {
     const payload: TransaccionInputDto = {
-      tipo_flujo: 'Gasto',
+      usuario_id: 1, // REQ-V2-102: aislar por perfil
+      tipo_flujo: 'Ingreso',
       categoria_id: 1,
-      concepto: 'Test',
+      concepto: 'Salario',
       frecuencia: 'Mensual',
-      comportamiento: 'Fijo',
-      naturaleza_necesidad: 'Necesario',
+      comportamiento: null,
+      naturaleza_necesidad: null,
       valor_centavos: 100_000,
     }
     invokeMock.mockResolvedValueOnce(42)
@@ -161,11 +162,12 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     expect(callArgs[1]).not.toHaveProperty('valor_centavos')
   })
 
+
   it('slice7_listar_transacciones_invokes_cmd_listar_transacciones', async () => {
     const fakeList = [
       {
         id: 7,
-        usuario_id: 1,
+        usuario_id: 99,
         tipo_flujo: 'Gasto' as const,
         categoria_id: 6,
         categoria_nombre: 'Hogar',
@@ -180,10 +182,10 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     ]
     invokeMock.mockResolvedValueOnce(fakeList)
 
-    const result = await listarTransacciones()
+    const result = await listarTransacciones(99) // REQ-V2-102: pasamos el ID
 
     expect(invokeMock).toHaveBeenCalledTimes(1)
-    expect(invokeMock).toHaveBeenCalledWith('cmd_listar_transacciones')
+    expect(invokeMock).toHaveBeenCalledWith('cmd_listar_transacciones', { usuarioId: 99 })
     expect(result).toEqual(fakeList)
     expect(result[0]?.concepto).toBe('Internet')
   })
@@ -193,6 +195,7 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     invokeMock.mockRejectedValueOnce(boom)
 
     const input: TransaccionInputDto = {
+      usuario_id: 1,
       tipo_flujo: 'Gasto',
       categoria_id: 6,
       concepto: 'Internet',
@@ -201,6 +204,7 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
       naturaleza_necesidad: 'Necesario',
       valor_centavos: 0,
     }
+
 
     await expect(insertarTransaccion(input)).rejects.toBe(boom)
     expect(invokeMock).toHaveBeenCalledTimes(1)

@@ -242,9 +242,14 @@ function App(): JSX.Element {
   // El flag `cancelado` evita `setState` si el componente se desmonta
   // mientras la promesa está en vuelo (cleanup del `useEffect`).
   const refetchTransacciones = async (cancelado: { v: boolean } = { v: false }): Promise<void> => {
+    if (perfilActivo === null) {
+      setTransacciones([])
+      setCargandoTransacciones(false)
+      return
+    }
     setCargandoTransacciones(true)
     try {
-      const txs = await listarTransacciones()
+      const txs = await listarTransacciones(perfilActivo)
       if (!cancelado.v) {
         setTransacciones(txs)
       }
@@ -389,7 +394,13 @@ function App(): JSX.Element {
     setErrorSubmit(null)
     setIdInsertado(null)
     try {
-      const payload: TransaccionInputDto = t
+      if (perfilActivo === null) throw new Error('No hay perfil activo')
+      
+      const payload: TransaccionInputDto = {
+        ...t,
+        usuario_id: perfilActivo
+      }
+      
       const id = await insertarTransaccion(payload)
       // eslint-disable-next-line no-console
       console.log('Transaccion persistida con id:', id)

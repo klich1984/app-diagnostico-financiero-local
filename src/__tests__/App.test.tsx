@@ -116,7 +116,12 @@ beforeEach(() => {
   // Reset the mock so call counts + queued resolutions don't leak
   // between tests.
   invokeMock.mockReset()
+
+  // REQ-V2-102: Ensure tests run with an active profile so the form
+  // can submit successfully without "No hay perfil activo" error.
+  localStorage.setItem('mvp-fin:perfil-activo', '1')
 })
+
 
 afterEach(() => {
   act(() => {
@@ -124,7 +129,9 @@ afterEach(() => {
   })
   container.remove()
   vi.restoreAllMocks()
+  localStorage.clear()
 })
+
 
 describe('App: form reset after successful submit', () => {
   // Behavior contract: after a successful insert + refetch, the form's

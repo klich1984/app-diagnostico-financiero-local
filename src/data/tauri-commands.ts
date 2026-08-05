@@ -55,6 +55,7 @@ export interface CategoriaDto {
  * activo; eso es responsabilidad del backend.
  */
 export interface TransaccionInputDto {
+  usuario_id: number
   tipo_flujo: 'Ingreso' | 'Gasto'
   categoria_id: number
   concepto: string
@@ -136,8 +137,8 @@ export async function insertarTransaccion(input: TransaccionInputDto): Promise<n
  * necesita pasarlo. Orden: `created_at DESC, id DESC` (la más reciente
  * primero), igual que el reporte de Excel fuente.
  */
-export async function listarTransacciones(): Promise<TransaccionCompletaDto[]> {
-  return invoke<TransaccionCompletaDto[]>('cmd_listar_transacciones')
+export async function listarTransacciones(usuarioId: number): Promise<TransaccionCompletaDto[]> {
+  return invoke<TransaccionCompletaDto[]>('cmd_listar_transacciones', { usuarioId })
 }
 
 /**
