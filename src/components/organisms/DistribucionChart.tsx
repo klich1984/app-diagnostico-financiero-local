@@ -85,6 +85,7 @@ function renderPorcentajeLabel(entry: PieLabelRenderProps): string {
   // `entry` contiene el spread del payload original, así que
   // `porcentaje` está disponible sin recalcular.
   const porcentaje = (entry as unknown as { porcentaje: number }).porcentaje
+  if (porcentaje < 5) return ''
   return `${porcentaje.toFixed(1)}%`
 }
 
@@ -115,20 +116,10 @@ export function DistribucionChart({
       className="rounded-md border border-slate-200 bg-white p-4"
     >
       <h3 className="text-sm font-medium text-slate-700">{titulo}</h3>
-      <div className="mt-2 h-64">
+      <div className="mt-2 h-80">
         <ResponsiveContainer
-          width={300}
-          height={256}
-          // En jsdom `ResizeObserver` no se dispara y
-          // `getBoundingClientRect()` devuelve `0x0`, por lo que el
-          // container por defecto `"100%" / "100%"` colapsa a 0x0 y
-          // `PieChart` no emite ningún `path.recharts-sector`. Pasamos
-          // dimensiones NUMÉRICAS explícitas para que `calculateChartDimensions`
-          // las tome como literales (`isPercent(300) === false`) y el
-          // chart renderice tanto en tests (jsdom) como en browser —
-          // visualmente equivalente porque el `<div>` padre ya fija la
-          // altura con `h-64` (256 px) y el chart ocupa el 100% del
-          // ancho disponible.
+          width={320}
+          height={320}
         >
           <PieChart>
             <Pie
@@ -136,8 +127,8 @@ export function DistribucionChart({
               dataKey="value"
               nameKey="name"
               cx="50%"
-              cy="50%"
-              outerRadius={80}
+              cy="40%"
+              outerRadius={60}
               label={renderPorcentajeLabel}
               isAnimationActive={false}
             >
@@ -146,7 +137,7 @@ export function DistribucionChart({
               ))}
             </Pie>
             <Tooltip formatter={formatearValorTooltip} />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '12px' }} />
           </PieChart>
         </ResponsiveContainer>
       </div>

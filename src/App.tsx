@@ -461,7 +461,7 @@ function App(): JSX.Element {
   return (
     <AppErrorBoundary>
       <main className="min-h-screen bg-slate-50 p-8">
-      <section className="mx-auto max-w-2xl">
+      <section className="mx-auto max-w-5xl">
         <h1 className="mb-2 text-3xl font-bold text-slate-900">Diagnostico Financiero Local</h1>
         <p className="mb-8 text-slate-600">
           Aplicación local-first para gestión financiera personal.
