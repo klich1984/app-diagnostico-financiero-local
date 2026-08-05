@@ -60,7 +60,8 @@ use app_diagnostico_financiero_local_lib::commands::{
     cmd_crear_perfil_impl, cmd_eliminar_simulacion_impl, cmd_eliminar_transaccion_impl,
     cmd_insert_transaccion_impl, cmd_listar_simulaciones_impl, cmd_listar_transacciones_impl,
     cmd_obtener_categorias_impl, cmd_obtener_perfil_impl, cmd_obtener_perfiles_impl,
-    cmd_upsert_simulacion_impl, CategoriaDto, SimulacionCompletaDto, UsuarioDto,
+    cmd_update_transaccion_impl, cmd_upsert_simulacion_impl, CategoriaDto, SimulacionCompletaDto,
+    UsuarioDto,
 };
 use app_diagnostico_financiero_local_lib::migrations::apply_all;
 use app_diagnostico_financiero_local_lib::transacciones::repo::{
@@ -620,5 +621,122 @@ fn req_602_cmd_eliminar_simulacion_removes_row() {
     assert!(
         sims.is_empty(),
         "REQ-602: after cmd_eliminar_simulacion_impl the listing MUST be empty"
+    );
+}
+
+// ===========================================================================
+// Slice 12 (mvp-v2): REQ-V2-101 — Edición de transacciones
+// ===========================================================================
+//
+// Surface tests para el nuevo comando:
+//
+//   * `cmd_update_transaccion_impl(
+//         &Connection,
+//         id: i64,
+//         usuario_id: i64,
+//         input: &TransaccionInput,
+//     ) -> Result<TransaccionCompletaDto, String>`
+//
+// Contratos (del design.md):
+//   * Actualiza sin duplicar: mismo `id`, misma `usuario_id`, mismo
+//     `created_at`, sin nueva fila.
+//   * Rechaza `id` ajeno al perfil activo (otro `usuario_id`).
+//   * Conserva `usuario_id` del propietario original; no permite
+//     reasignarlo.
+//
+// RED PHASE: este bloque referencia `cmd_update_transaccion_impl` que
+// NO existe aún en `crate::commands`. `cargo test --no-run` DEBE fallar
+// por símbolo no resuelto. Ese es el estado RED esperado.
+//
+// ===========================================================================
+
+/// REQ-V2-101 (Scenario "Edición exitosa"):
+/// `cmd_update_transaccion_impl` MUST update the row in place without
+/// inserting a new one. After the call, `lista` still has exactly 1 row,
+/// the id is the same, and `valor_centavos` reflects the new value.
+///
+/// Given: a freshly inserted Gasto owned by `usuario_id`.
+/// When:  `cmd_update_transaccion_impl` is called with the same id and a
+///        new `valor_centavos = 999_000`.
+/// Then:  the returned DTO carries `valor_centavos == 999_000` AND
+///        `id == original_id` AND the total row count is still 1.
+#[test]
+fn req_v2_101_cmd_update_transaccion_updates_in_place() {
+    let (conn, usuario_id) = fresh_db_with_user();
+    let categoria_id = categoria_id_for(&conn, "Gasto");
+
+    let original = gasto_input(usuario_id, categoria_id, 150_000);
+    let id = cmd_insert_transaccion_impl(&conn, &original)
+        .expect("insert before update must succeed");
+
+    let updated_input = gasto_input(usuario_id, categoria_id, 999_000);
+    let dto = cmd_update_transaccion_impl(&conn, id, usuario_id, &updated_input)
+        .expect("REQ-V2-101: update with valid id and owner must succeed");
+
+    assert_eq!(
+        dto.id, id,
+        "REQ-V2-101: cmd_update_transaccion_impl must NOT change the row id"
+    );
+    assert_eq!(
+        dto.valor_centavos, 999_000,
+        "REQ-V2-101: cmd_update_transaccion_impl must persist the new valor_centavos"
+    );
+    assert_eq!(
+        dto.usuario_id, usuario_id,
+        "REQ-V2-101: cmd_update_transaccion_impl must preserve the original usuario_id"
+    );
+
+    let all = cmd_listar_transacciones_impl(&conn, usuario_id)
+        .expect("list after update must succeed");
+    assert_eq!(
+        all.len(),
+        1,
+        "REQ-V2-101: update must NOT insert a duplicate row (still exactly 1 row)"
+    );
+}
+
+/// REQ-V2-101 (Scenario "Edición inválida — id ajeno"):
+/// `cmd_update_transaccion_impl` MUST return `Err(_)` when the given `id`
+/// belongs to a different `usuario_id`. No row is mutated.
+///
+/// Given: a transaction owned by `otro_id`; caller passes `usuario_id` (Yo).
+/// When:  `cmd_update_transaccion_impl(&conn, tx_id, usuario_id, &input)`.
+/// Then:  the call returns `Err(_)` AND the original row's
+///        `valor_centavos` is unchanged.
+#[test]
+fn req_v2_101_cmd_update_transaccion_rejects_foreign_id() {
+    let (conn, yo_id) = fresh_db_with_user();
+    let otro_id: i64 = conn
+        .execute(
+            "INSERT INTO Usuarios (nombre) VALUES (?1)",
+            rusqlite::params!["Otro"],
+        )
+        .map(|_| conn.last_insert_rowid())
+        .expect("insert second usuario");
+
+    let categoria_id = categoria_id_for(&conn, "Gasto");
+    let input = gasto_input(otro_id, categoria_id, 500_000);
+    let tx_id = cmd_insert_transaccion_impl(&conn, &input)
+        .expect("insert tx for Otro must succeed");
+
+    // Attempt to update a row owned by `otro_id` while passing `yo_id`.
+    let result =
+        cmd_update_transaccion_impl(&conn, tx_id, yo_id, &gasto_input(yo_id, categoria_id, 1));
+    assert!(
+        result.is_err(),
+        "REQ-V2-101: cmd_update_transaccion_impl MUST reject an id that belongs to a different usuario"
+    );
+
+    // Original row must remain untouched.
+    let original_valor: i64 = conn
+        .query_row(
+            "SELECT valor_centavos FROM Transacciones WHERE id = ?1",
+            rusqlite::params![tx_id],
+            |r| r.get(0),
+        )
+        .expect("original row must still exist");
+    assert_eq!(
+        original_valor, 500_000,
+        "REQ-V2-101: a rejected update MUST NOT mutate the original valor_centavos"
     );
 }

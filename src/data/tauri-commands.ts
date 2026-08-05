@@ -351,3 +351,45 @@ export async function actualizarSalarioObjetivo(
 ): Promise<void> {
   await invoke<void>('cmd_update_salario_objetivo', { input })
 }
+
+// ===========================================================================
+// Slice 12 (mvp-v2): REQ-V2-101 — wrapper `actualizarTransaccion`.
+//
+// El Rust struct `UpdateTransaccionInput` usa `#[serde(rename_all = "camelCase")]`,
+// por lo que los campos cruzan el IPC como camelCase: `usuarioId`, no
+// `usuario_id`. El nombre del parámetro Rust es `payload`, así que el
+// payload se envuelve bajo la key `payload` (distinto a los wrappers que
+// usan `input` — aquí el parámetro Rust se llama `payload` expresamente).
+// ===========================================================================
+
+/**
+ * Input para editar una transacción existente.
+ *
+ * Los campos camelCase (`usuarioId`) coinciden con el struct Rust
+ * `UpdateTransaccionInput` anotado con `#[serde(rename_all = "camelCase")]`.
+ * El backend valida que el `id` pertenezca al `usuarioId` antes de
+ * persistir el cambio (guarda de ownership, REQ-V2-101 + REQ-603).
+ */
+export interface ActualizarTransaccionInput {
+  id: number
+  usuarioId: number
+  input: TransaccionInputDto
+}
+
+/**
+ * Actualiza una transacción existente y devuelve la fila hidratada.
+ *
+ * El backend valida ownership (`id` debe pertenecer a `usuarioId`) antes
+ * de persistir — si no, la promesa rechaza con un mensaje descriptivo.
+ * La UI debe envolver la llamada en try/catch y refrescar la lista tras
+ * una edición exitosa.
+ *
+ * Contrato IPC: `invoke('cmd_update_transaccion', { payload: { id, usuarioId, input } })`
+ * con el objeto completo bajo la key `payload` (nombre del parámetro Rust).
+ */
+export async function actualizarTransaccion(
+  payload: ActualizarTransaccionInput,
+): Promise<TransaccionCompletaDto> {
+  return invoke<TransaccionCompletaDto>('cmd_update_transaccion', { payload })
+}
+
