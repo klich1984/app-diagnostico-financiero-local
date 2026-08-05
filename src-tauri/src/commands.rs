@@ -604,3 +604,79 @@ pub async fn cmd_update_salario_objetivo(
     let conn = db::abrir_conexion(&app)?;
     cmd_update_salario_objetivo_impl(&conn, &input)
 }
+
+// ===========================================================================
+// Slice 12 (mvp-v2): REQ-V2-101 — Edición de transacciones.
+// ===========================================================================
+//
+// Comando nuevo:
+//
+//   * `cmd_update_transaccion_impl(conn, id, usuario_id, input)`
+//     — actualiza la fila en su lugar sin duplicarla;
+//     — rechaza `id` que no pertenezca al `usuario_id` activo;
+//     — devuelve la fila hidratada (Transaccion) para que la UI pueda
+//       refrescar en local sin un segundo round-trip.
+//
+// El wrapper Tauri `cmd_update_transaccion` recibe `id` + `input` del
+// frontend; resuelve `usuario_id` desde el payload (el frontend lo envía
+// como parte del `UpdateTransaccionInput`, pineado en el wrapper TS).
+//
+// ===========================================================================
+
+/// Input del comando `cmd_update_transaccion`.
+///
+/// El frontend envía `{ id, input: TransaccionInput }` donde `input`
+/// ya incluye los campos editados. `usuario_id` lo manda el frontend
+/// desde su estado local (perfil activo en localStorage) para que el
+/// backend pueda validar ownership sin una segunda query.
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateTransaccionInput {
+    pub id: i64,
+    pub usuario_id: i64,
+    pub input: repo::TransaccionInput,
+}
+
+/// Actualiza una transacción existente y devuelve la fila hidratada.
+///
+/// Reglas (REQ-V2-101 + design.md):
+///   * El `id` DEBE pertenecer al `usuario_id` activo — si no, retorna
+///     `Err` con mensaje descriptivo (defensa en profundidad contra
+///     cross-profile mutation, REQ-603).
+///   * La actualización NO cambia `id`, `usuario_id` ni `created_at`;
+///     solo los campos editables del `TransaccionInput`.
+///   * `repo::update` aplica el trigger `trg_transacciones_updated_at`
+///     que refresca `updated_at` automáticamente.
+pub fn cmd_update_transaccion_impl(
+    conn: &Connection,
+    id: i64,
+    usuario_id: i64,
+    input: &repo::TransaccionInput,
+) -> Result<repo::Transaccion, String> {
+    // Verificar ownership antes de tocar nada.
+    let owner_id: i64 = conn
+        .query_row(
+            "SELECT usuario_id FROM Transacciones WHERE id = ?1",
+            [id],
+            |row| row.get(0),
+        )
+        .map_err(|e| format!("update transaccion: id={id} no existe: {e}"))?;
+
+    if owner_id != usuario_id {
+        return Err(format!(
+            "update transaccion: id={id} pertenece al usuario {owner_id}, no al usuario {usuario_id}"
+        ));
+    }
+
+    repo::update(conn, id, input).map_err(|e| format!("update transaccion id={id}: {e}"))
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_update_transaccion_impl`.
+#[tauri::command]
+pub async fn cmd_update_transaccion(
+    app: tauri::AppHandle,
+    payload: UpdateTransaccionInput,
+) -> Result<repo::Transaccion, String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_update_transaccion_impl(&conn, payload.id, payload.usuario_id, &payload.input)
+}
