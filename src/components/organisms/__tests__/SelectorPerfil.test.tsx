@@ -208,3 +208,150 @@ describe('REQ-501 / Slice 9: SelectorPerfil organism', () => {
     expect(createBtn).not.toBeNull()
   })
 })
+
+// ===========================================================================
+// REQ-V2-102 / Phase 2.3: Profile Management UI (rename + delete)
+// ===========================================================================
+//
+// These tests extend the SelectorPerfil organism with management actions.
+// The component receives two NEW optional callbacks:
+//
+//   onRenombrar?: (id: number, nuevoNombre: string) => void
+//   onEliminar?:  (id: number) => void
+//
+// When provided, each profile row renders:
+//   * `data-testid="boton-renombrar-perfil"` — triggers inline rename
+//   * `data-testid="boton-eliminar-perfil"` — calls onEliminar(id)
+//
+// The inline rename flow:
+//   1. Click "Renombrar" → row transforms into an input + "Guardar" button
+//   2. `data-testid="input-renombrar-perfil"` — the text input (pre-filled)
+//   3. `data-testid="boton-guardar-renombrar"` — confirms the rename
+//   4. Click "Guardar" → calls onRenombrar(id, newName)
+//
+// RED PHASE: the component does NOT implement these yet. All tests below
+// MUST FAIL until the GREEN phase lands.
+
+/// Helper: type a value into a controlled text input using the native
+/// setter trick (mirrors the pattern from TransaccionForm.test.tsx).
+function typeInto(input: HTMLInputElement, raw: string): void {
+  const nativeSetter = Object.getOwnPropertyDescriptor(
+    window.HTMLInputElement.prototype,
+    'value',
+  )?.set
+  nativeSetter?.call(input, raw)
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+}
+
+describe('REQ-V2-102: SelectorPerfil profile management', () => {
+  it('renders rename and delete buttons for each profile when callbacks are provided', () => {
+    act(() => {
+      root.render(
+        <SelectorPerfil
+          perfiles={samplePerfiles}
+          onSeleccionar={() => {}}
+          cargando={false}
+          onRenombrar={() => {}}
+          onEliminar={() => {}}
+        />,
+      )
+    })
+
+    const renameButtons = container.querySelectorAll('[data-testid="boton-renombrar-perfil"]')
+    const deleteButtons = container.querySelectorAll('[data-testid="boton-eliminar-perfil"]')
+
+    expect(renameButtons.length).toBe(2)
+    expect(deleteButtons.length).toBe(2)
+  })
+
+  it('does NOT render rename/delete buttons when callbacks are absent', () => {
+    act(() => {
+      root.render(
+        <SelectorPerfil
+          perfiles={samplePerfiles}
+          onSeleccionar={() => {}}
+          cargando={false}
+        />,
+      )
+    })
+
+    const renameButtons = container.querySelectorAll('[data-testid="boton-renombrar-perfil"]')
+    const deleteButtons = container.querySelectorAll('[data-testid="boton-eliminar-perfil"]')
+
+    expect(renameButtons.length).toBe(0)
+    expect(deleteButtons.length).toBe(0)
+  })
+
+  it('calls onEliminar with the correct profile id when delete is clicked', async () => {
+    const onEliminar = vi.fn()
+
+    await act(async () => {
+      root.render(
+        <SelectorPerfil
+          perfiles={samplePerfiles}
+          onSeleccionar={() => {}}
+          cargando={false}
+          onRenombrar={() => {}}
+          onEliminar={onEliminar}
+        />,
+      )
+    })
+
+    const deleteButtons = container.querySelectorAll('[data-testid="boton-eliminar-perfil"]')
+    expect(deleteButtons.length).toBe(2)
+
+    // Click delete on the second profile (Maria, id=2)
+    await act(async () => {
+      ;(deleteButtons[1] as HTMLButtonElement).click()
+    })
+
+    expect(onEliminar).toHaveBeenCalledTimes(1)
+    expect(onEliminar).toHaveBeenCalledWith(2)
+  })
+
+  it('enters inline rename mode and calls onRenombrar with new name', async () => {
+    const onRenombrar = vi.fn()
+
+    await act(async () => {
+      root.render(
+        <SelectorPerfil
+          perfiles={samplePerfiles}
+          onSeleccionar={() => {}}
+          cargando={false}
+          onRenombrar={onRenombrar}
+          onEliminar={() => {}}
+        />,
+      )
+    })
+
+    // Click rename on the first profile (Yo, id=1)
+    const renameButtons = container.querySelectorAll('[data-testid="boton-renombrar-perfil"]')
+    await act(async () => {
+      ;(renameButtons[0] as HTMLButtonElement).click()
+    })
+
+    // The row should now show an input pre-filled with the current name
+    const input = container.querySelector<HTMLInputElement>(
+      '[data-testid="input-renombrar-perfil"]',
+    )
+    expect(input).not.toBeNull()
+    expect(input!.value).toBe('Yo')
+
+    // Type a new name
+    await act(async () => {
+      typeInto(input!, 'Carlos')
+    })
+
+    // Click "Guardar"
+    const saveButton = container.querySelector<HTMLButtonElement>(
+      '[data-testid="boton-guardar-renombrar"]',
+    )
+    expect(saveButton).not.toBeNull()
+    await act(async () => {
+      saveButton!.click()
+    })
+
+    expect(onRenombrar).toHaveBeenCalledTimes(1)
+    expect(onRenombrar).toHaveBeenCalledWith(1, 'Carlos')
+  })
+})

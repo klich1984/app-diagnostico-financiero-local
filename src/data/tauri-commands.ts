@@ -226,8 +226,27 @@ export async function obtenerPerfil(id: number): Promise<UsuarioDto> {
   return invoke<UsuarioDto>('cmd_obtener_perfil', { id })
 }
 
+/**
+ * Renames an existing profile.
+ *
+ * Contrato IPC: `invoke('cmd_update_perfil', { id, nuevoNombre })`
+ */
+export async function renombrarPerfil(id: number, nuevoNombre: string): Promise<void> {
+  return invoke<void>('cmd_update_perfil', { id, nuevoNombre })
+}
+
+/**
+ * Deletes a profile and all associated data (CASCADE).
+ *
+ * Contrato IPC: `invoke('cmd_eliminar_perfil', { id })`
+ */
+export async function eliminarPerfil(id: number): Promise<void> {
+  return invoke<void>('cmd_eliminar_perfil', { id })
+}
+
 // ===========================================================================
 // Slice 11: REQ-602 + REQ-603 — wrappers para los 3 comandos del Simulador.
+
 //
 // Las keys de payload usan camelCase para `input` (renombrado por serde
 // en el struct `UpsertSimulacionInput` del lado Rust) y top-level snake_case
