@@ -229,10 +229,10 @@ export async function obtenerPerfil(id: number): Promise<UsuarioDto> {
 /**
  * Renames an existing profile.
  *
- * Contrato IPC: `invoke('cmd_update_perfil', { id, nuevoNombre })`
+ * Contrato IPC: `invoke('cmd_update_perfil', { id, nombre })`
  */
 export async function renombrarPerfil(id: number, nuevoNombre: string): Promise<void> {
-  return invoke<void>('cmd_update_perfil', { id, nuevoNombre })
+  return invoke<void>('cmd_update_perfil', { id, nombre: nuevoNombre })
 }
 
 /**

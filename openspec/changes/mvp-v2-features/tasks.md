@@ -43,7 +43,7 @@ Chain strategy: feature-branch-chain
 - [x] 2.1 RED: backend para renombrar, eliminar con protección y filtrar mutations/listados por perfil activo.
 - [x] 2.2 GREEN: implementar comandos de perfil e impedir cruces de `usuario_id` en `commands.rs`/repos.
 - [x] 2.3 RED: wrappers TS y `SelectorPerfil` para crear, seleccionar, renombrar y cancelar eliminación.
-- [ ] 2.4 GREEN: actualizar `src/data/tauri-commands.ts`, `SelectorPerfil.tsx` y `App.tsx` usando `localStorage` como perfil activo.
+- [x] 2.4 GREEN: actualizar `src/data/tauri-commands.ts`, `SelectorPerfil.tsx` y `App.tsx` usando `localStorage` como perfil activo.
 
 
 ## Phase 3: Modo mejorado

@@ -34,7 +34,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Component, type ReactNode } from 'react'
 import {
   actualizarTransaccion,
+  crearPerfil,
   eliminarSimulacion,
+  eliminarPerfil,
   eliminarTransaccion,
   actualizarSalarioObjetivo,
   insertarTransaccion,
@@ -42,6 +44,7 @@ import {
   obtenerCategorias,
   obtenerPerfiles,
   obtenerSimulaciones,
+  renombrarPerfil,
   upsertSimulacion,
   type CategoriaDto,
   type SimulacionCompletaDto,
@@ -384,6 +387,51 @@ function App(): JSX.Element {
     setMostrarSelector(true)
   }
 
+  // Task 2.4 (REQ-V2-102): rename a profile and refresh the list.
+  const handleRenombrarPerfil = async (id: number, nuevoNombre: string): Promise<void> => {
+    try {
+      await renombrarPerfil(id, nuevoNombre)
+      await cargarPerfiles()
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Error renombrando perfil:', e)
+    }
+  }
+
+  // Task 2.4 (REQ-V2-102): delete a profile.
+  // Guard: the active profile cannot be deleted — the user must switch
+  // first. A native confirm protects against accidental clicks.
+  const handleEliminarPerfil = async (id: number): Promise<void> => {
+    if (id === perfilActivo) {
+      window.alert('No se puede eliminar el perfil activo. Cambiá de perfil primero.')
+      return
+    }
+    if (!window.confirm('¿Eliminar este perfil? Esta acción no se puede deshacer.')) return
+    try {
+      await eliminarPerfil(id)
+      await cargarPerfiles()
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Error eliminando perfil:', e)
+    }
+  }
+
+  // Task 2.4 (REQ-V2-102): create a new profile and auto-select it.
+  // Salary defaults to 0 — the user can update it later from the
+  // Resultados tab (ModalSalarioObjetivo).
+  const handleCrearPerfil = async (nombre: string): Promise<void> => {
+    try {
+      const id = await crearPerfil({ nombre, salario_personal_objetivo_centavos: 0 })
+      await cargarPerfiles()
+      guardarPerfilActivo(id)
+      setPerfilActivo(id)
+      setMostrarSelector(false)
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Error creando perfil:', e)
+    }
+  }
+
   // Handler de submit: cruza la frontera del form → IPC → SQLite.
   // Conservamos el `console.log` original (debugging explícito del
   // usuario) y agregamos 2 logs nuevos: éxito con id y error de IPC.
@@ -395,12 +443,12 @@ function App(): JSX.Element {
     setIdInsertado(null)
     try {
       if (perfilActivo === null) throw new Error('No hay perfil activo')
-      
+
       const payload: TransaccionInputDto = {
         ...t,
         usuario_id: perfilActivo
       }
-      
+
       const id = await insertarTransaccion(payload)
       // eslint-disable-next-line no-console
       console.log('Transaccion persistida con id:', id)
@@ -719,6 +767,9 @@ function App(): JSX.Element {
           perfiles={perfiles}
           onSeleccionar={handleSeleccionarPerfil}
           cargando={cargandoPerfiles}
+          onRenombrar={handleRenombrarPerfil}
+          onEliminar={handleEliminarPerfil}
+          onCrear={handleCrearPerfil}
         />
       ) : null}
       </main>
