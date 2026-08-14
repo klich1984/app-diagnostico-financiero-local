@@ -10,10 +10,10 @@
 
 ## 1. Alcance
 
-| REQ     | Tareas   | Descripción corta                                                                              |
-| ------- | -------- | ---------------------------------------------------------------------------------------------- |
-| REQ-202 | T-202, T-203, T-205 | CRUD de transacciones (backend Rust) + formateo de input (frontend TS)            |
-| REQ-203 | T-204    | Motor de normalización temporal (frontend TS, decimal.js)                                     |
+| REQ     | Tareas              | Descripción corta                                                      |
+| ------- | ------------------- | ---------------------------------------------------------------------- |
+| REQ-202 | T-202, T-203, T-205 | CRUD de transacciones (backend Rust) + formateo de input (frontend TS) |
+| REQ-203 | T-204               | Motor de normalización temporal (frontend TS, decimal.js)              |
 
 Las dos épicas del slice se reparten en dos lenguajes porque la
 arquitectura ya está fijada (ver `design.md` §1, regla #2 "Cálculo en el
@@ -43,26 +43,26 @@ src/components/molecules/
 Total: **4 archivos de test, 24 tests** distribuidos en 3 archivos
 nuevos más uno extendido.
 
-| Archivo                                  | REQ     | Tests | Estado RED                                          |
-| ---------------------------------------- | ------- | ----- | --------------------------------------------------- |
-| `src-tauri/tests/transacciones_repo_test.rs`  | REQ-202 | 7     | COMPILE-FAIL: `transacciones::repo` no declarado    |
-| `src/domain/normalizacion/__tests__/index.test.ts`     | REQ-203 | 8     | IMPORT-FAIL: `src/domain/normalizacion/index.ts` ausente |
-| `src/domain/precision/__tests__/money-form.test.ts`   | REQ-202 | 5     | RUNTIME-FAIL: `parseAmount`, `toCentavos`, `formatCentavos` son `undefined` |
-| `src/components/molecules/__tests__/TransaccionForm.test.tsx` | REQ-202 | 4     | IMPORT-FAIL: `TransaccionForm` ausente              |
+| Archivo                                                       | REQ     | Tests | Estado RED                                                                  |
+| ------------------------------------------------------------- | ------- | ----- | --------------------------------------------------------------------------- |
+| `src-tauri/tests/transacciones_repo_test.rs`                  | REQ-202 | 7     | COMPILE-FAIL: `transacciones::repo` no declarado                            |
+| `src/domain/normalizacion/__tests__/index.test.ts`            | REQ-203 | 8     | IMPORT-FAIL: `src/domain/normalizacion/index.ts` ausente                    |
+| `src/domain/precision/__tests__/money-form.test.ts`           | REQ-202 | 5     | RUNTIME-FAIL: `parseAmount`, `toCentavos`, `formatCentavos` son `undefined` |
+| `src/components/molecules/__tests__/TransaccionForm.test.tsx` | REQ-202 | 4     | IMPORT-FAIL: `TransaccionForm` ausente                                      |
 
 ## 3. Qué valida cada archivo
 
 ### `transacciones_repo_test.rs` (REQ-202)
 
-| Test                                                       | Mecanismo                  | Estado RED                                       |
-| ---------------------------------------------------------- | -------------------------- | ------------------------------------------------ |
-| `req_202_repo_inserts_transaccion_with_centavos`            | In-memory DB + CHECK       | COMPILE-FAIL (E0433 sobre `transacciones::repo`) |
-| `req_202_repo_rejects_negative_or_zero_valor`              | In-memory DB + CHECK       | COMPILE-FAIL                                      |
-| `req_202_repo_lists_all_transacciones_for_user`            | In-memory DB + orden       | COMPILE-FAIL                                      |
-| `req_202_repo_updates_transaccion_in_place`                | In-memory DB + trigger     | COMPILE-FAIL                                      |
-| `req_202_repo_soft_or_hard_deletes_transaccion`            | In-memory DB               | COMPILE-FAIL                                      |
-| `req_202_repo_enforces_check_constraint_on_frecuencia`     | In-memory DB + CHECK       | COMPILE-FAIL                                      |
-| `req_202_repo_rejects_ingreso_with_naturaleza_necesidad`   | In-memory DB + CHECK cruce | COMPILE-FAIL                                      |
+| Test                                                     | Mecanismo                  | Estado RED                                       |
+| -------------------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| `req_202_repo_inserts_transaccion_with_centavos`         | In-memory DB + CHECK       | COMPILE-FAIL (E0433 sobre `transacciones::repo`) |
+| `req_202_repo_rejects_negative_or_zero_valor`            | In-memory DB + CHECK       | COMPILE-FAIL                                     |
+| `req_202_repo_lists_all_transacciones_for_user`          | In-memory DB + orden       | COMPILE-FAIL                                     |
+| `req_202_repo_updates_transaccion_in_place`              | In-memory DB + trigger     | COMPILE-FAIL                                     |
+| `req_202_repo_soft_or_hard_deletes_transaccion`          | In-memory DB               | COMPILE-FAIL                                     |
+| `req_202_repo_enforces_check_constraint_on_frecuencia`   | In-memory DB + CHECK       | COMPILE-FAIL                                     |
+| `req_202_repo_rejects_ingreso_with_naturaleza_necesidad` | In-memory DB + CHECK cruce | COMPILE-FAIL                                     |
 
 El fixture `fresh_db_with_user()` aplica `migrations::apply_all` (símbolo
 ya pineado en Slice 2) y crea un `Usuario` para satisfacer la FK. Cada
@@ -72,17 +72,17 @@ virgen.
 
 ### `normalizacion/__tests__/index.test.ts` (REQ-203)
 
-| Test                                                  | Mecanismo              | Estado RED                       |
-| ----------------------------------------------------- | ---------------------- | -------------------------------- |
-| `req_203_mensual_divides_by_1`                        | Decimal.equals         | IMPORT-FAIL: `..` no resuelve    |
-| `req_203_bimensual_divides_by_2`                      | Decimal.toString       | IMPORT-FAIL                       |
-| `req_203_trimestral_divides_by_3_exact`               | Decimal.toString       | IMPORT-FAIL                       |
-| `req_203_semestral_divides_by_6`                      | Decimal.toString       | IMPORT-FAIL                       |
-| `req_203_anual_divides_by_12`                         | Decimal.toString       | IMPORT-FAIL                       |
-| `req_203_handles_non_exact_division_without_drift`    | Decimal.equals literal | IMPORT-FAIL                       |
-| `req_203_rejects_invalid_frecuencia`                  | expect.toThrow         | IMPORT-FAIL                       |
-| `req_203_anualizacion_multiplies_by_12_without_drift` | Decimal.toString       | IMPORT-FAIL                       |
-| `req_203_anualizacion_of_anual_is_identity`           | Decimal.toString       | IMPORT-FAIL                       |
+| Test                                                  | Mecanismo              | Estado RED                    |
+| ----------------------------------------------------- | ---------------------- | ----------------------------- |
+| `req_203_mensual_divides_by_1`                        | Decimal.equals         | IMPORT-FAIL: `..` no resuelve |
+| `req_203_bimensual_divides_by_2`                      | Decimal.toString       | IMPORT-FAIL                   |
+| `req_203_trimestral_divides_by_3_exact`               | Decimal.toString       | IMPORT-FAIL                   |
+| `req_203_semestral_divides_by_6`                      | Decimal.toString       | IMPORT-FAIL                   |
+| `req_203_anual_divides_by_12`                         | Decimal.toString       | IMPORT-FAIL                   |
+| `req_203_handles_non_exact_division_without_drift`    | Decimal.equals literal | IMPORT-FAIL                   |
+| `req_203_rejects_invalid_frecuencia`                  | expect.toThrow         | IMPORT-FAIL                   |
+| `req_203_anualizacion_multiplies_by_12_without_drift` | Decimal.toString       | IMPORT-FAIL                   |
+| `req_203_anualizacion_of_anual_is_identity`           | Decimal.toString       | IMPORT-FAIL                   |
 
 Las funciones esperadas (`valorMensual`, `valorAnual`) **deben** usar
 `decimal.js` (no `Number`) — el test `req_203_handles_non_exact_…` es
@@ -99,13 +99,13 @@ representación IEEE-754 `16666666.666666664`.
 
 ### `precision/__tests__/money-form.test.ts` (REQ-202)
 
-| Test                                                    | Mecanismo          | Estado RED                                  |
-| ------------------------------------------------------- | ------------------ | ------------------------------------------- |
-| `req_202_parse_amount_handles_dot_separator`            | expect.toBe        | RUNTIME: `parseAmount is not a function`    |
-| `req_202_parse_amount_handles_comma_decimal`            | expect.toBe        | RUNTIME: `parseAmount is not a function`    |
-| `req_202_to_centavos_multiplies_by_100`                 | expect.toBe        | RUNTIME: `toCentavos is not a function`     |
-| `req_202_parse_then_to_centavos_round_trip`             | composición        | RUNTIME: ambos `undefined`                   |
-| `req_202_format_centavos_uses_thousands_separator`      | expect.toBe string | RUNTIME: `formatCentavos is not a function` |
+| Test                                               | Mecanismo          | Estado RED                                  |
+| -------------------------------------------------- | ------------------ | ------------------------------------------- |
+| `req_202_parse_amount_handles_dot_separator`       | expect.toBe        | RUNTIME: `parseAmount is not a function`    |
+| `req_202_parse_amount_handles_comma_decimal`       | expect.toBe        | RUNTIME: `parseAmount is not a function`    |
+| `req_202_to_centavos_multiplies_by_100`            | expect.toBe        | RUNTIME: `toCentavos is not a function`     |
+| `req_202_parse_then_to_centavos_round_trip`        | composición        | RUNTIME: ambos `undefined`                  |
+| `req_202_format_centavos_uses_thousands_separator` | expect.toBe string | RUNTIME: `formatCentavos is not a function` |
 
 El test `req_202_format_centavos_uses_thousands_separator` es el guard
 de **REQ-601** (idioma UI en español neutro): pinea explícitamente que
@@ -115,12 +115,12 @@ inglés.
 
 ### `molecules/__tests__/TransaccionForm.test.tsx` (REQ-202)
 
-| Test                                              | Mecanismo                | Estado RED                       |
-| ------------------------------------------------- | ------------------------ | -------------------------------- |
-| `req_202_form_rejects_empty_concepto`             | render + click + onSubmit| IMPORT-FAIL: `../TransaccionForm` no existe |
-| `req_202_form_rejects_negative_value`             | render + click + onSubmit| IMPORT-FAIL                       |
-| `req_202_form_rejects_zero_value`                 | render + click + onSubmit| IMPORT-FAIL                       |
-| `req_202_form_calls_on_submit_with_centavos`      | render + type + click    | IMPORT-FAIL                       |
+| Test                                         | Mecanismo                 | Estado RED                                  |
+| -------------------------------------------- | ------------------------- | ------------------------------------------- |
+| `req_202_form_rejects_empty_concepto`        | render + click + onSubmit | IMPORT-FAIL: `../TransaccionForm` no existe |
+| `req_202_form_rejects_negative_value`        | render + click + onSubmit | IMPORT-FAIL                                 |
+| `req_202_form_rejects_zero_value`            | render + click + onSubmit | IMPORT-FAIL                                 |
+| `req_202_form_calls_on_submit_with_centavos` | render + type + click     | IMPORT-FAIL                                 |
 
 El test #4 es el **cierre del loop REQ-202**: la cadena completa
 `"1.500.000,50" → parseAmount → toCentavos → onSubmit(valor_centavos)`
@@ -191,7 +191,7 @@ La fase IMPL (delegada a otro agente) debe:
 
 2. Agregar `pub mod transacciones;` (o `pub mod transacciones { pub mod repo; pub use repo::*; }`)
    a `src-tauri/src/lib.rs`. Eso basta para que los `use
-   app_diagnostico_financiero_local_lib::transacciones::repo::...`
+app_diagnostico_financiero_local_lib::transacciones::repo::...`
    resuelvan.
 
 3. Implementar las funciones usando `conn.prepare()` + `query_row` /
@@ -278,6 +278,7 @@ Comprobado en `pnpm test` (resumen):
 ```
 
 Los 3 archivos que fallan:
+
 - `src/components/molecules/__tests__/TransaccionForm.test.tsx` — import sin resolver (`../TransaccionForm` no existe).
 - `src/domain/normalizacion/__tests__/index.test.ts` — import sin resolver (`..` apunta a un directorio sin `index.ts`).
 - `src/domain/precision/__tests__/money-form.test.ts` — 5 tests fallan en runtime con `parseAmount is not a function` / `toCentavos is not a function` / `formatCentavos is not a function`.

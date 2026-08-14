@@ -40,10 +40,7 @@ export function ListaTransacciones({
 }: ListaTransaccionesProps): JSX.Element {
   if (cargando) {
     return (
-      <p
-        data-testid="lista-cargando"
-        className="text-sm text-slate-500"
-      >
+      <p data-testid="lista-cargando" className="text-sm text-slate-500">
         Cargando transacciones…
       </p>
     )
@@ -51,10 +48,7 @@ export function ListaTransacciones({
 
   if (transacciones.length === 0) {
     return (
-      <p
-        data-testid="lista-vacia"
-        className="text-sm text-slate-500"
-      >
+      <p data-testid="lista-vacia" className="text-sm text-slate-500">
         No hay transacciones todavía.
       </p>
     )

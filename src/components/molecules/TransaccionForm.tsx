@@ -76,7 +76,12 @@ interface FormErrors {
   valor?: string
 }
 
-export function TransaccionForm({ categorias, onSubmit, initialValue, onCancelar }: TransaccionFormProps): JSX.Element {
+export function TransaccionForm({
+  categorias,
+  onSubmit,
+  initialValue,
+  onCancelar,
+}: TransaccionFormProps): JSX.Element {
   const [tipoFlujo, setTipoFlujo] = useState<TipoFlujo>('Gasto')
   const [concepto, setConcepto] = useState('')
   const [valorRaw, setValorRaw] = useState('')
@@ -322,12 +327,12 @@ export function TransaccionForm({ categorias, onSubmit, initialValue, onCancelar
           inputMode="decimal"
           value={valorRaw}
           onChange={(e) => {
-              // Only allow digits, dots (thousands separator), commas
-              // (decimal separator) and minus sign. Everything else is
-              // stripped silently so the user never sees invalid chars.
-              const sanitized = e.target.value.replace(/[^0-9.,\-]/g, '')
-              setValorRaw(sanitized)
-            }}
+            // Only allow digits, dots (thousands separator), commas
+            // (decimal separator) and minus sign. Everything else is
+            // stripped silently so the user never sees invalid chars.
+            const sanitized = e.target.value.replace(/[^0-9.,\-]/g, '')
+            setValorRaw(sanitized)
+          }}
           placeholder="1.500.000,50"
           className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
           aria-invalid={Boolean(errors.valor)}

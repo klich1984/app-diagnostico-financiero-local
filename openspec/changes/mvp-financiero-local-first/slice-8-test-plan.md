@@ -34,8 +34,8 @@ más un nuevo comando backend `cmd_eliminar_transaccion` y su wrapper TS
 Añadido un test de integración que cubre la API backend del nuevo
 comando:
 
-| Test | Función/módulo que valida | REQ |
-|------|---------------------------|-----|
+| Test                                           | Función/módulo que valida                                                                    | REQ     |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------- | ------- |
 | `req_202_cmd_eliminar_transaccion_removes_row` | `crate::commands::cmd_eliminar_transaccion_impl(&Connection, id: i64) -> Result<(), String>` | REQ-202 |
 
 El test:
@@ -54,8 +54,8 @@ El test:
 
 Añadido un test para el wrapper TS que llama al comando backend:
 
-| Test | Función/módulo que valida | REQ |
-|------|---------------------------|-----|
+| Test                                                           | Función/módulo que valida                                                        | REQ     |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------- |
 | `eliminarTransaccion invokes cmd_eliminar_transaccion with id` | `eliminarTransaccion(id: number): Promise<void>` en `src/data/tauri-commands.ts` | REQ-202 |
 
 El test:
@@ -75,14 +75,14 @@ function` (el módulo existe pero el símbolo no está exportado todavía).
 Creado el directorio `src/components/organisms/__tests__/` y un archivo
 de tests que cubre el organismo React:
 
-| Test | Comportamiento que valida | REQ |
-|------|---------------------------|-----|
-| `slice8_lista_transacciones_renders_empty_state_when_no_data` | Estado vacío con texto "no hay transacciones" | REQ-202 |
-| `slice8_lista_transacciones_renders_loading_state` | Estado de carga con texto "cargando transacciones" | REQ-202 |
-| `slice8_lista_transacciones_renders_one_row_per_transaction` | Una fila por transacción + conceptos visibles | REQ-202 |
+| Test                                                                | Comportamiento que valida                                 | REQ               |
+| ------------------------------------------------------------------- | --------------------------------------------------------- | ----------------- |
+| `slice8_lista_transacciones_renders_empty_state_when_no_data`       | Estado vacío con texto "no hay transacciones"             | REQ-202           |
+| `slice8_lista_transacciones_renders_loading_state`                  | Estado de carga con texto "cargando transacciones"        | REQ-202           |
+| `slice8_lista_transacciones_renders_one_row_per_transaction`        | Una fila por transacción + conceptos visibles             | REQ-202           |
 | `slice8_lista_transacciones_formats_valor_with_thousands_separator` | `formatCentavos` aplicado correctamente (formato español) | REQ-601 + REQ-202 |
-| `slice8_lista_transacciones_shows_tipo_flujo_badge` | La columna Tipo muestra el texto del `tipo_flujo` | REQ-202 |
-| `slice8_lista_transacciones_calls_on_eliminar_with_row_id` | Click en botón eliminar invoca `onEliminar(id)` | REQ-202 |
+| `slice8_lista_transacciones_shows_tipo_flujo_badge`                 | La columna Tipo muestra el texto del `tipo_flujo`         | REQ-202           |
+| `slice8_lista_transacciones_calls_on_eliminar_with_row_id`          | Click en botón eliminar invoca `onEliminar(id)`           | REQ-202           |
 
 **Pin de la firma del componente** (binding para la fase IMPL):
 

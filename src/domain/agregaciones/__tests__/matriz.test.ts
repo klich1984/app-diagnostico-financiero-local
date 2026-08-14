@@ -53,7 +53,9 @@ import type { TransaccionMin, CategoriaMin } from '..'
  *   frecuencia  = 'Mensual'
  *   valor_centavos = 0  (caller must set non-zero)
  */
-function transaccion(partial: Partial<TransaccionMin> & Pick<TransaccionMin, 'valor_centavos'>): TransaccionMin {
+function transaccion(
+  partial: Partial<TransaccionMin> & Pick<TransaccionMin, 'valor_centavos'>,
+): TransaccionMin {
   return {
     tipo_flujo: 'Ingreso',
     categoria_id: 1,
@@ -334,9 +336,7 @@ describe('REQ-301: matriz de agregación por categoría y naturaleza', () => {
       // rows silently, so the Ingreso columns showed 0 in the UI even
       // though the rows were persisted. Fix: treat null/undefined
       // comportamiento as Variable.
-      const cats: CategoriaMin[] = [
-        { id: 1, nombre: 'Salario', grupo_pertenencia: 'INGRESO' },
-      ]
+      const cats: CategoriaMin[] = [{ id: 1, nombre: 'Salario', grupo_pertenencia: 'INGRESO' }]
       const txs: Array<TransaccionMin & { id: number }> = [
         {
           id: 1,
@@ -363,9 +363,7 @@ describe('REQ-301: matriz de agregación por categoría y naturaleza', () => {
       // Companion to the row-bucket test: the totals roll-up must also
       // pick up the row. If the row is dropped in the loop, `totalIngresos`
       // ends at 0 even though the bucket exists (it would be all-zero).
-      const cats: CategoriaMin[] = [
-        { id: 1, nombre: 'Salario', grupo_pertenencia: 'INGRESO' },
-      ]
+      const cats: CategoriaMin[] = [{ id: 1, nombre: 'Salario', grupo_pertenencia: 'INGRESO' }]
       const txs: Array<TransaccionMin & { id: number }> = [
         {
           id: 1,

@@ -110,9 +110,7 @@ export function SelectorPerfil({
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-50 p-8"
     >
       <h1 className="text-2xl font-bold text-slate-900">¿Quién eres?</h1>
-      <p className="mt-2 text-sm text-slate-600">
-        Elegí un perfil existente o creá uno nuevo.
-      </p>
+      <p className="mt-2 text-sm text-slate-600">Elegí un perfil existente o creá uno nuevo.</p>
 
       <ul className="mt-8 w-full max-w-md space-y-2">
         {perfiles.map((p) => (
@@ -124,9 +122,7 @@ export function SelectorPerfil({
                   type="text"
                   data-testid="input-renombrar-perfil"
                   value={renombrandoValor}
-                  onInput={(e) =>
-                    setRenombrandoValor((e.target as HTMLInputElement).value)
-                  }
+                  onInput={(e) => setRenombrandoValor((e.target as HTMLInputElement).value)}
                   className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm focus:outline-none"
                 />
                 <button
@@ -185,9 +181,7 @@ export function SelectorPerfil({
             data-testid="input-crear-perfil"
             placeholder="Nombre del nuevo perfil"
             value={creandoValor}
-            onInput={(e) =>
-              setCreandoValor((e.target as HTMLInputElement).value)
-            }
+            onInput={(e) => setCreandoValor((e.target as HTMLInputElement).value)}
             className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:border-slate-500"
           />
           <button

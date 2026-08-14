@@ -302,9 +302,7 @@ export interface UpsertSimulacionInput {
  * Contrato IPC: `invoke('cmd_listar_simulaciones', { usuarioId })`
  * con `usuarioId` como top-level key.
  */
-export async function obtenerSimulaciones(
-  usuarioId: number,
-): Promise<SimulacionCompletaDto[]> {
+export async function obtenerSimulaciones(usuarioId: number): Promise<SimulacionCompletaDto[]> {
   return invoke<SimulacionCompletaDto[]>('cmd_listar_simulaciones', {
     usuarioId,
   })
@@ -412,4 +410,3 @@ export async function actualizarTransaccion(
 ): Promise<TransaccionCompletaDto> {
   return invoke<TransaccionCompletaDto>('cmd_update_transaccion', { payload })
 }
-

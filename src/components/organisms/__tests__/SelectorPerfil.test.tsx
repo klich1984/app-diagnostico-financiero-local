@@ -99,11 +99,7 @@ function render(
 ) {
   act(() => {
     root.render(
-      <SelectorPerfil
-        perfiles={perfiles}
-        onSeleccionar={onSeleccionar}
-        cargando={cargando}
-      />,
+      <SelectorPerfil perfiles={perfiles} onSeleccionar={onSeleccionar} cargando={cargando} />,
     )
   })
 }
@@ -153,11 +149,7 @@ describe('REQ-501 / Slice 9: SelectorPerfil organism', () => {
     const onSeleccionar = vi.fn()
     await act(async () => {
       root.render(
-        <SelectorPerfil
-          perfiles={samplePerfiles}
-          onSeleccionar={onSeleccionar}
-          cargando={false}
-        />,
+        <SelectorPerfil perfiles={samplePerfiles} onSeleccionar={onSeleccionar} cargando={false} />,
       )
     })
 
@@ -166,7 +158,7 @@ describe('REQ-501 / Slice 9: SelectorPerfil organism', () => {
 
     // Click the second option (Maria's id is 2; see fixture).
     await act(async () => {
-      (options[1] as HTMLButtonElement).click()
+      ;(options[1] as HTMLButtonElement).click()
     })
 
     expect(onSeleccionar).toHaveBeenCalledTimes(1)
@@ -267,11 +259,7 @@ describe('REQ-V2-102: SelectorPerfil profile management', () => {
   it('does NOT render rename/delete buttons when callbacks are absent', () => {
     act(() => {
       root.render(
-        <SelectorPerfil
-          perfiles={samplePerfiles}
-          onSeleccionar={() => {}}
-          cargando={false}
-        />,
+        <SelectorPerfil perfiles={samplePerfiles} onSeleccionar={() => {}} cargando={false} />,
       )
     })
 

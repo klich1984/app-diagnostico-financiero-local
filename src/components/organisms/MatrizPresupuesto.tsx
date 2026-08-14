@@ -55,24 +55,20 @@ export function MatrizPresupuesto({
 }: MatrizPresupuestoProps): JSX.Element {
   if (cargando) {
     return (
-      <div
-        data-testid="matriz-presupuesto"
-        className="p-4 text-sm text-slate-500"
-      >
+      <div data-testid="matriz-presupuesto" className="p-4 text-sm text-slate-500">
         Calculando matriz…
       </div>
     )
   }
 
-  const noHayTransacciones =
-    matriz.ingresos.length === 0 && matriz.gastos.length === 0
+  const noHayTransacciones = matriz.ingresos.length === 0 && matriz.gastos.length === 0
 
   if (noHayTransacciones) {
     return (
       <div data-testid="matriz-presupuesto" className="p-4">
         <p className="text-sm text-slate-500">
-          No hay transacciones todavía. Agregá una en la pestaña
-          &quot;Transacciones&quot; para ver la matriz.
+          No hay transacciones todavía. Agregá una en la pestaña &quot;Transacciones&quot; para ver
+          la matriz.
         </p>
       </div>
     )

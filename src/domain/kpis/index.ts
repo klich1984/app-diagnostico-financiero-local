@@ -127,9 +127,7 @@ export function esCategoriaDeudaPorNombre(nombre: string): boolean {
  * predicado "Deuda". El resultado se usa como set de búsqueda O(1) en
  * el bucle de gastos.
  */
-export function categoriasDeuda(
-  categorias: CategoriaMin[],
-): Set<number> {
+export function categoriasDeuda(categorias: CategoriaMin[]): Set<number> {
   const set = new Set<number>()
   for (const c of categorias) {
     if (esCategoriaDeudaPorNombre(c.nombre)) {
@@ -303,9 +301,10 @@ export function calcularLadoMejorado(
 ): LadoEstado {
   const deudaIds = categoriasDeuda(categorias)
   const matriz = calcularMatrizMejorada(transacciones, categorias, simulaciones)
-  const salario = salarioObjetivoCentavos === null || salarioObjetivoCentavos === undefined
-    ? null
-    : new Decimal(salarioObjetivoCentavos)
+  const salario =
+    salarioObjetivoCentavos === null || salarioObjetivoCentavos === undefined
+      ? null
+      : new Decimal(salarioObjetivoCentavos)
   return componerLado(matriz, categorias, deudaIds, salario)
 }
 

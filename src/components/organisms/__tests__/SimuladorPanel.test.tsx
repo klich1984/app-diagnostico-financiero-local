@@ -263,9 +263,7 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
   it('REQ-402: Aplicar button is disabled when input matches persisted value', () => {
     render(sampleTransacciones)
 
-    const button = container.querySelector<HTMLButtonElement>(
-      '[data-testid="aplicar-1"]',
-    )
+    const button = container.querySelector<HTMLButtonElement>('[data-testid="aplicar-1"]')
     expect(button).not.toBeNull()
     if (!button) throw new Error('aplicar-1 not present in the DOM')
     expect(button.disabled).toBe(true)
@@ -283,9 +281,7 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
   it('REQ-402: Aplicar button is enabled when input differs from persisted value', async () => {
     render(sampleTransacciones)
 
-    const input = container.querySelector<HTMLInputElement>(
-      '[data-testid="simulador-input-1"]',
-    )
+    const input = container.querySelector<HTMLInputElement>('[data-testid="simulador-input-1"]')
     expect(input).not.toBeNull()
     if (!input) throw new Error('simulador-input-1 not present in the DOM')
 
@@ -300,9 +296,7 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }))
     })
 
-    const button = container.querySelector<HTMLButtonElement>(
-      '[data-testid="aplicar-1"]',
-    )
+    const button = container.querySelector<HTMLButtonElement>('[data-testid="aplicar-1"]')
     expect(button).not.toBeNull()
     if (!button) throw new Error('aplicar-1 not present in the DOM')
     expect(button.disabled).toBe(false)
@@ -325,9 +319,7 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
     const onUpsert = vi.fn().mockResolvedValue(undefined)
     render(sampleTransacciones, { onUpsert })
 
-    const input = container.querySelector<HTMLInputElement>(
-      '[data-testid="simulador-input-1"]',
-    )
+    const input = container.querySelector<HTMLInputElement>('[data-testid="simulador-input-1"]')
     expect(input).not.toBeNull()
     if (!input) throw new Error('simulador-input-1 not present in the DOM')
 
@@ -340,9 +332,7 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }))
     })
 
-    const button = container.querySelector<HTMLButtonElement>(
-      '[data-testid="aplicar-1"]',
-    )
+    const button = container.querySelector<HTMLButtonElement>('[data-testid="aplicar-1"]')
     expect(button).not.toBeNull()
     if (!button) throw new Error('aplicar-1 not present in the DOM')
 
@@ -373,9 +363,7 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
     const onUpsert = vi.fn().mockResolvedValue(undefined)
     render(sampleTransacciones, { onUpsert })
 
-    const input = container.querySelector<HTMLInputElement>(
-      '[data-testid="simulador-input-1"]',
-    )
+    const input = container.querySelector<HTMLInputElement>('[data-testid="simulador-input-1"]')
     expect(input).not.toBeNull()
     if (!input) throw new Error('simulador-input-1 not present in the DOM')
 
@@ -400,9 +388,7 @@ describe('REQ-602 / Slice 11: SimuladorPanel organism', () => {
   it('REQ-V2-104: strips non-numeric characters from input value', async () => {
     render(sampleTransacciones)
 
-    const input = container.querySelector<HTMLInputElement>(
-      '[data-testid="simulador-input-1"]',
-    )
+    const input = container.querySelector<HTMLInputElement>('[data-testid="simulador-input-1"]')
     expect(input).not.toBeNull()
     if (!input) throw new Error('simulador-input-1 not present in the DOM')
 

@@ -162,7 +162,6 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
     expect(callArgs[1]).not.toHaveProperty('valor_centavos')
   })
 
-
   it('slice7_listar_transacciones_invokes_cmd_listar_transacciones', async () => {
     const fakeList = [
       {
@@ -204,7 +203,6 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
       naturaleza_necesidad: 'Necesario',
       valor_centavos: 0,
     }
-
 
     await expect(insertarTransaccion(input)).rejects.toBe(boom)
     expect(invokeMock).toHaveBeenCalledTimes(1)

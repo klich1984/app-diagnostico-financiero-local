@@ -24,10 +24,10 @@
 
 ## Archivos modificados / creados (2 archivos)
 
-| # | Archivo | Tipo | Tests | Estado RED |
-|---|---------|------|-------|------------|
-| 1 | `src/components/organisms/__tests__/MatrizPresupuesto.test.tsx` | nuevo | 5 | falla a nivel de archivo (no se puede resolver `../MatrizPresupuesto`) |
-| 2 | `src/__tests__/App.test.tsx` | modificado | 2 nuevos (3 existentes intactos) | los 2 nuevos fallan (`tab-transacciones` y `tab-presupuesto` no existen en el DOM) |
+| #   | Archivo                                                         | Tipo       | Tests                            | Estado RED                                                                         |
+| --- | --------------------------------------------------------------- | ---------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| 1   | `src/components/organisms/__tests__/MatrizPresupuesto.test.tsx` | nuevo      | 5                                | falla a nivel de archivo (no se puede resolver `../MatrizPresupuesto`)             |
+| 2   | `src/__tests__/App.test.tsx`                                    | modificado | 2 nuevos (3 existentes intactos) | los 2 nuevos fallan (`tab-transacciones` y `tab-presupuesto` no existen en el DOM) |
 
 **Total**: **7 tests nuevos** en 2 archivos (5 del organismo + 2 de la
 integración a nivel App).
@@ -40,18 +40,18 @@ Organismo (Atomic Design) que renderiza la matriz: tabla de Ingresos +
 tabla de Gastos + sección de totales. Se mantiene "tonto" — recibe la
 `MatrizPresupuesto` ya calculada y la pinta.
 
-| Test | Contrato |
-|------|----------|
-| `slice10_matriz_presupuesto_renders_ingresos_with_categoria_names` | Los nombres de las categorías de Ingreso ('Salario', 'Otros ingresos') están visibles en el DOM |
-| `slice10_matriz_presupuesto_renders_gastos_with_categoria_names` | Los nombres de las categorías de Gasto ('Hogar', 'Alimentacion') están visibles en el DOM |
-| `slice10_matriz_presupuesto_renders_totales_in_spanish_locale` | Los totales agregados aparecen formateados al español neutro (`7.200.000,00` y `2.770.000,00`) |
-| `slice10_matriz_presupuesto_renders_empty_state_when_no_data` | Cuando no hay transacciones, se renderiza un mensaje vacío con el texto `/no hay transacciones/i` |
-| `slice10_matriz_presupuesto_exposes_data_testids` | El componente expone los hooks `data-testid="matriz-ingresos"`, `data-testid="matriz-gastos"` y `data-testid="matriz-totales"` |
+| Test                                                               | Contrato                                                                                                                       |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `slice10_matriz_presupuesto_renders_ingresos_with_categoria_names` | Los nombres de las categorías de Ingreso ('Salario', 'Otros ingresos') están visibles en el DOM                                |
+| `slice10_matriz_presupuesto_renders_gastos_with_categoria_names`   | Los nombres de las categorías de Gasto ('Hogar', 'Alimentacion') están visibles en el DOM                                      |
+| `slice10_matriz_presupuesto_renders_totales_in_spanish_locale`     | Los totales agregados aparecen formateados al español neutro (`7.200.000,00` y `2.770.000,00`)                                 |
+| `slice10_matriz_presupuesto_renders_empty_state_when_no_data`      | Cuando no hay transacciones, se renderiza un mensaje vacío con el texto `/no hay transacciones/i`                              |
+| `slice10_matriz_presupuesto_exposes_data_testids`                  | El componente expone los hooks `data-testid="matriz-ingresos"`, `data-testid="matriz-gastos"` y `data-testid="matriz-totales"` |
 
 Props esperadas:
+
 ```typescript
-import type { MatrizPresupuesto as MatrizPresupuestoData } from
-  '../../../domain/agregaciones/matriz'
+import type { MatrizPresupuesto as MatrizPresupuestoData } from '../../../domain/agregaciones/matriz'
 
 export interface MatrizPresupuestoProps {
   matriz: MatrizPresupuestoData
@@ -69,9 +69,9 @@ matriz). No se usa React Router — es state local con `useState<Tab>`.
 Los 2 tests nuevos verifican la presencia de los botones de tab y el
 wireado de la matriz cuando la pestaña "Presupuesto" está activa.
 
-| Test | Contrato |
-|------|----------|
-| `slice10_app_renders_tabs_for_transacciones_and_presupuesto` | Ambos botones de tab están presentes en el DOM (`data-testid="tab-transacciones"` y `data-testid="tab-presupuesto"`) con sus textos visibles |
+| Test                                                                | Contrato                                                                                                                                         |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `slice10_app_renders_tabs_for_transacciones_and_presupuesto`        | Ambos botones de tab están presentes en el DOM (`data-testid="tab-transacciones"` y `data-testid="tab-presupuesto"`) con sus textos visibles     |
 | `slice10_app_shows_matriz_container_when_presupuesto_tab_is_active` | En el render inicial, `data-testid="matriz-presupuesto"` NO está en el DOM; tras hacer click en la pestaña Presupuesto, el contenedor SÍ aparece |
 
 ## Contrato de selectores `data-testid`
@@ -111,7 +111,7 @@ $ pnpm test
 - [ ] Renderizar condicionalmente `<MatrizPresupuesto matriz={...} />`
       cuando la tab Presupuesto está activa.
 - [ ] Cablear `useMemo` sobre `calcularMatriz(transacciones,
-      categorias)` en `App.tsx` con dependencias estables.
+categorias)` en `App.tsx` con dependencias estables.
 - [ ] Preservar los 4 `console.log` existentes de debugging y agregar
       como mínimo 1 log para la ejecución del cálculo de la matriz.
 

@@ -19,16 +19,16 @@ No hay migración de schema (columna `salario_personal_objetivo_centavos` ya en 
 
 ## 2. Decisiones arquitectónicas
 
-| # | Decisión | Alternativas | Por qué esta |
-|---|---|---|---|
-| D1 | **Trigger del modal en `EstadoResultadosPanel`**, no en `SelectorPerfil` | Mover al selector (perfil DUMB) / mover al chip del header | El selector es DUMB y se re-muestra solo al abrir la app; el panel de Resultados es donde el usuario revisa el valor. Replica la decisión bloqueada #7 del proposal. |
-| D2 | **Reusar `calcularMatrizMejorada` en D2 vía `useMemo`** | Re-implementar en el organism / delegar a `calcularMatriz` y aplicar sims manualmente | El golden test de `matriz-mejorada.test.ts` es la fuente de verdad; delegar mantiene "una sola capa de cálculo" (regla del design §1). |
-| D3 | **Cmd IPC = thin wrapper `_impl` + `#[tauri::command]`** | Un solo `cmd_*` con lógica inline | Mismo patrón que `cmd_obtener_perfiles` y `cmd_upsert_simulacion`. Permite `cargo test` sin runtime Tauri. |
-| D4 | **Validación de centavos en backend (`<= 100_000_000_000`)** | Solo validar en frontend | Defensa en profundidad (regla del design §14.4). El modal también valida para no malgastar el IPC. |
-| D5 | **Payload del cmd envuelto bajo `{ input: {...} }`** | Top-level keys | Convención del proyecto pineada por `crearPerfil` y `upsertSimulacion` (ver `tauri-commands.ts` líneas 207 y 304). |
-| D6 | **Tabla `ModalSalarioObjetivo` props = controladas, sin `onChange` externos** | Props totalmente controladas con `value`/`onChange` por el padre | Estado local del modal: el padre solo recibe el resultado final de `onGuardar`. Menos re-renders del padre al tipear. |
-| D7 | **Modal reusa el patrón full-screen overlay de `SelectorPerfil` (`fixed inset-0 z-50`)** | Modal estilo Material UI / modal portal | Réplica exacta del patrón existente; sin dependencias nuevas. |
-| D8 | **State del modal (`modalAbierto`) vive en `EstadoResultadosPanel`, no en `App.tsx`** | Subir a `App.tsx` | El modal pertenece al panel; si fuera a `App`, la prop chain se infla sin valor. El padre solo expone `onSalarioGuardado`. |
+| #   | Decisión                                                                                 | Alternativas                                                                          | Por qué esta                                                                                                                                                         |
+| --- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | **Trigger del modal en `EstadoResultadosPanel`**, no en `SelectorPerfil`                 | Mover al selector (perfil DUMB) / mover al chip del header                            | El selector es DUMB y se re-muestra solo al abrir la app; el panel de Resultados es donde el usuario revisa el valor. Replica la decisión bloqueada #7 del proposal. |
+| D2  | **Reusar `calcularMatrizMejorada` en D2 vía `useMemo`**                                  | Re-implementar en el organism / delegar a `calcularMatriz` y aplicar sims manualmente | El golden test de `matriz-mejorada.test.ts` es la fuente de verdad; delegar mantiene "una sola capa de cálculo" (regla del design §1).                               |
+| D3  | **Cmd IPC = thin wrapper `_impl` + `#[tauri::command]`**                                 | Un solo `cmd_*` con lógica inline                                                     | Mismo patrón que `cmd_obtener_perfiles` y `cmd_upsert_simulacion`. Permite `cargo test` sin runtime Tauri.                                                           |
+| D4  | **Validación de centavos en backend (`<= 100_000_000_000`)**                             | Solo validar en frontend                                                              | Defensa en profundidad (regla del design §14.4). El modal también valida para no malgastar el IPC.                                                                   |
+| D5  | **Payload del cmd envuelto bajo `{ input: {...} }`**                                     | Top-level keys                                                                        | Convención del proyecto pineada por `crearPerfil` y `upsertSimulacion` (ver `tauri-commands.ts` líneas 207 y 304).                                                   |
+| D6  | **Tabla `ModalSalarioObjetivo` props = controladas, sin `onChange` externos**            | Props totalmente controladas con `value`/`onChange` por el padre                      | Estado local del modal: el padre solo recibe el resultado final de `onGuardar`. Menos re-renders del padre al tipear.                                                |
+| D7  | **Modal reusa el patrón full-screen overlay de `SelectorPerfil` (`fixed inset-0 z-50`)** | Modal estilo Material UI / modal portal                                               | Réplica exacta del patrón existente; sin dependencias nuevas.                                                                                                        |
+| D8  | **State del modal (`modalAbierto`) vive en `EstadoResultadosPanel`, no en `App.tsx`**    | Subir a `App.tsx`                                                                     | El modal pertenece al panel; si fuera a `App`, la prop chain se infla sin valor. El padre solo expone `onSalarioGuardado`.                                           |
 
 ---
 
@@ -38,10 +38,10 @@ No hay migración de schema (columna `salario_personal_objetivo_centavos` ya en 
 
 ```ts
 interface ModalSalarioObjetivoProps {
-  salarioActualCentavos: number | null  // pre-load del input
-  onGuardar: (centavos: number) => Promise<void>  // throws si IPC falla
+  salarioActualCentavos: number | null // pre-load del input
+  onGuardar: (centavos: number) => Promise<void> // throws si IPC falla
   onCancelar: () => void
-  perfilActivoId: number | null  // null → modal no se monta
+  perfilActivoId: number | null // null → modal no se monta
 }
 // State local:
 //   inputTexto: string          // raw "1.500.000"
@@ -65,8 +65,8 @@ interface ModalSalarioObjetivoProps {
 interface EstadoResultadosPanelProps {
   estado: EstadoResultados
   salarioObjetivoCentavos: number | null
-  perfilActivoId: number | null                  // NUEVO (REQ-502-D1-1, D1-11)
-  onSalarioGuardado: (centavos: number) => Promise<void>  // NUEVO
+  perfilActivoId: number | null // NUEVO (REQ-502-D1-1, D1-11)
+  onSalarioGuardado: (centavos: number) => Promise<void> // NUEVO
 }
 // State local nuevo: modalAbierto: boolean
 // Render condicional del botón "Editar salario":
@@ -88,7 +88,7 @@ interface PresupuestoMejoradoPanelProps {
   transacciones: TransaccionCompletaDto[]
   categorias: CategoriaDto[]
   simulaciones: SimulacionCompletaDto[]
-  onIrATransacciones: () => void  // CTA empty-state
+  onIrATransacciones: () => void // CTA empty-state
 }
 // useMemo matrizMejorada = calcularMatrizMejorada(transacciones as never, catsMin, simsMin)
 // useMemo totalGastos = matrizMejorada.totalGastos.toNumber()
@@ -229,21 +229,21 @@ User: click tab "presupuesto-mejorado" (data-testid="tab-presupuesto-mejorado")
 
 ## 5. Cambios por archivo
 
-| Archivo | Acción | Líneas est. | Por qué |
-|---|---|---|---|
-| `src/components/organisms/ModalSalarioObjetivo.tsx` | crear | 110-150 | Nuevo organism D1 |
-| `src/components/organisms/__tests__/ModalSalarioObjetivo.test.tsx` | crear | 200-280 | RED 11 escenarios REQ-502-D1-* |
-| `src/components/organisms/EstadoResultadosPanel.tsx` | modificar | +30 | State `modalAbierto` + render condicional del botón + props nuevas |
-| `src/components/organisms/__tests__/EstadoResultadosPanel.test.tsx` | modificar | +60 | Escenarios D1-1 (botón visible) + D1-11 (no visible) |
-| `src/components/organisms/PresupuestoMejoradoPanel.tsx` | crear | 100-140 | Nuevo organism D2 (sin gráficos; tabla + KPIs) |
-| `src/components/organisms/__tests__/PresupuestoMejoradoPanel.test.tsx` | crear | 180-260 | RED 8 escenarios REQ-403-D2-* + REQ-605-D2-1 |
-| `src/App.tsx` | modificar | +20 | 5ª tab en nav + case en render + handler `handleSalarioGuardado` |
-| `src/data/tauri-commands.ts` | modificar | +10 | `actualizarSalarioObjetivo` wrapper |
-| `src/data/__tests__/tauri-commands.test.ts` | modificar | +40 | Escenario wrapper actualizarSalarioObjetivo |
-| `src-tauri/src/commands.rs` | modificar | +50 | `cmd_update_salario_objetivo` + `UpdateSalarioObjetivoInput` |
-| `src-tauri/src/lib.rs` | modificar | +1 | Sumar `cmd_update_salario_objetivo` a `invoke_handler` |
-| `src-tauri/tests/usuarios_update_test.rs` | crear | 80-120 | 4 RED tests: update ok / negativo / > 1e11 / perfil inexistente |
-| `openspec/changes/mvp-financiero-local-first/MVP-COMPLETE.md` | modificar | doc | Marcar HU-502 ✅ + tab Presupuesto Mejorado ✅ |
+| Archivo                                                                | Acción    | Líneas est. | Por qué                                                            |
+| ---------------------------------------------------------------------- | --------- | ----------- | ------------------------------------------------------------------ |
+| `src/components/organisms/ModalSalarioObjetivo.tsx`                    | crear     | 110-150     | Nuevo organism D1                                                  |
+| `src/components/organisms/__tests__/ModalSalarioObjetivo.test.tsx`     | crear     | 200-280     | RED 11 escenarios REQ-502-D1-*                                     |
+| `src/components/organisms/EstadoResultadosPanel.tsx`                   | modificar | +30         | State `modalAbierto` + render condicional del botón + props nuevas |
+| `src/components/organisms/__tests__/EstadoResultadosPanel.test.tsx`    | modificar | +60         | Escenarios D1-1 (botón visible) + D1-11 (no visible)               |
+| `src/components/organisms/PresupuestoMejoradoPanel.tsx`                | crear     | 100-140     | Nuevo organism D2 (sin gráficos; tabla + KPIs)                     |
+| `src/components/organisms/__tests__/PresupuestoMejoradoPanel.test.tsx` | crear     | 180-260     | RED 8 escenarios REQ-403-D2-* + REQ-605-D2-1                       |
+| `src/App.tsx`                                                          | modificar | +20         | 5ª tab en nav + case en render + handler `handleSalarioGuardado`   |
+| `src/data/tauri-commands.ts`                                           | modificar | +10         | `actualizarSalarioObjetivo` wrapper                                |
+| `src/data/__tests__/tauri-commands.test.ts`                            | modificar | +40         | Escenario wrapper actualizarSalarioObjetivo                        |
+| `src-tauri/src/commands.rs`                                            | modificar | +50         | `cmd_update_salario_objetivo` + `UpdateSalarioObjetivoInput`       |
+| `src-tauri/src/lib.rs`                                                 | modificar | +1          | Sumar `cmd_update_salario_objetivo` a `invoke_handler`             |
+| `src-tauri/tests/usuarios_update_test.rs`                              | crear     | 80-120      | 4 RED tests: update ok / negativo / > 1e11 / perfil inexistente    |
+| `openspec/changes/mvp-financiero-local-first/MVP-COMPLETE.md`          | modificar | doc         | Marcar HU-502 ✅ + tab Presupuesto Mejorado ✅                     |
 
 **Total**: 5 nuevos (3 impl + 2 tests) + 6 modificados. ≈ 700-900 líneas agregadas, sobre el límite de 400 del Review Workload Guard — **aplicar chained PR strategy (slice A + slice B)**.
 
@@ -251,14 +251,14 @@ User: click tab "presupuesto-mejorado" (data-testid="tab-presupuesto-mejorado")
 
 ## 6. Estrategia de tests (RED antes de impl)
 
-| Capa | Archivo | Escenarios | Patrón |
-|---|---|---|---|
-| Unit frontend | `__tests__/ModalSalarioObjetivo.test.tsx` | 11 (REQ-502-D1-1..11) | `react-dom/client` + `createRoot` + `act()` (sin `@testing-library/react`) |
-| Unit frontend | `__tests__/EstadoResultadosPanel.test.tsx` (modif) | +2 (D1-1, D1-11) | mismo patrón + `vi.mock` para `@tauri-apps/api/core` si el modal dispara IPC durante el render del padre |
-| Unit frontend | `__tests__/PresupuestoMejoradoPanel.test.tsx` | 9 (REQ-403-D2-1..8 + REQ-605-D2-1) | mismo patrón |
-| Wrapper TS | `src/data/__tests__/tauri-commands.test.ts` | +1 | `vi.mock('@tauri-apps/api/core', ...)` — mismo patrón que `upsertSimulacion` |
-| Unit backend | `src-tauri/tests/usuarios_update_test.rs` | 4 | `cargo test` contra `apply_all(&conn)` in-memory |
-| Golden (ya existe) | `src/domain/simulador/__tests__/matriz-mejorada.test.ts` | 6 | sigue siendo la fuente de verdad del cálculo — NO se duplica |
+| Capa               | Archivo                                                  | Escenarios                         | Patrón                                                                                                   |
+| ------------------ | -------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Unit frontend      | `__tests__/ModalSalarioObjetivo.test.tsx`                | 11 (REQ-502-D1-1..11)              | `react-dom/client` + `createRoot` + `act()` (sin `@testing-library/react`)                               |
+| Unit frontend      | `__tests__/EstadoResultadosPanel.test.tsx` (modif)       | +2 (D1-1, D1-11)                   | mismo patrón + `vi.mock` para `@tauri-apps/api/core` si el modal dispara IPC durante el render del padre |
+| Unit frontend      | `__tests__/PresupuestoMejoradoPanel.test.tsx`            | 9 (REQ-403-D2-1..8 + REQ-605-D2-1) | mismo patrón                                                                                             |
+| Wrapper TS         | `src/data/__tests__/tauri-commands.test.ts`              | +1                                 | `vi.mock('@tauri-apps/api/core', ...)` — mismo patrón que `upsertSimulacion`                             |
+| Unit backend       | `src-tauri/tests/usuarios_update_test.rs`                | 4                                  | `cargo test` contra `apply_all(&conn)` in-memory                                                         |
+| Golden (ya existe) | `src/domain/simulador/__tests__/matriz-mejorada.test.ts` | 6                                  | sigue siendo la fuente de verdad del cálculo — NO se duplica                                             |
 
 **Total previsto**: 206 tests previos + **27 nuevos** = 233 verde al cierre.
 
@@ -281,16 +281,16 @@ Slice A targetea `main`; Slice B puede ir en paralelo (no depende del command Ru
 
 ## 8. Riesgos abiertos / Verificaciones pre-apply
 
-| # | Riesgo | Mitigación / verificación |
-|---|---|---|
-| R-1 | El wrapper `actualizarSalarioObjetivo` debe usar camelCase en el payload o snake_case | El design pineó `{ input: { perfil_id, salario_objetivo_centavos } }` (snake_case, sin `rename_all`). Confirmar en el test RED: `expect(invokeMock).toHaveBeenCalledWith('cmd_update_salario_objetivo', { input: { perfil_id: ..., salario_objetivo_centavos: ... } })`. El struct Rust NO lleva `#[serde(rename_all)]` → keys snake_case. |
-| R-2 | El test del organism `ModalSalarioObjetivo` necesita mockear `@tauri-apps/api/core` si el padre pasa IPC async durante render | El `ModalSalarioObjetivo` NO llama IPC directo; solo dispara `onGuardar` (callback del padre). El padre (`EstadoResultadosPanel`) llama `actualizarSalarioObjetivo`. Si el test del modal solo valida que `onGuardar(centavos)` se invoca con el valor correcto, NO necesita mock. Si el test valida el flujo completo padre→modal→IPC, sí. **Decisión**: el test del modal valida el callback; el test de integración del padre sí mockea IPC. |
-| R-3 | `parsePesosInput` ya rechaza `< 0` (ver `money-form.test.ts` línea 177) | El modal solo muestra "El valor no puede ser negativo" cuando `parsePesosInput` retorna `null`. Cobertura ya validada — sin riesgo. |
-| R-4 | El `data-testid="btn-editar-salario"` debe renderizarse SOLO si `salarioObjetivoCentavos !== null && perfilActivoId !== null` (REQ-502-D1-1 + D1-11) | Test cubre ambos branches (con y sin perfil). El subtítulo existente (línea 42-46) sigue como está — el botón va **debajo** del subtítulo. |
-| R-5 | Cambio de perfil mientras modal abierto (REQ-502-D1-8) | `useEffect` que dispara `onCancelar()` cuando `perfilActivoId` cambia. Cubierto por test RED. |
-| R-6 | `calcularMatrizMejorada` requiere `TransaccionMin[]` con `id` opcional; el DTO `TransaccionCompletaDto` SÍ trae `id` | El organism castea `transacciones as never` igual que `App.tsx` línea 165. Mismo patrón que el resto del codebase — sin riesgo. |
-| R-7 | El test `presupuesto_mejorado_panel` valida KPI golden `6,275,000.00` (REQ-605-D2-1) | El valor es exacto: el test importa la misma fixture `transacciones32()` (NO la duplicamos) o construye una mini-fixture equivalente. Decisión: mini-fixture mínima para no acoplar el test del organism al archivo de 32 filas. |
-| R-8 | El archivo de test wrapper es `src/data/__tests__/tauri-commands.test.ts`, NO `src/__tests__/tauri-commands.test.ts` como dice el spec §1.1 | Documentado: el spec tiene una errata de path. El test nuevo va en `src/data/__tests__/tauri-commands.test.ts` (path real). |
+| #   | Riesgo                                                                                                                                               | Mitigación / verificación                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-1 | El wrapper `actualizarSalarioObjetivo` debe usar camelCase en el payload o snake_case                                                                | El design pineó `{ input: { perfil_id, salario_objetivo_centavos } }` (snake_case, sin `rename_all`). Confirmar en el test RED: `expect(invokeMock).toHaveBeenCalledWith('cmd_update_salario_objetivo', { input: { perfil_id: ..., salario_objetivo_centavos: ... } })`. El struct Rust NO lleva `#[serde(rename_all)]` → keys snake_case.                                                                                                      |
+| R-2 | El test del organism `ModalSalarioObjetivo` necesita mockear `@tauri-apps/api/core` si el padre pasa IPC async durante render                        | El `ModalSalarioObjetivo` NO llama IPC directo; solo dispara `onGuardar` (callback del padre). El padre (`EstadoResultadosPanel`) llama `actualizarSalarioObjetivo`. Si el test del modal solo valida que `onGuardar(centavos)` se invoca con el valor correcto, NO necesita mock. Si el test valida el flujo completo padre→modal→IPC, sí. **Decisión**: el test del modal valida el callback; el test de integración del padre sí mockea IPC. |
+| R-3 | `parsePesosInput` ya rechaza `< 0` (ver `money-form.test.ts` línea 177)                                                                              | El modal solo muestra "El valor no puede ser negativo" cuando `parsePesosInput` retorna `null`. Cobertura ya validada — sin riesgo.                                                                                                                                                                                                                                                                                                             |
+| R-4 | El `data-testid="btn-editar-salario"` debe renderizarse SOLO si `salarioObjetivoCentavos !== null && perfilActivoId !== null` (REQ-502-D1-1 + D1-11) | Test cubre ambos branches (con y sin perfil). El subtítulo existente (línea 42-46) sigue como está — el botón va **debajo** del subtítulo.                                                                                                                                                                                                                                                                                                      |
+| R-5 | Cambio de perfil mientras modal abierto (REQ-502-D1-8)                                                                                               | `useEffect` que dispara `onCancelar()` cuando `perfilActivoId` cambia. Cubierto por test RED.                                                                                                                                                                                                                                                                                                                                                   |
+| R-6 | `calcularMatrizMejorada` requiere `TransaccionMin[]` con `id` opcional; el DTO `TransaccionCompletaDto` SÍ trae `id`                                 | El organism castea `transacciones as never` igual que `App.tsx` línea 165. Mismo patrón que el resto del codebase — sin riesgo.                                                                                                                                                                                                                                                                                                                 |
+| R-7 | El test `presupuesto_mejorado_panel` valida KPI golden `6,275,000.00` (REQ-605-D2-1)                                                                 | El valor es exacto: el test importa la misma fixture `transacciones32()` (NO la duplicamos) o construye una mini-fixture equivalente. Decisión: mini-fixture mínima para no acoplar el test del organism al archivo de 32 filas.                                                                                                                                                                                                                |
+| R-8 | El archivo de test wrapper es `src/data/__tests__/tauri-commands.test.ts`, NO `src/__tests__/tauri-commands.test.ts` como dice el spec §1.1          | Documentado: el spec tiene una errata de path. El test nuevo va en `src/data/__tests__/tauri-commands.test.ts` (path real).                                                                                                                                                                                                                                                                                                                     |
 
 ---
 
@@ -320,24 +320,24 @@ Replicadas del baseline `design.md` §19 sin cambios:
 
 ## 11. Referencias cruzadas
 
-| Tema | Documento |
-|---|---|
-| Qué se construye (alcance) | `proposal.md` §1-§7 |
-| Requisitos formales (20 escenarios) | `spec.md` (11 D1 + 8 D2 + 1 REQ-605) |
-| Decisiones de producto bloqueadas | `proposal.md` §3 (7 decisiones) |
-| Riesgos y mitigaciones | `proposal.md` §8 |
-| Arquitectura baseline | `openspec/changes/mvp-financiero-local-first/design.md` §1-§19 (referencia completa) |
-| Tabla `Usuarios` + columna `salario_…` | `src-tauri/migrations/001_inicial.sql` línea 178 |
-| Commands Rust sobre `Usuarios` (referencia) | `src-tauri/src/commands.rs` líneas 200-346 |
-| Registro invoke_handler | `src-tauri/src/lib.rs` líneas 24-35 |
-| `calcularMatrizMejorada` (reuso D2) | `src/domain/simulador/matriz-mejorada.ts` (golden 6,275,000.00) |
-| Helper `parsePesosInput` (validación modal) | `src/domain/precision/money.ts` líneas 141-193 |
-| Subtítulo actual del salario | `src/components/organisms/EstadoResultadosPanel.tsx` líneas 42-46 |
-| Patrón de tests sin `@testing-library/react` | `src/components/organisms/__tests__/EstadoResultadosPanel.test.tsx` líneas 65-67 |
-| State `simulaciones` ya en App | `src/App.tsx` línea 156 |
-| Nav de tabs actual | `src/App.tsx` líneas 518-570 |
-| Patrón de modal overlay | `src/components/organisms/SelectorPerfil.tsx` líneas 49-52 (`fixed inset-0 z-50`) |
-| Estado actual `salarioObjetivoCentavos` | `src/App.tsx` línea 152 |
+| Tema                                         | Documento                                                                            |
+| -------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Qué se construye (alcance)                   | `proposal.md` §1-§7                                                                  |
+| Requisitos formales (20 escenarios)          | `spec.md` (11 D1 + 8 D2 + 1 REQ-605)                                                 |
+| Decisiones de producto bloqueadas            | `proposal.md` §3 (7 decisiones)                                                      |
+| Riesgos y mitigaciones                       | `proposal.md` §8                                                                     |
+| Arquitectura baseline                        | `openspec/changes/mvp-financiero-local-first/design.md` §1-§19 (referencia completa) |
+| Tabla `Usuarios` + columna `salario_…`       | `src-tauri/migrations/001_inicial.sql` línea 178                                     |
+| Commands Rust sobre `Usuarios` (referencia)  | `src-tauri/src/commands.rs` líneas 200-346                                           |
+| Registro invoke_handler                      | `src-tauri/src/lib.rs` líneas 24-35                                                  |
+| `calcularMatrizMejorada` (reuso D2)          | `src/domain/simulador/matriz-mejorada.ts` (golden 6,275,000.00)                      |
+| Helper `parsePesosInput` (validación modal)  | `src/domain/precision/money.ts` líneas 141-193                                       |
+| Subtítulo actual del salario                 | `src/components/organisms/EstadoResultadosPanel.tsx` líneas 42-46                    |
+| Patrón de tests sin `@testing-library/react` | `src/components/organisms/__tests__/EstadoResultadosPanel.test.tsx` líneas 65-67     |
+| State `simulaciones` ya en App               | `src/App.tsx` línea 156                                                              |
+| Nav de tabs actual                           | `src/App.tsx` líneas 518-570                                                         |
+| Patrón de modal overlay                      | `src/components/organisms/SelectorPerfil.tsx` líneas 49-52 (`fixed inset-0 z-50`)    |
+| Estado actual `salarioObjetivoCentavos`      | `src/App.tsx` línea 152                                                              |
 
 ---
 

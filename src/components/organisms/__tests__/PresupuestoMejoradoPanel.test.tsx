@@ -21,7 +21,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react'
 import { PresupuestoMejoradoPanel } from '../PresupuestoMejoradoPanel'
-import type { TransaccionCompletaDto, CategoriaDto, SimulacionCompletaDto } from '../../../data/tauri-commands'
+import type {
+  TransaccionCompletaDto,
+  CategoriaDto,
+  SimulacionCompletaDto,
+} from '../../../data/tauri-commands'
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -73,7 +77,7 @@ const simsGolden: SimulacionCompletaDto[] = [
     nuevo_valor_centavos: 1_275_000_00, // This makes the Golden Total: 5M + 1.275M = 6,275,000.00
     created_at: 1,
     updated_at: 1,
-  }
+  },
 ]
 
 let container: HTMLDivElement
@@ -96,7 +100,7 @@ function render(
   transacciones: TransaccionCompletaDto[],
   categorias: CategoriaDto[],
   simulaciones: SimulacionCompletaDto[],
-  onIrATransacciones: () => void = vi.fn()
+  onIrATransacciones: () => void = vi.fn(),
 ): void {
   act(() => {
     root.render(
@@ -105,13 +109,12 @@ function render(
         categorias={categorias}
         simulaciones={simulaciones}
         onIrATransacciones={onIrATransacciones}
-      />
+      />,
     )
   })
 }
 
 describe('REQ-403-D2 / Slice B: PresupuestoMejoradoPanel organism', () => {
-
   // REQ-403-D2-4: Empty state sin transacciones
   it('sliceB_renders_empty_state_when_no_transactions', () => {
     const onIr = vi.fn()
@@ -161,7 +164,14 @@ describe('REQ-403-D2 / Slice B: PresupuestoMejoradoPanel organism', () => {
   it('sliceB_ignores_orphan_simulations_without_crashing', () => {
     const orphanSims: SimulacionCompletaDto[] = [
       ...simsGolden,
-      { id: 99, usuario_id: 1, transaccion_id: 999, nuevo_valor_centavos: 0, created_at: 1, updated_at: 1 }
+      {
+        id: 99,
+        usuario_id: 1,
+        transaccion_id: 999,
+        nuevo_valor_centavos: 0,
+        created_at: 1,
+        updated_at: 1,
+      },
     ]
 
     expect(() => {

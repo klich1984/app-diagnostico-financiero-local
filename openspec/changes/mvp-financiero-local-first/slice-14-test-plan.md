@@ -30,9 +30,7 @@ export interface EstadoResultadosPanelProps {
   salarioObjetivoCentavos: number | null
 }
 
-export function EstadoResultadosPanel(
-  props: EstadoResultadosPanelProps,
-): JSX.Element
+export function EstadoResultadosPanel(props: EstadoResultadosPanelProps): JSX.Element
 ```
 
 El organism es DUMB: consume el `EstadoResultados` ya calculado por `calcularEstadoResultados` del dominio puro (T-503, Slice 6) y lo proyecta en una tabla de 3 columnas. **No recalcula**. La columna Delta la calcula acá mismo restando `inicial - mejorado` y coloreando verde/rojo según el signo, usando comparación decimal.
@@ -47,11 +45,11 @@ Archivo: `src/components/organisms/__tests__/EstadoResultadosPanel.test.tsx`
 
 Total: **3 tests**.
 
-| #   | Test                                                  | Escenario (REQ-501/502)                                                                            | Selector                                                                          |
-| --- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| 1   | `slice14_estado_resultados_renders_3_columns`         | El panel renderea una tabla de 3 columnas: Inicial, Mejorado y Delta (header tolerante a variantes). | `container.textContent` (regex tolerante para el header Delta)                    |
-| 2   | `slice14_estado_resultados_renders_one_row_per_kpi`   | El panel expone una fila por KPI mensual principal: Ingresos, Gastos, FA1, FA2.                      | `container.textContent`                                                           |
-| 3   | `slice14_estado_resultados_exposes_data_testid`       | El container raíz expone `data-testid="estado-resultados"` (contrato para tooling e2e + debugging). | `container.querySelector('[data-testid="estado-resultados"]')`                    |
+| #   | Test                                                | Escenario (REQ-501/502)                                                                              | Selector                                                       |
+| --- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| 1   | `slice14_estado_resultados_renders_3_columns`       | El panel renderea una tabla de 3 columnas: Inicial, Mejorado y Delta (header tolerante a variantes). | `container.textContent` (regex tolerante para el header Delta) |
+| 2   | `slice14_estado_resultados_renders_one_row_per_kpi` | El panel expone una fila por KPI mensual principal: Ingresos, Gastos, FA1, FA2.                      | `container.textContent`                                        |
+| 3   | `slice14_estado_resultados_exposes_data_testid`     | El container raíz expone `data-testid="estado-resultados"` (contrato para tooling e2e + debugging).  | `container.querySelector('[data-testid="estado-resultados"]')` |
 
 ### 3.1 Cobertura por branch
 
