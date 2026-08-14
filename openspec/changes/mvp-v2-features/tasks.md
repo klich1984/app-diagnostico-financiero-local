@@ -2,14 +2,14 @@
 
 ## Review Workload Forecast
 
-| Campo | Valor |
-|---|---|
-| Líneas estimadas | 650-900 |
-| 400-line budget risk | High |
-| Chained PRs recommended | Yes |
-| Split sugerido | PR 1 edición → PR 2 perfiles → PR 3 modo/docs |
-| Delivery strategy | ask-on-risk |
-| Chain strategy | feature-branch-chain |
+| Campo                   | Valor                                         |
+| ----------------------- | --------------------------------------------- |
+| Líneas estimadas        | 650-900                                       |
+| 400-line budget risk    | High                                          |
+| Chained PRs recommended | Yes                                           |
+| Split sugerido          | PR 1 edición → PR 2 perfiles → PR 3 modo/docs |
+| Delivery strategy       | ask-on-risk                                   |
+| Chain strategy          | feature-branch-chain                          |
 
 Decision needed before apply: Yes
 Chained PRs recommended: Yes
@@ -18,11 +18,11 @@ Chain strategy: feature-branch-chain
 
 ### Work units sugeridos
 
-| Unidad | Objetivo | Test enfocado | Harness runtime | Rollback |
-|---|---|---|---|---|
-| 1 | Editar transacciones | `npm test -- TransaccionForm ListaTransacciones tauri-commands && cargo test commands_test --manifest-path src-tauri/Cargo.toml` | `npm run tauri dev`: editar fila y ver totales | `commands.rs`, `repo.rs`, `tauri-commands.ts`, form/lista |
-| 2 | Gestión/aislamiento de perfiles | `npm test -- SelectorPerfil App && cargo test commands_test --manifest-path src-tauri/Cargo.toml` | crear, seleccionar, renombrar y cancelar borrado | comandos/wrappers/perfil/App |
-| 3 | Modo mejorado y cierre SDD | `npm test -- App EstadoResultadosPanel && npm run build` | alternar modo con/sin simulación | toggle/App/docs/OpenSpec |
+| Unidad | Objetivo                        | Test enfocado                                                                                                                    | Harness runtime                                  | Rollback                                                  |
+| ------ | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------- |
+| 1      | Editar transacciones            | `npm test -- TransaccionForm ListaTransacciones tauri-commands && cargo test commands_test --manifest-path src-tauri/Cargo.toml` | `npm run tauri dev`: editar fila y ver totales   | `commands.rs`, `repo.rs`, `tauri-commands.ts`, form/lista |
+| 2      | Gestión/aislamiento de perfiles | `npm test -- SelectorPerfil App && cargo test commands_test --manifest-path src-tauri/Cargo.toml`                                | crear, seleccionar, renombrar y cancelar borrado | comandos/wrappers/perfil/App                              |
+| 3      | Modo mejorado y cierre SDD      | `npm test -- App EstadoResultadosPanel && npm run build`                                                                         | alternar modo con/sin simulación                 | toggle/App/docs/OpenSpec                                  |
 
 ## Ya implementado/documentado
 
@@ -45,17 +45,16 @@ Chain strategy: feature-branch-chain
 - [x] 2.3 RED: wrappers TS y `SelectorPerfil` para crear, seleccionar, renombrar y cancelar eliminación.
 - [x] 2.4 GREEN: actualizar `src/data/tauri-commands.ts`, `SelectorPerfil.tsx` y `App.tsx` usando `localStorage` como perfil activo.
 
-
 ## Phase 3: Modo mejorado
 
-- [ ] 3.1 RED: integración en `App` para activar modo, mantener base recuperable y avisar si no hay simulación.
-- [ ] 3.2 GREEN: agregar toggle visible y alimentar matriz/resultados con base o mejorado sin nuevas dependencias.
+- [x] 3.1 RED: integración en `App` para activar modo, mantener base recuperable y avisar si no hay simulación.
+- [x] 3.2 GREEN: agregar toggle visible y alimentar matriz/resultados con base o mejorado sin nuevas dependencias.
 
 ## Phase 4: Cierre SDD y verificación
 
 - [ ] 4.1 Consolidar fuente SDD: conservar `specs/mvp-v2-features/spec.md`; eliminar o convertir `openspec/changes/mvp-v2-features/spec.md` en puntero.
-- [ ] 4.2 Confirmar espejo Engram en `app-diagnostico-financiero-local`, no en `antigravity`, y revisar `MVP-COMPLETE.md`/`README.md` solo si quedan obsoletos.
-- [ ] 4.3 Ejecutar DoD: `npm test`, `npm run build`, `cargo test --manifest-path src-tauri/Cargo.toml`; no reclamar verify/archive hasta completar apply.
+- [x] 4.2 `README.md` actualizado (tests 238, sección DB para desarrolladores, tabla v2, estructura de organismos).
+- [ ] 4.3 Ejecutar DoD final: `pnpm test`, `pnpm build`, `cargo test`; confirmar 238 verde.
 
 ## DoD
 
