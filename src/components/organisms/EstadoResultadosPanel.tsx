@@ -17,6 +17,7 @@ interface KpiRow {
   isIndent?: boolean
   isTotal?: boolean
   isHighlight?: boolean
+  isSemaphore?: boolean
   getValue: (lado: EstadoResultados['inicial']) => number
 }
 
@@ -110,12 +111,14 @@ const KPI_ROWS: KpiRow[] = [
     sign: '(=)',
     label: 'FLUJO DE AHORRO 2',
     isTotal: true,
+    isSemaphore: true,
     getValue: (lado) => lado.flujo_ahorro_2.toNumber(),
   },
   {
     sign: '',
     label: 'Capacidad inversión',
     isHighlight: true,
+    isSemaphore: true,
     getValue: (lado) => lado.capacidad_inversion.toNumber(),
   },
 ]
@@ -183,6 +186,11 @@ export function EstadoResultadosPanel({
               rowStyle = 'text-slate-700'
             }
 
+            const getColorClass = (val: number, isSemaphore: boolean) => {
+              if (!isSemaphore) return ''
+              return val < 0 ? 'text-red-500' : 'text-green-600'
+            }
+
             return (
               <tr key={row.label} className={rowStyle}>
                 <td className="px-2 py-1.5 text-center font-mono text-xs text-slate-500 font-semibold">
@@ -191,10 +199,10 @@ export function EstadoResultadosPanel({
                 <td className={`px-3 py-1.5 ${row.isIndent ? 'pl-8 italic text-slate-600' : ''}`}>
                   {row.label}
                 </td>
-                <td className="px-3 py-1.5 text-right font-mono">
+                <td className={`px-3 py-1.5 text-right font-mono ${getColorClass(inicialCentavos, !!row.isSemaphore)}`}>
                   {formatCentavos(inicialCentavos)}
                 </td>
-                <td className="px-3 py-1.5 text-right font-mono">
+                <td className={`px-3 py-1.5 text-right font-mono ${getColorClass(mejoradoCentavos, !!row.isSemaphore)}`}>
                   {formatCentavos(mejoradoCentavos)}
                 </td>
               </tr>
