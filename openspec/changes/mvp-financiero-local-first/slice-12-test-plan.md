@@ -48,10 +48,10 @@ El slice 12 reemplaza ese comportamiento por un contrato explícito:
 
 ## Archivos modificados / creados (2 archivos)
 
-| # | Archivo | Tipo | Tests nuevos | Estado RED |
-|---|---------|------|--------------|------------|
-| 1 | `src/components/organisms/__tests__/SimuladorPanel.test.tsx` | modificado | 4 nuevos (1 viejo removido) | 4 fallan: 3 por `[data-testid="aplicar-1"]` ausente, 1 por el debounce aún activo |
-| 2 | `openspec/changes/mvp-financiero-local-first/slice-12-test-plan.md` | nuevo | — | n/a (doc) |
+| #   | Archivo                                                             | Tipo       | Tests nuevos                | Estado RED                                                                        |
+| --- | ------------------------------------------------------------------- | ---------- | --------------------------- | --------------------------------------------------------------------------------- |
+| 1   | `src/components/organisms/__tests__/SimuladorPanel.test.tsx`        | modificado | 4 nuevos (1 viejo removido) | 4 fallan: 3 por `[data-testid="aplicar-1"]` ausente, 1 por el debounce aún activo |
+| 2   | `openspec/changes/mvp-financiero-local-first/slice-12-test-plan.md` | nuevo      | —                           | n/a (doc)                                                                         |
 
 **Total**: **4 tests** nuevos (3 slice 11 que validan estructura +
 4 nuevos slice 12 = **7 tests** en el archivo). Estado actual: 3 pasan
@@ -59,12 +59,12 @@ El slice 12 reemplaza ese comportamiento por un contrato explícito:
 
 ## Detalle de los 4 tests nuevos
 
-| # | Test | Contrato (Given/When/Then) |
-|---|------|---------------------------|
-| 1 | `REQ-402: Aplicar button is disabled when input matches persisted value` | Given el panel renderiza con la fixture de muestra. When el usuario aún no tocó el input. Then `[data-testid="aplicar-1"]` existe y tiene `disabled === true`. |
-| 2 | `REQ-402: Aplicar button is enabled when input differs from persisted value` | Given el panel renderiza con la fixture. When el usuario tipea `50000` (PESOS) en `[data-testid="simulador-input-1"]` (diverge de los 1.500 PESOS formateados desde el valor persistido). Then `[data-testid="aplicar-1"]` tiene `disabled === false`. |
-| 3 | `REQ-402: Aplicar button click calls onUpsert with the typed value` | Given la fixture + un `vi.fn().mockResolvedValue(undefined)` como `onUpsert`. When el usuario tipea `50000` PESOS y hace click en `[data-testid="aplicar-1"]`. Then `onUpsert` se llamó exactamente UNA vez con `{ transaccionId: 1, nuevoValorCentavos: 5_000_000, usuarioId: 1 }` (50.000 pesos × 100 = 5.000.000 centavos). |
-| 4 | `REQ-402: Aplicar button does NOT auto-fire on input change (no debounce)` | Given la fixture + un spy `onUpsert`. When el usuario tipea `50000` y espera 500 ms (> ventana del viejo debounce de 300 ms) SIN clickear. Then `onUpsert` NO fue llamado. |
+| #   | Test                                                                         | Contrato (Given/When/Then)                                                                                                                                                                                                                                                                                                     |
+| --- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | `REQ-402: Aplicar button is disabled when input matches persisted value`     | Given el panel renderiza con la fixture de muestra. When el usuario aún no tocó el input. Then `[data-testid="aplicar-1"]` existe y tiene `disabled === true`.                                                                                                                                                                 |
+| 2   | `REQ-402: Aplicar button is enabled when input differs from persisted value` | Given el panel renderiza con la fixture. When el usuario tipea `50000` (PESOS) en `[data-testid="simulador-input-1"]` (diverge de los 1.500 PESOS formateados desde el valor persistido). Then `[data-testid="aplicar-1"]` tiene `disabled === false`.                                                                         |
+| 3   | `REQ-402: Aplicar button click calls onUpsert with the typed value`          | Given la fixture + un `vi.fn().mockResolvedValue(undefined)` como `onUpsert`. When el usuario tipea `50000` PESOS y hace click en `[data-testid="aplicar-1"]`. Then `onUpsert` se llamó exactamente UNA vez con `{ transaccionId: 1, nuevoValorCentavos: 5_000_000, usuarioId: 1 }` (50.000 pesos × 100 = 5.000.000 centavos). |
+| 4   | `REQ-402: Aplicar button does NOT auto-fire on input change (no debounce)`   | Given la fixture + un spy `onUpsert`. When el usuario tipea `50000` y espera 500 ms (> ventana del viejo debounce de 300 ms) SIN clickear. Then `onUpsert` NO fue llamado.                                                                                                                                                     |
 
 > Test #3 incluye `toHaveBeenCalledTimes(1)` además del `toHaveBeenCalledWith`.
 > Eso previene que la IMPL introduzca accidentalmente doble invocación
@@ -83,13 +83,13 @@ descriptivamente reemplazado.
 
 ## Contrato de `data-testid` (binding con la IMPL)
 
-| `data-testid` | Elemento | Notas |
-|---------------|----------|-------|
-| `simulador-panel` | root container | Sin cambios desde slice 11. |
-| `simulador-input-{id}` | input controlado | Sin cambios. Continúa CONTROLADO (la IMPL del slice 11 lo dejó así para evitar pisar el texto). |
-| `simulador-vacio` | empty-state placeholder | Sin cambios. |
-| `aplicar-{id}` | **NUEVO** botón por fila | Único trigger de `onUpsert`. `id` = `transaccionId` (PK). |
-| `simulador-eliminar-{id}` | botón × de la propuesta | Sin cambios (sigue presente cuando hay `sim` activa). |
+| `data-testid`             | Elemento                 | Notas                                                                                           |
+| ------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------- |
+| `simulador-panel`         | root container           | Sin cambios desde slice 11.                                                                     |
+| `simulador-input-{id}`    | input controlado         | Sin cambios. Continúa CONTROLADO (la IMPL del slice 11 lo dejó así para evitar pisar el texto). |
+| `simulador-vacio`         | empty-state placeholder  | Sin cambios.                                                                                    |
+| `aplicar-{id}`            | **NUEVO** botón por fila | Único trigger de `onUpsert`. `id` = `transaccionId` (PK).                                       |
+| `simulador-eliminar-{id}` | botón × de la propuesta  | Sin cambios (sigue presente cuando hay `sim` activa).                                           |
 
 ## Estado RED verificado
 

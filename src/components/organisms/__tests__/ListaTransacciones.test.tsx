@@ -157,10 +157,7 @@ describe('REQ-202 / Slice 8: ListaTransacciones organism', () => {
   // Then:   there are exactly 2 `fila-transaccion` nodes AND each
   //         transaction's `concepto` is visible to the user.
   it('slice8_lista_transacciones_renders_one_row_per_transaction', () => {
-    render([
-      sampleTx,
-      { ...sampleTx, id: 2, concepto: 'Arriendo' },
-    ])
+    render([sampleTx, { ...sampleTx, id: 2, concepto: 'Arriendo' }])
 
     const rows = container.querySelectorAll('[data-testid="fila-transaccion"]')
     expect(rows.length).toBe(2)
@@ -221,9 +218,7 @@ describe('REQ-202 / Slice 8: ListaTransacciones organism', () => {
     const onEliminar = vi.fn().mockResolvedValue(undefined)
     render([sampleTx], false, onEliminar)
 
-    const deleteBtn = container.querySelector<HTMLButtonElement>(
-      '[data-testid="eliminar-1"]',
-    )
+    const deleteBtn = container.querySelector<HTMLButtonElement>('[data-testid="eliminar-1"]')
     expect(deleteBtn).not.toBeNull()
     expect(deleteBtn?.tagName).toBe('BUTTON')
 

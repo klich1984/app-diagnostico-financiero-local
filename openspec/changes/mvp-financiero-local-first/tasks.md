@@ -308,13 +308,13 @@ T-101 ─► T-102 ─► T-103 ─► T-104 ─► T-105 ─► T-106
 > **Rama dedicada**: `feat/persistencia` (creada desde `main` el
 > 2026-07-04; el usuario NO debe tocar `main` para este slice).
 
-| ID     | HU    | REQs    | Título                                                  | Tests                                  | Estado  |
-| ------ | ----- | ------- | ------------------------------------------------------- | -------------------------------------- | ------- |
-| T-701  | HU-202 | REQ-202 | Wiring: `cmd_obtener_categorias` (Rust)                 | `slice7_cmd_obtener_categorias_returns_all_14`, `..._returns_correct_shape` | [x] RED |
-| T-702  | HU-202 | REQ-202 | Wiring: `cmd_insert_transaccion` (Rust)                 | `slice7_cmd_insert_transaccion_persists_to_db`, `..._validates_value_positive` | [x] RED |
-| T-703  | HU-202 | REQ-202 | Wiring: `cmd_listar_transacciones` (Rust)               | `slice7_cmd_listar_transacciones_returns_only_user_rows` | [x] RED |
-| T-704  | HU-202 | REQ-202 | Wrappers TS en `src/data/tauri-commands.ts`             | 5 tests en `tauri-commands.test.ts`    | [x] RED |
-| T-705  | HU-202 | REQ-202 | Integración App.tsx (usa wrappers en lugar de seed)     | (futuro, no incluido en RED)           | [ ]     |
+| ID    | HU     | REQs    | Título                                              | Tests                                                                          | Estado  |
+| ----- | ------ | ------- | --------------------------------------------------- | ------------------------------------------------------------------------------ | ------- |
+| T-701 | HU-202 | REQ-202 | Wiring: `cmd_obtener_categorias` (Rust)             | `slice7_cmd_obtener_categorias_returns_all_14`, `..._returns_correct_shape`    | [x] RED |
+| T-702 | HU-202 | REQ-202 | Wiring: `cmd_insert_transaccion` (Rust)             | `slice7_cmd_insert_transaccion_persists_to_db`, `..._validates_value_positive` | [x] RED |
+| T-703 | HU-202 | REQ-202 | Wiring: `cmd_listar_transacciones` (Rust)           | `slice7_cmd_listar_transacciones_returns_only_user_rows`                       | [x] RED |
+| T-704 | HU-202 | REQ-202 | Wrappers TS en `src/data/tauri-commands.ts`         | 5 tests en `tauri-commands.test.ts`                                            | [x] RED |
+| T-705 | HU-202 | REQ-202 | Integración App.tsx (usa wrappers en lugar de seed) | (futuro, no incluido en RED)                                                   | [ ]     |
 
 ### H.1 RED phase artifact checklist
 

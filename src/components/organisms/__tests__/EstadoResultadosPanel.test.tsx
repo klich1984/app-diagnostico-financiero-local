@@ -241,9 +241,7 @@ describe('REQ-501 + REQ-502 / Slice 14 + REQ-V2-105: EstadoResultadosPanel organ
   it('slice14_estado_resultados_exposes_data_testid', () => {
     render(sampleEstado, null)
 
-    expect(
-      container.querySelector('[data-testid="estado-resultados"]'),
-    ).not.toBeNull()
+    expect(container.querySelector('[data-testid="estado-resultados"]')).not.toBeNull()
   })
 
   // REQ-502-D1-1 / T-503 RED:
@@ -258,9 +256,7 @@ describe('REQ-501 + REQ-502 / Slice 14 + REQ-V2-105: EstadoResultadosPanel organ
   it('slice14_T503_editar_salario_btn_visible_with_perfil_and_salario', () => {
     render(sampleEstado, 720_000_000, 1)
 
-    expect(
-      container.querySelector('[data-testid="btn-editar-salario"]'),
-    ).not.toBeNull()
+    expect(container.querySelector('[data-testid="btn-editar-salario"]')).not.toBeNull()
   })
 
   // REQ-502-D1-11 / T-503 RED:
@@ -273,8 +269,6 @@ describe('REQ-501 + REQ-502 / Slice 14 + REQ-V2-105: EstadoResultadosPanel organ
   it('slice14_T503_editar_salario_btn_hidden_when_salario_null', () => {
     render(sampleEstado, null, 1)
 
-    expect(
-      container.querySelector('[data-testid="btn-editar-salario"]'),
-    ).toBeNull()
+    expect(container.querySelector('[data-testid="btn-editar-salario"]')).toBeNull()
   })
 })

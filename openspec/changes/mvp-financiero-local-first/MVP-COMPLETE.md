@@ -26,17 +26,17 @@ La combinación **Tauri v2 (Rust) + React 18 + TypeScript + SQLite + `decimal.js
 
 ## Métricas del snapshot
 
-| Métrica                                                       | Valor                              |
-| ------------------------------------------------------------- | ---------------------------------- |
-| Total tests passing                                           | **206** (137 frontend + 69 backend) |
-| Slices completados (lógica + UI)                              | **14 de 14**                       |
-| Commits mergeados en `main`                                   | ver `git log --oneline`            |
-| Golden values validados contra el Excel fuente                | **7** (sin cambios desde el cierre del slice 9) |
-| Warnings conocidas remanentes                                | **1** (deferred, ver abajo)        |
-| REQs cubiertos en `spec.md`                                   | 19 / 19 (100%)                     |
-| HUs cubiertas del PRD                                         | 14 / 14 (100% lógica); 13 / 14 con UI integrada |
-| Decisiones de producto locked cubiertas                      | 6 / 6 (100%)                       |
-| Tabs implementadas vs planeadas en el PRD                     | **4 de 5** (falta "Presupuesto Mejorado" como tab separada) |
+| Métrica                                        | Valor                                                       |
+| ---------------------------------------------- | ----------------------------------------------------------- |
+| Total tests passing                            | **206** (137 frontend + 69 backend)                         |
+| Slices completados (lógica + UI)               | **14 de 14**                                                |
+| Commits mergeados en `main`                    | ver `git log --oneline`                                     |
+| Golden values validados contra el Excel fuente | **7** (sin cambios desde el cierre del slice 9)             |
+| Warnings conocidas remanentes                  | **1** (deferred, ver abajo)                                 |
+| REQs cubiertos en `spec.md`                    | 19 / 19 (100%)                                              |
+| HUs cubiertas del PRD                          | 14 / 14 (100% lógica); 13 / 14 con UI integrada             |
+| Decisiones de producto locked cubiertas        | 6 / 6 (100%)                                                |
+| Tabs implementadas vs planeadas en el PRD      | **4 de 5** (falta "Presupuesto Mejorado" como tab separada) |
 
 > ⚠️ **Nota sobre los conteos del doc anterior:** el `MVP-COMPLETE.md` fechado 2026-07-04 decía "127 tests (74 FE + 53 BE)". Ese número correspondía al cierre del slice 9. Al 2026-07-24 hay **206 tests** porque se agregaron MatrizPresupuesto, DistribucionChart, EstadoResultadosPanel, SimuladorPanel y sus tests asociados en los slices 10-14.
 
@@ -44,15 +44,15 @@ La combinación **Tauri v2 (Rust) + React 18 + TypeScript + SQLite + `decimal.js
 
 Estos son los 7 valores contra los que los golden tests comparan el motor (sin cambios desde el cierre del slice 9):
 
-| # | Métrica                                | Valor reportado | Fuente Excel                        |
-| - | -------------------------------------- | --------------- | ----------------------------------- |
-| 1 | Total Ingresos Mensual                | `$7,200,000.00` | `PRESUPUESTO!F12`                   |
-| 2 | Total Gastos Mensual                  | `$8,345,000.00` | `PRESUPUESTO!F24`                   |
-| 3 | Flujo de Caja Libre (FA1)             | `$2,140,000.00` | `ESTADO DE RESULTADOS!D14`          |
-| 4 | Flujo de Ahorro 2 (Inicial)           | `-$1,145,000.00` | `ESTADO DE RESULTADOS!D21`         |
-| 5 | Flujo de Ahorro 2 (Mejorado)           | `$425,000.00`   | `ESTADO DE RESULTADOS!H21`          |
-| 6 | Capacidad de Inversión (Mejorado)     | `$925,000.00`   | `ESTADO DE RESULTADOS!H23`          |
-| 7 | Ahorro anual total del simulador       | `$24,840,000.00` | `PRESUPUESTO MEJORADO!F32` (anual) |
+| #   | Métrica                           | Valor reportado  | Fuente Excel                       |
+| --- | --------------------------------- | ---------------- | ---------------------------------- |
+| 1   | Total Ingresos Mensual            | `$7,200,000.00`  | `PRESUPUESTO!F12`                  |
+| 2   | Total Gastos Mensual              | `$8,345,000.00`  | `PRESUPUESTO!F24`                  |
+| 3   | Flujo de Caja Libre (FA1)         | `$2,140,000.00`  | `ESTADO DE RESULTADOS!D14`         |
+| 4   | Flujo de Ahorro 2 (Inicial)       | `-$1,145,000.00` | `ESTADO DE RESULTADOS!D21`         |
+| 5   | Flujo de Ahorro 2 (Mejorado)      | `$425,000.00`    | `ESTADO DE RESULTADOS!H21`         |
+| 6   | Capacidad de Inversión (Mejorado) | `$925,000.00`    | `ESTADO DE RESULTADOS!H23`         |
+| 7   | Ahorro anual total del simulador  | `$24,840,000.00` | `PRESUPUESTO MEJORADO!F32` (anual) |
 
 Todos los valores cierran al centavo (tolerancia `$0.00`) en el golden test de las 32 transacciones del Excel.
 
@@ -66,26 +66,26 @@ Todos los valores cierran al centavo (tolerancia `$0.00`) en el golden test de l
 
 Las 6 decisiones locked del MVP reproducidas desde `openspec/changes/mvp-financiero-local-first/proposal.md` §3:
 
-| #   | Decisión                                       | Implementación                                                                                            |
-| --- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| 1   | **Idioma de la UI**                            | Español neutro LATAM sin voseo, formalidad "tú", sin selector de locale en v1.                            |
-| 2   | **Salario Personal Objetivo en FA2 inicial**   | NO se descuenta al inicio. Replica exacta del Excel: `-$1,145,000`. El salario descuenta solo en "Mejorado". |
-| 3   | **Librería de gráficos**                       | Recharts (SVG-based, declarativo, ~100KB gzipped).                                                        |
-| 4   | **Validación de enums**                        | CHECK constraints en SQL dentro de `src-tauri/migrations/001_inicial.sql`.                                |
-| 5   | **Límite duro de transacciones**               | Sin límite duro. Scroll virtualizado / paginación queda diferido (ver "Fuera del MVP").                  |
-| 6   | **Soporte multi-usuario**                      | Múltiples perfiles con selector. Tabla `Usuarios` ya creada. **UI del selector implementada en slice 14.** Modal de edición de salario objetivo sigue diferido. |
+| #   | Decisión                                     | Implementación                                                                                                                                                  |
+| --- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Idioma de la UI**                          | Español neutro LATAM sin voseo, formalidad "tú", sin selector de locale en v1.                                                                                  |
+| 2   | **Salario Personal Objetivo en FA2 inicial** | NO se descuenta al inicio. Replica exacta del Excel: `-$1,145,000`. El salario descuenta solo en "Mejorado".                                                    |
+| 3   | **Librería de gráficos**                     | Recharts (SVG-based, declarativo, ~100KB gzipped).                                                                                                              |
+| 4   | **Validación de enums**                      | CHECK constraints en SQL dentro de `src-tauri/migrations/001_inicial.sql`.                                                                                      |
+| 5   | **Límite duro de transacciones**             | Sin límite duro. Scroll virtualizado / paginación queda diferido (ver "Fuera del MVP").                                                                         |
+| 6   | **Soporte multi-usuario**                    | Múltiples perfiles con selector. Tabla `Usuarios` ya creada. **UI del selector implementada en slice 14.** Modal de edición de salario objetivo sigue diferido. |
 
 ---
 
 ## Cobertura por épica (snapshot 2026-07-24)
 
-| Épica                | Nombre                                      | Estado UI   | HUs cubiertas con UI                                                | REQs cubiertos                                                         | Tests que la cubren                                                                                                                       |
-| -------------------- | ------------------------------------------- | ----------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **ÉPICA 1**          | Arquitectura de persistencia y puentes      | ✅ Done     | HU-101, HU-102, HU-103                                              | REQ-101, REQ-102, REQ-103                                              | `migrations_test.rs`, `db_path_test.rs`, `sql_plugin_test.rs`, `capabilities_test.rs`, `smoke.test.ts`                                    |
-| **ÉPICA 2**          | Captura transaccional y CRUD                 | ✅ Done     | HU-201, HU-202, HU-203                                              | REQ-201, REQ-202, REQ-203                                              | `money-form.test.ts`, `normalizacion/index.test.ts`, `categorias_seed_test.rs`, `transacciones_repo_test.rs`, `TransaccionForm.test.tsx`, `ListaTransacciones.test.tsx` (con warning deprecation) |
-| **ÉPICA 3**          | Dashboard y Presupuesto                      | ✅ Done     | HU-301, HU-302                                                      | REQ-301, REQ-302                                                       | `agregaciones/matriz.test.ts`, `agregaciones/graficos.test.ts`, `MatrizPresupuesto.test.tsx`, `DistribucionChart.test.tsx`                |
-| **ÉPICA 4**          | Simulador de Oportunidades                   | ✅ Done     | HU-401, HU-402, HU-403                                              | REQ-401, REQ-402, REQ-403                                              | `simulador/filtro.test.ts`, `simulador/debounce.test.ts`, `simulador/matriz-mejorada.test.ts`, `simulador_repo_test.rs`, `SimuladorPanel.test.tsx` |
-| **ÉPICA 5**          | Estado de Resultados y métricas              | 🟡 Parcial | HU-501 ✅; **HU-502 falta modal UI para salario objetivo**           | REQ-501, REQ-502 + REQ-605 (golden)                                    | `kpis/index.test.ts`, `kpis/golden-excel.test.ts`, `kpis_test.rs`, `transacciones_aggregate_test.rs`, `EstadoResultadosPanel.test.tsx`     |
+| Épica       | Nombre                                 | Estado UI  | HUs cubiertas con UI                                       | REQs cubiertos                      | Tests que la cubren                                                                                                                                                                               |
+| ----------- | -------------------------------------- | ---------- | ---------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ÉPICA 1** | Arquitectura de persistencia y puentes | ✅ Done    | HU-101, HU-102, HU-103                                     | REQ-101, REQ-102, REQ-103           | `migrations_test.rs`, `db_path_test.rs`, `sql_plugin_test.rs`, `capabilities_test.rs`, `smoke.test.ts`                                                                                            |
+| **ÉPICA 2** | Captura transaccional y CRUD           | ✅ Done    | HU-201, HU-202, HU-203                                     | REQ-201, REQ-202, REQ-203           | `money-form.test.ts`, `normalizacion/index.test.ts`, `categorias_seed_test.rs`, `transacciones_repo_test.rs`, `TransaccionForm.test.tsx`, `ListaTransacciones.test.tsx` (con warning deprecation) |
+| **ÉPICA 3** | Dashboard y Presupuesto                | ✅ Done    | HU-301, HU-302                                             | REQ-301, REQ-302                    | `agregaciones/matriz.test.ts`, `agregaciones/graficos.test.ts`, `MatrizPresupuesto.test.tsx`, `DistribucionChart.test.tsx`                                                                        |
+| **ÉPICA 4** | Simulador de Oportunidades             | ✅ Done    | HU-401, HU-402, HU-403                                     | REQ-401, REQ-402, REQ-403           | `simulador/filtro.test.ts`, `simulador/debounce.test.ts`, `simulador/matriz-mejorada.test.ts`, `simulador_repo_test.rs`, `SimuladorPanel.test.tsx`                                                |
+| **ÉPICA 5** | Estado de Resultados y métricas        | 🟡 Parcial | HU-501 ✅; **HU-502 falta modal UI para salario objetivo** | REQ-501, REQ-502 + REQ-605 (golden) | `kpis/index.test.ts`, `kpis/golden-excel.test.ts`, `kpis_test.rs`, `transacciones_aggregate_test.rs`, `EstadoResultadosPanel.test.tsx`                                                            |
 
 > **Diferencia con el doc anterior (2026-07-04):** Épica 2, 3 y 5 cambiaron de 🟡 Partial a ✅ Done en UI (salvo Épica 5 / HU-502 que sigue parcial por el modal). Las páginas se implementaron como `organisms` wireados en `App.tsx` con state local (4 tabs), no como carpeta `src/pages/` separada — ver "Decisiones arquitectónicas implícitas" abajo.
 
@@ -105,12 +105,12 @@ Durante los slices 10-14 se tomaron dos decisiones que conviene registrar formal
 
 Estos puntos bloquean el cierre formal del cambio SDD `mvp-financiero-local-first`:
 
-| # | Pendiente                                                                                       | Esfuerzo estimado | Bloqueante cierre |
-| - | ----------------------------------------------------------------------------------------------- | ----------------- | ----------------- |
-| 1 | **Modal UI para configurar salario objetivo personal** (HU-502): hoy solo editable por DB.     | 1 slice chico     | Sí                |
-| 2 | **Decidir sobre la 5ª tab "Presupuesto Mejorado"**: ¿se agrega tab separada o se documenta la consolidación con Simulador como decisión de scope? | decisión + posible 1 slice | Sí                |
-| 3 | **Migrar `ReactDOMTestUtils.act` → `@testing-library/react`** en `TransaccionForm.test.tsx`     | 15 min            | No (housekeeping) |
-| 4 | **Auditoría de accesibilidad WCAG AA** (declarada diferida en el doc anterior)                  | 1+ slice          | No (post-MVP)     |
+| #   | Pendiente                                                                                                                                         | Esfuerzo estimado          | Bloqueante cierre |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ----------------- |
+| 1   | **Modal UI para configurar salario objetivo personal** (HU-502): hoy solo editable por DB.                                                        | 1 slice chico              | Sí                |
+| 2   | **Decidir sobre la 5ª tab "Presupuesto Mejorado"**: ¿se agrega tab separada o se documenta la consolidación con Simulador como decisión de scope? | decisión + posible 1 slice | Sí                |
+| 3   | **Migrar `ReactDOMTestUtils.act` → `@testing-library/react`** en `TransaccionForm.test.tsx`                                                       | 15 min                     | No (housekeeping) |
+| 4   | **Auditoría de accesibilidad WCAG AA** (declarada diferida en el doc anterior)                                                                    | 1+ slice                   | No (post-MVP)     |
 
 Si se completan los puntos 1 y 2 (y se decide cómo se cierra la disyuntiva de la 5ª tab), el cambio SDD queda en condiciones de correr `/sdd-archive-stableopencode` para sincronizar los delta specs.
 
@@ -349,7 +349,7 @@ pnpm tauri build
 - **Resumen:** el motor de estado de resultados replica al centavo los 6 valores del Excel:
   - Inicial: FA1=2,140,000.00 / FA2=-1,145,000.00 / Cap.Inv=-1,145,000.00
   - Mejorado: FA1=2,140,000.00 / FA2=425,000.00 / Cap.Inv=925,000.00
-  La columna Delta muestra la diferencia entre Mejorado e Inicial. **Cambió desde el doc anterior (2026-07-04):** el render está implementado como organism wireado en la 4ª tab; el comentario sobre "`pages/EstadoResultados.tsx` queda diferida" del doc viejo era incorrecto.
+    La columna Delta muestra la diferencia entre Mejorado e Inicial. **Cambió desde el doc anterior (2026-07-04):** el render está implementado como organism wireado en la 4ª tab; el comentario sobre "`pages/EstadoResultados.tsx` queda diferida" del doc viejo era incorrecto.
 
 #### HU-502 — Salario Personal Objetivo configurable
 
@@ -368,19 +368,19 @@ pnpm tauri build
 
 ## Section C — Quick links
 
-| Documento                                                                  | Propósito                                                  |
-| -------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| [`spec.md`](./spec.md)                                                     | Requisitos formales REQ-101 → REQ-605 con 38 escenarios    |
-| [`design.md`](./design.md)                                                 | Diseño técnico y arquitectura (1688 líneas)                |
-| [`tasks.md`](./tasks.md)                                                   | Task breakdown con el worklog de cada slice                |
-| [`proposal.md`](./proposal.md)                                             | Propuesta de cambio con las 6 decisiones locked            |
-| [`slice-2-test-plan.md`](./slice-2-test-plan.md)                           | Plan de tests del slice 2 (SQLite + migrations)            |
-| [`slice-3-test-plan.md`](./slice-3-test-plan.md)                           | Plan de tests del slice 3 (captura + normalización)        |
-| [`slice-4-test-plan.md`](./slice-4-test-plan.md)                           | Plan de tests del slice 4 (matriz + gráficos)              |
-| [`slice-5-test-plan.md`](./slice-5-test-plan.md)                           | Plan de tests del slice 5 (simulador)                      |
-| [`slice-6-test-plan.md`](./slice-6-test-plan.md)                           | Plan de tests del slice 6 (KPIs + golden)                  |
-| [`slice-13-test-plan.md`](./slice-13-test-plan.md)                         | Plan de tests del slice 13 (distribution charts)           |
-| [`slice-14-test-plan.md`](./slice-14-test-plan.md)                         | Plan de tests del slice 14 (estado de resultados dual)     |
-| [`slice-14-tasks.md`](./slice-14-tasks.md)                                 | Task checklist del slice 14                                |
-| [`../../src/domain/simulador/__tests__/matriz-mejorada.test.ts`](../../src/domain/simulador/__tests__/matriz-mejorada.test.ts)     | Golden test que valida `6,275,000.00` (REQ-403)          |
-| [`../../src/domain/kpis/__tests__/golden-excel.test.ts`](../../src/domain/kpis/__tests__/golden-excel.test.ts)                   | Golden test que valida los 6 valores del Estado de Resultados (REQ-605) |
+| Documento                                                                                                                      | Propósito                                                               |
+| ------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| [`spec.md`](./spec.md)                                                                                                         | Requisitos formales REQ-101 → REQ-605 con 38 escenarios                 |
+| [`design.md`](./design.md)                                                                                                     | Diseño técnico y arquitectura (1688 líneas)                             |
+| [`tasks.md`](./tasks.md)                                                                                                       | Task breakdown con el worklog de cada slice                             |
+| [`proposal.md`](./proposal.md)                                                                                                 | Propuesta de cambio con las 6 decisiones locked                         |
+| [`slice-2-test-plan.md`](./slice-2-test-plan.md)                                                                               | Plan de tests del slice 2 (SQLite + migrations)                         |
+| [`slice-3-test-plan.md`](./slice-3-test-plan.md)                                                                               | Plan de tests del slice 3 (captura + normalización)                     |
+| [`slice-4-test-plan.md`](./slice-4-test-plan.md)                                                                               | Plan de tests del slice 4 (matriz + gráficos)                           |
+| [`slice-5-test-plan.md`](./slice-5-test-plan.md)                                                                               | Plan de tests del slice 5 (simulador)                                   |
+| [`slice-6-test-plan.md`](./slice-6-test-plan.md)                                                                               | Plan de tests del slice 6 (KPIs + golden)                               |
+| [`slice-13-test-plan.md`](./slice-13-test-plan.md)                                                                             | Plan de tests del slice 13 (distribution charts)                        |
+| [`slice-14-test-plan.md`](./slice-14-test-plan.md)                                                                             | Plan de tests del slice 14 (estado de resultados dual)                  |
+| [`slice-14-tasks.md`](./slice-14-tasks.md)                                                                                     | Task checklist del slice 14                                             |
+| [`../../src/domain/simulador/__tests__/matriz-mejorada.test.ts`](../../src/domain/simulador/__tests__/matriz-mejorada.test.ts) | Golden test que valida `6,275,000.00` (REQ-403)                         |
+| [`../../src/domain/kpis/__tests__/golden-excel.test.ts`](../../src/domain/kpis/__tests__/golden-excel.test.ts)                 | Golden test que valida los 6 valores del Estado de Resultados (REQ-605) |

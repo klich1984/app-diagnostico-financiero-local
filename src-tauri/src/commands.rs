@@ -104,30 +104,14 @@ pub fn cmd_insert_transaccion_impl(
     repo::insert(conn, t).map_err(|e| format!("inserting Transaccion: {e}"))
 }
 
-/// Resuelve el `usuario_id` activo para el comando actual.
-///
-/// Slice 7 (MVP local): retorna el id del usuario 'Yo' (creado por el
-/// seed en `001_inicial.sql`). Cuando exista el selector de perfil
-/// (decision de producto #6, slices futuros), este helper leerá la
-/// sesión activa desde el estado de Tauri (vía `tauri::State`) y ya
-/// no abrirá la conexión acá — solo delegará en el `cmd_obtener_usuario_activo`.
-fn resolver_usuario_activo(app: &tauri::AppHandle) -> Result<i64, String> {
-    let conn = db::abrir_conexion(app)?;
-    conn.query_row(
-        "SELECT id FROM Usuarios WHERE nombre = ?1 LIMIT 1",
-        ["Yo"],
-        |row| row.get::<_, i64>(0),
-    )
-    .map_err(|e| format!("resolver_usuario_activo: no user 'Yo' found: {e}"))
-}
-
 #[tauri::command]
 pub async fn cmd_insert_transaccion(
     app: tauri::AppHandle,
-    mut input: TransaccionInput,
+    input: TransaccionInput,
 ) -> Result<i64, String> {
-    let usuario_id = resolver_usuario_activo(&app)?;
-    input.usuario_id = Some(usuario_id);
+    if input.usuario_id.is_none() {
+        return Err("REQ-V2-102: usuario_id es requerido para aislar por perfil".to_string());
+    }
     let conn = db::abrir_conexion(&app)?;
     cmd_insert_transaccion_impl(&conn, &input)
 }
@@ -142,37 +126,13 @@ pub fn cmd_listar_transacciones_impl(
     repo::list_by_user(conn, usuario_id).map_err(|e| format!("listing Transacciones: {e}"))
 }
 
-/// Resuelve el `id` del primer `Usuarios` insertado (menor `id`).
-///
-/// Estrategia de mínimo costo para slice 7: la seed migration inserta
-/// UN perfil llamado 'Yo' en `001_inicial.sql`. Tomamos el de menor
-/// `id` por robustez (si en el futuro la seed agrega más perfiles,
-/// este resolver sigue funcionando). Si la tabla está vacía,
-/// devolvemos `Err` claro. Cuando se implemente el selector de
-/// perfil (Épica 5), este resolver se reemplaza sin tocar
-/// `cmd_listar_transacciones_impl`.
-///
-/// NOTA: este resolver vive sólo para `cmd_listar_transacciones`
-/// (lee de la DB). El resolver que usa `cmd_insert_transaccion` es
-/// `resolver_usuario_activo(&AppHandle)` y resuelve por nombre — son
-/// dos helpers con propósitos distintos (este lee de un `&Connection`
-/// ya abierto; el otro abre la conexión vía `AppHandle`).
-fn resolver_usuario_activo_desde_db(conn: &Connection) -> Result<i64, String> {
-    conn.query_row(
-        "SELECT id FROM Usuarios ORDER BY id ASC LIMIT 1",
-        [],
-        |row| row.get::<_, i64>(0),
-    )
-    .map_err(|e| format!("resolving active usuario: {e}"))
-}
-
-/// Wrapper IPC: resuelve el usuario activo y delega en `_impl`.
+/// Wrapper IPC: delega en `_impl` utilizando el `usuario_id` del frontend.
 #[tauri::command]
 pub async fn cmd_listar_transacciones(
     app: tauri::AppHandle,
+    usuario_id: i64,
 ) -> Result<Vec<Transaccion>, String> {
     let conn = db::abrir_conexion(&app)?;
-    let usuario_id = resolver_usuario_activo_desde_db(&conn)?;
     cmd_listar_transacciones_impl(&conn, usuario_id)
 }
 
@@ -314,6 +274,55 @@ pub async fn cmd_crear_perfil(
 ) -> Result<i64, String> {
     let conn = db::abrir_conexion(&app)?;
     cmd_crear_perfil_impl(&conn, input.nombre, input.salario_personal_objetivo_centavos)
+}
+
+/// Actualiza el nombre de un perfil existente.
+///
+/// Rechaza nombres vacíos o de solo espacios. Si el ID no existe, retorna Err.
+pub fn cmd_update_perfil_impl(conn: &Connection, id: i64, nombre: String) -> Result<(), String> {
+    let nombre = nombre.trim().to_string();
+    if nombre.is_empty() {
+        return Err("El nombre del perfil no puede estar vacío.".to_string());
+    }
+
+    let rows_affected = conn
+        .execute(
+            "UPDATE Usuarios SET nombre = ?1 WHERE id = ?2",
+            rusqlite::params![nombre, id],
+        )
+        .map_err(|e| format!("actualizando nombre de perfil: {e}"))?;
+
+    if rows_affected == 0 {
+        return Err(format!("perfil_id {} no encontrado", id));
+    }
+
+    Ok(())
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_update_perfil_impl`.
+#[tauri::command]
+pub async fn cmd_update_perfil(
+    app: tauri::AppHandle,
+    id: i64,
+    nombre: String,
+) -> Result<(), String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_update_perfil_impl(&conn, id, nombre)
+}
+
+/// Elimina un perfil y, por ON DELETE CASCADE en SQLite, todas sus
+/// transacciones y simulaciones asociadas.
+pub fn cmd_eliminar_perfil_impl(conn: &Connection, id: i64) -> Result<(), String> {
+    conn.execute("DELETE FROM Usuarios WHERE id = ?1", rusqlite::params![id])
+        .map_err(|e| format!("eliminando perfil: {e}"))?;
+    Ok(())
+}
+
+/// Wrapper IPC: abre la conexión y delega en `cmd_eliminar_perfil_impl`.
+#[tauri::command]
+pub async fn cmd_eliminar_perfil(app: tauri::AppHandle, id: i64) -> Result<(), String> {
+    let conn = db::abrir_conexion(&app)?;
+    cmd_eliminar_perfil_impl(&conn, id)
 }
 
 /// Devuelve UN perfil por id (lookup 1-a-1).

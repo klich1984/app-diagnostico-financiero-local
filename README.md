@@ -9,14 +9,17 @@ Aplicación de escritorio para gestión financiera personal construida con **Tau
 
 ## Estado
 
-**MVP con 14 Slices completados.** Cierre al centavo contra el Excel fuente. Ver [`MVP-COMPLETE.md`](openspec/changes/mvp-financiero-local-first/MVP-COMPLETE.md) para el resumen ejecutivo y las release notes por historia de usuario.
+**MVP + v2 completado.** Cierre al centavo contra el Excel fuente + gestión de perfiles + modo mejorado.
+Ver [`MVP-COMPLETE.md`](openspec/changes/mvp-financiero-local-first/MVP-COMPLETE.md) para el resumen ejecutivo y las release notes.
 
-| Slices | PRs     | Tareas                                                         | Estado    |
-| ------ | ------- | -------------------------------------------------------------- | --------- |
-| 1–6    | #1–#6   | Lógica del motor (SQLite, captura, presupuesto, simulador, KPIs)| ✅ done  |
-| 7–14   | #7–#14  | Integración UI completa (organismos, 4 pestañas, selector)     | ✅ done  |
+| Fase       | Slices / Tasks | Característica                                   | Estado  |
+| ---------- | -------------- | ------------------------------------------------ | ------- |
+| MVP        | Slices 1–14    | Motor, UI, 5 pestañas, selector                  | ✅ done |
+| v2 Phase 1 | Tasks 1.1–1.6  | Edición de transacciones                         | ✅ done |
+| v2 Phase 2 | Tasks 2.1–2.4  | Gestión de perfiles (crear, renombrar, eliminar) | ✅ done |
+| v2 Phase 3 | Tasks 3.1–3.2  | Toggle modo mejorado                             | ✅ done |
 
-**Tests:** 206 verde (137 frontend + 69 backend), 0 fallando.
+**Tests:** 238 verde (169 frontend + 69 backend), 0 fallando.
 
 ---
 
@@ -77,7 +80,7 @@ pnpm format
 ## Tests
 
 ```bash
-# Frontend (Vitest + jsdom) — 137 tests
+# Frontend (Vitest + jsdom) — 169 tests
 pnpm test
 pnpm test:watch
 
@@ -89,28 +92,30 @@ cd ..
 pnpm format:check
 ```
 
-**Resultado esperado:** los 206 tests pasan verde.
+**Resultado esperado:** 169 + 69 = 238 tests pasan verde.
 
 ---
 
 ## Cobertura de tests
 
-- **137 tests frontend** (Vitest, en `src/**/__tests__/`):
+- **169 tests frontend** (Vitest, en `src/**/__tests__/`):
   - `smoke.test.ts`, `precision.test.ts` — base.
   - `precision/__tests__/money-form.test.ts` — formateo de moneda.
   - `normalizacion/__tests__/index.test.ts` — motor de frecuencias (REQ-203).
   - `agregaciones/__tests__/matriz.test.ts`, `graficos.test.ts`, `golden-mvp.test.ts` — matriz SUMIFS y golden de las 32 transacciones.
   - `simulador/__tests__/filtro.test.ts`, `debounce.test.ts`, `matriz-mejorada.test.ts` — HU-401/402/403.
   - `kpis/__tests__/index.test.ts`, `golden-excel.test.ts` — estado de resultados + golden REQ-605.
-  - `components/molecules/__tests__/TransaccionForm.test.tsx` — captura transaccional.
-  - `components/organisms/__tests__/` — tests de organismos (`ListaTransacciones`, `MatrizPresupuesto`, `DistribucionChart`, `SimuladorPanel`, `EstadoResultadosPanel`).
+  - `data/__tests__/perfil-activo.test.ts`, `tauri-commands.test.ts` — IPC wrappers y localStorage.
+  - `components/molecules/__tests__/TransaccionForm.test.tsx` — captura + edición transaccional.
+  - `components/organisms/__tests__/` — `ListaTransacciones`, `MatrizPresupuesto`, `DistribucionChart`, `SimuladorPanel`, `EstadoResultadosPanel`, `PresupuestoMejoradoPanel`, `ModalSalarioObjetivo`, `SelectorPerfil`.
+  - `__tests__/App.test.tsx` — integración shell (tabs, form reset, toggle modo mejorado).
 - **69 tests backend** (`cargo test`, en `src-tauri/tests/`):
   - `migrations_test.rs`, `db_path_test.rs`, `sql_plugin_test.rs`, `capabilities_test.rs` — ÉPICA 1.
   - `categorias_seed_test.rs`, `transacciones_repo_test.rs`, `transacciones_aggregate_test.rs` — ÉPICA 2 + 3.
   - `simulador_repo_test.rs` — ÉPICA 4 (backend del simulador).
   - `kpis_test.rs` — ÉPICA 5 (engine Rust de KPIs).
 
-**206 tests verde, 0 fallando.**
+**238 tests verde, 0 fallando.**
 
 ---
 
@@ -118,26 +123,59 @@ pnpm format:check
 
 ```
 docs/                                # PRD + análisis técnico del Excel fuente
-openspec/                            # SDD artifacts (proposal, spec, design, tasks, tests plans, MVP-COMPLETE)
-  changes/mvp-financiero-local-first/
+openspec/                            # SDD artifacts (proposal, spec, design, tasks, MVP-COMPLETE)
+  changes/mvp-financiero-local-first/ # MVP original (slices 1–14)
+  changes/mvp-v2-features/            # Fase v2 (edición, perfiles, modo mejorado)
 scripts/                             # Scripts Python para análisis del Excel + wrappers Windows
 src/                                 # Frontend React
   components/                        # Atomic Design (molecules, organisms)
     molecules/                       # TransaccionForm.tsx
-    organisms/                       # ListaTransacciones, MatrizPresupuesto, DistribucionChart, SimuladorPanel, EstadoResultadosPanel, SelectorPerfil
-  data/                              # Módulos de datos e IPC tipado (tauri-commands.ts, categorias-seed.ts, perfil-activo.ts)
+    organisms/                       # ListaTransacciones, MatrizPresupuesto, DistribucionChart,
+                                     # SimuladorPanel, EstadoResultadosPanel, SelectorPerfil,
+                                     # PresupuestoMejoradoPanel, ModalSalarioObjetivo
+  data/                              # Módulos de datos e IPC tipado (tauri-commands.ts, perfil-activo.ts)
   domain/                            # Lógica pura TS (matriz, normalización, simulador, KPIs, precisión)
     normalizacion/                   # Divisor por frecuencia (REQ-203)
     agregaciones/                    # SUMIFS virtual + gráficos (REQ-301, REQ-302)
     simulador/                       # Filtro, debounce, matriz mejorada (REQ-401..403)
     kpis/                            # Engine estado de resultados (REQ-501, REQ-502, REQ-605)
     precision/                       # decimal.js + form helpers
-  __tests__/                         # smoke + precision
+  __tests__/                         # smoke + precision + App integration
 src-tauri/                           # Backend Rust
-  src/                               # Módulos Rust (migrations, transacciones, simulador, kpis)
+  src/                               # Módulos Rust (migrations, transacciones, simulador, kpis, perfiles)
   tests/                             # Tests cargo (11 archivos)
   migrations/                        # SQL versionado (001_inicial.sql)
 ```
+
+---
+
+## Base de datos (para desarrolladores)
+
+La app persiste todo en un archivo SQLite local. No hay servidor.
+
+**Ubicación en Windows:**
+
+```
+C:\Users\{tu-usuario}\AppData\Roaming\com.hetan.mvp-financiero\misfinanzas.db
+```
+
+> En variables de entorno: `%APPDATA%\com.hetan.mvp-financiero\misfinanzas.db`
+
+**Cómo abrirla:**
+
+1. Descargá [DB Browser for SQLite](https://sqlitebrowser.org/) (gratis, multiplataforma).
+2. File → Open Database → navegá a la ruta de arriba.
+3. Pestañá **Browse Data** para ver las tablas: `Usuarios`, `Categorias`, `Transacciones`, `Simulador`.
+
+Alternativamente con la CLI de SQLite:
+
+```bash
+sqlite3 "%APPDATA%\com.hetan.mvp-financiero\misfinanzas.db"
+.tables
+SELECT * FROM Usuarios;
+```
+
+> **⚠️ No modifiqués las tablas a mano** mientras la app está corriendo. Cerrala primero.
 
 ---
 

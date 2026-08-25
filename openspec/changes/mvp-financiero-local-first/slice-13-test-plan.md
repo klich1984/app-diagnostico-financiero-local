@@ -35,9 +35,7 @@ export interface DistribucionChartProps {
   titulo: string
 }
 
-export function DistribucionChart(
-  props: DistribucionChartProps,
-): JSX.Element
+export function DistribucionChart(props: DistribucionChartProps): JSX.Element
 ```
 
 El organism es DUMB: consume la distribución ya calculada por
@@ -58,12 +56,12 @@ Archivo: `src/components/organisms/__tests__/DistribucionChart.test.tsx`
 
 Total: **4 tests**.
 
-| #   | Test                                                                 | Escenario (REQ-302)                                                                                  | Selector                                                                                |
-| --- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| 1   | `slice13_distribucion_chart_renders_titulo`                          | El organism renderea el `titulo` provisto en el DOM.                                                | `container.textContent` (regex tolerant)                                                |
-| 2   | `slice13_distribucion_chart_renders_one_segment_per_item`            | El PieChart emite un `path.recharts-sector` por cada item en `distribucion`. Exactitud 1:1.         | `container.querySelectorAll('path.recharts-sector')`                                    |
-| 3   | `slice13_distribucion_chart_renders_empty_state`                     | `distribucion=[]` → mensaje "no hay datos" en español (no PieChart vacío ni crash de Recharts).      | `container.textContent` regex `/no hay datos/i`                                          |
-| 4   | `slice13_distribucion_chart_exposes_data_testid`                     | Container raíz tiene `data-testid="distribucion-chart"` (contrato para tooling e2e y debugging).    | `container.querySelector('[data-testid="distribucion-chart"]')`                         |
+| #   | Test                                                      | Escenario (REQ-302)                                                                              | Selector                                                        |
+| --- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| 1   | `slice13_distribucion_chart_renders_titulo`               | El organism renderea el `titulo` provisto en el DOM.                                             | `container.textContent` (regex tolerant)                        |
+| 2   | `slice13_distribucion_chart_renders_one_segment_per_item` | El PieChart emite un `path.recharts-sector` por cada item en `distribucion`. Exactitud 1:1.      | `container.querySelectorAll('path.recharts-sector')`            |
+| 3   | `slice13_distribucion_chart_renders_empty_state`          | `distribucion=[]` → mensaje "no hay datos" en español (no PieChart vacío ni crash de Recharts).  | `container.textContent` regex `/no hay datos/i`                 |
+| 4   | `slice13_distribucion_chart_exposes_data_testid`          | Container raíz tiene `data-testid="distribucion-chart"` (contrato para tooling e2e y debugging). | `container.querySelector('[data-testid="distribucion-chart"]')` |
 
 ### 3.1 Cobertura por branch
 

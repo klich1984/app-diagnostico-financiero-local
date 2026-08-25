@@ -132,28 +132,22 @@ import { describe, it, expect } from 'vitest'
 import { Decimal } from '../../precision/money'
 import type { CategoriaMin, TransaccionMin } from '../../agregaciones'
 import type { Simulacion } from '../../simulador/matriz-mejorada'
-import {
-  calcularEstadoResultados,
-  calcularLadoInicial,
-  calcularLadoMejorado,
-} from '..'
+import { calcularEstadoResultados, calcularLadoInicial, calcularLadoMejorado } from '..'
 
-  it('calcularEstadoResultados accepts undefined salarioObjetivoCentavos (treated as null)', () => {
-    const cats: CategoriaMin[] = [
-      { id: 1, nombre: 'Salario', grupo_pertenencia: 'INGRESO' },
-    ]
-    const txs: Array<TransaccionMin & { id: number }> = [
-      {
-        id: 1,
-        tipo_flujo: 'Ingreso',
-        categoria_id: 1,
-        frecuencia: 'Mensual',
-        valor_centavos: 1_000_000,
-      },
-    ]
-    const resultado = calcularEstadoResultados(txs, cats, [], undefined)
-    expect(resultado.inicial.flujo_ahorro_2.toNumber()).toBe(1_000_000)
-  })
+it('calcularEstadoResultados accepts undefined salarioObjetivoCentavos (treated as null)', () => {
+  const cats: CategoriaMin[] = [{ id: 1, nombre: 'Salario', grupo_pertenencia: 'INGRESO' }]
+  const txs: Array<TransaccionMin & { id: number }> = [
+    {
+      id: 1,
+      tipo_flujo: 'Ingreso',
+      categoria_id: 1,
+      frecuencia: 'Mensual',
+      valor_centavos: 1_000_000,
+    },
+  ]
+  const resultado = calcularEstadoResultados(txs, cats, [], undefined)
+  expect(resultado.inicial.flujo_ahorro_2.toNumber()).toBe(1_000_000)
+})
 
 // and slice-4 `golden-mvp.test.ts`).
 // ---------------------------------------------------------------------------
@@ -496,34 +490,19 @@ function simulaciones12(): Simulacion[] {
 
 describe('REQ-501: calcularEstadoResultados — lado Inicial', () => {
   it('req_501_kpis_inicial_total_ingresos_es_7_200_000', () => {
-    const estado = calcularEstadoResultados(
-      transacciones32(),
-      categorias32(),
-      [],
-      null,
-    )
+    const estado = calcularEstadoResultados(transacciones32(), categorias32(), [], null)
     expect(estado.inicial.total_ingresos.equals(new Decimal(720_000_000))).toBe(true)
   })
 
   it('req_501_kpis_inicial_fa1_es_2_140_000', () => {
-    const estado = calcularEstadoResultados(
-      transacciones32(),
-      categorias32(),
-      [],
-      null,
-    )
+    const estado = calcularEstadoResultados(transacciones32(), categorias32(), [], null)
     // FA1 = ingresos − (gastos_necesarios_sin_deudas + gastos_deudas)
     //      = 7,200,000 − (3,860,000 + 1,200,000) = 2,140,000.
     expect(estado.inicial.flujo_ahorro_1.equals(new Decimal(214_000_000))).toBe(true)
   })
 
   it('req_501_kpis_inicial_fa2_es_neg_1_145_000', () => {
-    const estado = calcularEstadoResultados(
-      transacciones32(),
-      categorias32(),
-      [],
-      null,
-    )
+    const estado = calcularEstadoResultados(transacciones32(), categorias32(), [], null)
     // FA2 = FA1 − salario(0) − variables_total
     //      = 2,140,000 − 0 − 3,285,000 = -1,145,000.
     expect(estado.inicial.flujo_ahorro_2.equals(new Decimal(-114_500_000))).toBe(true)
@@ -531,12 +510,7 @@ describe('REQ-501: calcularEstadoResultados — lado Inicial', () => {
   })
 
   it('req_501_kpis_inicial_cap_inv_es_neg_1_145_000', () => {
-    const estado = calcularEstadoResultados(
-      transacciones32(),
-      categorias32(),
-      [],
-      null,
-    )
+    const estado = calcularEstadoResultados(transacciones32(), categorias32(), [], null)
     // capacidad_inversion = salario(0) + FA2 = -1,145,000.
     expect(estado.inicial.capacidad_inversion.equals(new Decimal(-114_500_000))).toBe(true)
   })
@@ -608,32 +582,26 @@ describe('REQ-501 + REQ-605: anualización × 12', () => {
     )
     // Inicial:
     //   FCL mensual = -1,145,000 → anual = -13,740,000 (Excel J27).
-    expect(
-      estado.inicial.fcl_anual.equals(estado.inicial.flujo_caja_libre.mul(12)),
-    ).toBe(true)
+    expect(estado.inicial.fcl_anual.equals(estado.inicial.flujo_caja_libre.mul(12))).toBe(true)
     expect(estado.inicial.fcl_anual.equals(new Decimal(-1_374_000_000))).toBe(true)
 
     // FA2 anual inicial = -1,145,000 × 12 = -13,740,000.
-    expect(
-      estado.inicial.fa2_anual.equals(estado.inicial.flujo_ahorro_2.mul(12)),
-    ).toBe(true)
+    expect(estado.inicial.fa2_anual.equals(estado.inicial.flujo_ahorro_2.mul(12))).toBe(true)
 
     // Cap_inv anual inicial = -1,145,000 × 12 = -13,740,000.
-    expect(
-      estado.inicial.cap_inv_anual.equals(estado.inicial.capacidad_inversion.mul(12)),
-    ).toBe(true)
+    expect(estado.inicial.cap_inv_anual.equals(estado.inicial.capacidad_inversion.mul(12))).toBe(
+      true,
+    )
 
     // Mejorado:
     //   FCL mensual = 925,000 → anual = 11,100,000.
-    expect(
-      estado.mejorado.fcl_anual.equals(estado.mejorado.flujo_caja_libre.mul(12)),
-    ).toBe(true)
+    expect(estado.mejorado.fcl_anual.equals(estado.mejorado.flujo_caja_libre.mul(12))).toBe(true)
     expect(estado.mejorado.fcl_anual.equals(new Decimal(1_110_000_000))).toBe(true)
 
     // Cap_inv anual mejorado = 925,000 × 12 = 11,100,000.
-    expect(
-      estado.mejorado.cap_inv_anual.equals(estado.mejorado.capacidad_inversion.mul(12)),
-    ).toBe(true)
+    expect(estado.mejorado.cap_inv_anual.equals(estado.mejorado.capacidad_inversion.mul(12))).toBe(
+      true,
+    )
   })
 })
 

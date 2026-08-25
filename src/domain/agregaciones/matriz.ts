@@ -64,11 +64,7 @@ export interface TransaccionMin {
   // `undefined` sigue siendo la representación TS idiomática;
   // el agregador trata ambos como "ausente" (ver las ramas `else`).
   comportamiento?: 'Fijo' | 'Variable' | null
-  naturaleza_necesidad?:
-    | 'Necesario'
-    | 'No tan necesario'
-    | 'No necesario'
-    | null
+  naturaleza_necesidad?: 'Necesario' | 'No tan necesario' | 'No necesario' | null
   valor_centavos: number
   concepto?: string
   notas?: string | null
@@ -252,14 +248,8 @@ export function calcularMatriz(
   // 4. Totales agregados. Se calculan a partir de los buckets ya
   //    normalizados a mensual para evitar doble conteo o drift si el
   //    set de transacciones se filtra en una capa superior.
-  const totalIngresos = ingresos.reduce(
-    (acc, b) => acc.plus(b.total),
-    new Decimal(0),
-  )
-  const totalGastos = gastos.reduce(
-    (acc, b) => acc.plus(b.total),
-    new Decimal(0),
-  )
+  const totalIngresos = ingresos.reduce((acc, b) => acc.plus(b.total), new Decimal(0))
+  const totalGastos = gastos.reduce((acc, b) => acc.plus(b.total), new Decimal(0))
   const flujoCajaLibre = totalIngresos.minus(totalGastos)
 
   return {

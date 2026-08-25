@@ -55,6 +55,7 @@ export interface CategoriaDto {
  * activo; eso es responsabilidad del backend.
  */
 export interface TransaccionInputDto {
+  usuario_id: number
   tipo_flujo: 'Ingreso' | 'Gasto'
   categoria_id: number
   concepto: string
@@ -136,8 +137,8 @@ export async function insertarTransaccion(input: TransaccionInputDto): Promise<n
  * necesita pasarlo. Orden: `created_at DESC, id DESC` (la más reciente
  * primero), igual que el reporte de Excel fuente.
  */
-export async function listarTransacciones(): Promise<TransaccionCompletaDto[]> {
-  return invoke<TransaccionCompletaDto[]>('cmd_listar_transacciones')
+export async function listarTransacciones(usuarioId: number): Promise<TransaccionCompletaDto[]> {
+  return invoke<TransaccionCompletaDto[]>('cmd_listar_transacciones', { usuarioId })
 }
 
 /**
@@ -225,8 +226,27 @@ export async function obtenerPerfil(id: number): Promise<UsuarioDto> {
   return invoke<UsuarioDto>('cmd_obtener_perfil', { id })
 }
 
+/**
+ * Renames an existing profile.
+ *
+ * Contrato IPC: `invoke('cmd_update_perfil', { id, nombre })`
+ */
+export async function renombrarPerfil(id: number, nuevoNombre: string): Promise<void> {
+  return invoke<void>('cmd_update_perfil', { id, nombre: nuevoNombre })
+}
+
+/**
+ * Deletes a profile and all associated data (CASCADE).
+ *
+ * Contrato IPC: `invoke('cmd_eliminar_perfil', { id })`
+ */
+export async function eliminarPerfil(id: number): Promise<void> {
+  return invoke<void>('cmd_eliminar_perfil', { id })
+}
+
 // ===========================================================================
 // Slice 11: REQ-602 + REQ-603 — wrappers para los 3 comandos del Simulador.
+
 //
 // Las keys de payload usan camelCase para `input` (renombrado por serde
 // en el struct `UpsertSimulacionInput` del lado Rust) y top-level snake_case
@@ -282,9 +302,7 @@ export interface UpsertSimulacionInput {
  * Contrato IPC: `invoke('cmd_listar_simulaciones', { usuarioId })`
  * con `usuarioId` como top-level key.
  */
-export async function obtenerSimulaciones(
-  usuarioId: number,
-): Promise<SimulacionCompletaDto[]> {
+export async function obtenerSimulaciones(usuarioId: number): Promise<SimulacionCompletaDto[]> {
   return invoke<SimulacionCompletaDto[]>('cmd_listar_simulaciones', {
     usuarioId,
   })
@@ -392,4 +410,3 @@ export async function actualizarTransaccion(
 ): Promise<TransaccionCompletaDto> {
   return invoke<TransaccionCompletaDto>('cmd_update_transaccion', { payload })
 }
-

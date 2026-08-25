@@ -18,10 +18,10 @@
 
 ## REQs cubiertos
 
-| REQ       | Historia de usuario  | Alcance en este slice                                                                      |
-| --------- | -------------------- | ------------------------------------------------------------------------------------------ |
+| REQ         | Historia de usuario  | Alcance en este slice                                                                         |
+| ----------- | -------------------- | --------------------------------------------------------------------------------------------- |
 | **REQ-301** | HU-301 (Presupuesto) | Matriz de agregación SUMIFS virtual. Totales por categoría × naturaleza. Flujo de Caja Libre. |
-| **REQ-302** | HU-302 (Dashboard)   | Distribución porcentual para gráficos Recharts (torta + barras).                            |
+| **REQ-302** | HU-302 (Dashboard)   | Distribución porcentual para gráficos Recharts (torta + barras).                              |
 
 Las dependencias de los REQs (REQ-202 transacciones, REQ-203 normalización,
 REQ-603 multi-perfil) ya están testeadas y aprobadas en slices anteriores.
@@ -30,13 +30,13 @@ REQ-603 multi-perfil) ya están testeadas y aprobadas en slices anteriores.
 
 ## Archivos de tests creados
 
-| Archivo                                                       | Cantidad de tests | Módulo target                                                |
-| ------------------------------------------------------------- | ----------------- | ------------------------------------------------------------ |
-| `src-tauri/tests/transacciones_aggregate_test.rs`             | 3                 | `crate::transacciones::repo` (contrato — ya existe)          |
-| `src/domain/agregaciones/__tests__/matriz.test.ts`            | 9                 | `src/domain/agregaciones/matriz.ts` (NO existe — T-302)      |
-| `src/domain/agregaciones/__tests__/golden-mvp.test.ts`        | 4                 | `src/domain/agregaciones/matriz.ts` (golden, REQ-605)        |
-| `src/domain/agregaciones/__tests__/graficos.test.ts`          | 5                 | `src/domain/agregaciones/graficos.ts` (NO existe — T-303)    |
-| **Total**                                                     | **21 tests**      |                                                              |
+| Archivo                                                | Cantidad de tests | Módulo target                                             |
+| ------------------------------------------------------ | ----------------- | --------------------------------------------------------- |
+| `src-tauri/tests/transacciones_aggregate_test.rs`      | 3                 | `crate::transacciones::repo` (contrato — ya existe)       |
+| `src/domain/agregaciones/__tests__/matriz.test.ts`     | 9                 | `src/domain/agregaciones/matriz.ts` (NO existe — T-302)   |
+| `src/domain/agregaciones/__tests__/golden-mvp.test.ts` | 4                 | `src/domain/agregaciones/matriz.ts` (golden, REQ-605)     |
+| `src/domain/agregaciones/__tests__/graficos.test.ts`   | 5                 | `src/domain/agregaciones/graficos.ts` (NO existe — T-303) |
+| **Total**                                              | **21 tests**      |                                                           |
 
 > **Nota**: el test file `golden-mvp.test.ts` valida los mismos símbolos
 > que `matriz.test.ts` (`calcularMatriz`), pero con el dataset de 32
@@ -56,11 +56,11 @@ hace en TypeScript (ver `design.md` §1 regla "cálculo en el frontend"),
 el backend solo tiene que garantizar que el shape devuelto por
 `list_by_user` sea el que la capa TS espera.
 
-| Test                                                     | Comportamiento esperado                                                                                    |
-| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `req_301_repo_returns_all_transacciones_with_categoria_join` | El join in-memory entre `Transaccion.categoria_id` y `Categorias` recupera `tipo_flujo` y `nombre`.       |
-| `req_301_repo_returns_ingresos_separated_from_gastos`    | Las filas retornadas por `list_by_user` pueden filtrarse en TS por `tipo_flujo` para cada bulto.         |
-| `req_301_repo_includes_categoria_id_for_aggregation`     | `categoria_id` round-trippea sin mutación a través de `insert` + `list_by_user`.                            |
+| Test                                                         | Comportamiento esperado                                                                             |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `req_301_repo_returns_all_transacciones_with_categoria_join` | El join in-memory entre `Transaccion.categoria_id` y `Categorias` recupera `tipo_flujo` y `nombre`. |
+| `req_301_repo_returns_ingresos_separated_from_gastos`        | Las filas retornadas por `list_by_user` pueden filtrarse en TS por `tipo_flujo` para cada bulto.    |
+| `req_301_repo_includes_categoria_id_for_aggregation`         | `categoria_id` round-trippea sin mutación a través de `insert` + `list_by_user`.                    |
 
 **Estado esperado al correr**: **PASA** (contrato pin; depende del módulo
 `transacciones::repo` ya implementado en slice 3).
@@ -70,17 +70,17 @@ el backend solo tiene que garantizar que el shape devuelto por
 **Propósito**: validar `calcularMatriz` con fixtures sintéticos para cada
 escenario del REQ-301 antes de enfrentar el dataset de 32 filas.
 
-| Test                                              | Escenario validado                                                          |
-| ------------------------------------------------- | --------------------------------------------------------------------------- |
-| `req_301_matriz_agrega_ingresos_por_categoria`    | Dos ingresos en la misma categoría suman al `total` del bucket.            |
-| `req_301_matriz_separa_fijo_de_variable`          | Ingreso Fijo e Ingreso Variable se separan correctamente.                  |
-| `req_301_matriz_agrega_gastos_por_categoria`      | Dos gastos en la misma categoría suman al `total`.                         |
-| `req_301_matriz_separa_necesidad_en_3_niveles`    | Necesario / No tan necesario / No necesario se separan.                     |
-| `req_301_matriz_normaliza_frecuencia_a_mensual`   | Un gasto trimestral de $300K da $100K mensual (división exacta).            |
-| `req_301_matriz_total_ingresos_mensual_es_correcto` | `totalIngresos` = suma de buckets de Ingreso.                            |
-| `req_301_matriz_total_gastos_mensual_es_correcto`  | `totalGastos` = suma de buckets de Gasto.                                 |
-| `req_301_matriz_flujo_caja_libre_ingresos_menos_gastos` | `flujoCajaLibre = totalIngresos − totalGastos`.                        |
-| `req_301_matriz_anualizacion_es_x12_del_mensual`   | `totalIngresosAnual = totalIngresos × 12`.                                  |
+| Test                                                    | Escenario validado                                               |
+| ------------------------------------------------------- | ---------------------------------------------------------------- |
+| `req_301_matriz_agrega_ingresos_por_categoria`          | Dos ingresos en la misma categoría suman al `total` del bucket.  |
+| `req_301_matriz_separa_fijo_de_variable`                | Ingreso Fijo e Ingreso Variable se separan correctamente.        |
+| `req_301_matriz_agrega_gastos_por_categoria`            | Dos gastos en la misma categoría suman al `total`.               |
+| `req_301_matriz_separa_necesidad_en_3_niveles`          | Necesario / No tan necesario / No necesario se separan.          |
+| `req_301_matriz_normaliza_frecuencia_a_mensual`         | Un gasto trimestral de $300K da $100K mensual (división exacta). |
+| `req_301_matriz_total_ingresos_mensual_es_correcto`     | `totalIngresos` = suma de buckets de Ingreso.                    |
+| `req_301_matriz_total_gastos_mensual_es_correcto`       | `totalGastos` = suma de buckets de Gasto.                        |
+| `req_301_matriz_flujo_caja_libre_ingresos_menos_gastos` | `flujoCajaLibre = totalIngresos − totalGastos`.                  |
+| `req_301_matriz_anualizacion_es_x12_del_mensual`        | `totalIngresosAnual = totalIngresos × 12`.                       |
 
 **Estado esperado al correr**: **FALLA al import** — el módulo
 `src/domain/agregaciones/matriz.ts` no existe todavía. Esto es la RED
@@ -92,12 +92,12 @@ esperada.
 transacciones del Excel y exige que las cifras cierren al centavo contra
 `PRESUPUESTO!F12, F24, F27` y `J12`.
 
-| Test                                                       | Valor esperado (centavos) | Celda Excel de referencia              |
-| ---------------------------------------------------------- | ------------------------- | -------------------------------------- |
-| `req_301_golden_total_ingresos_es_7_200_000`               | 720_000_000               | `PRESUPUESTO!F12`                      |
-| `req_301_golden_total_gastos_es_8_345_000`                 | 834_500_000               | `PRESUPUESTO!F24`                      |
-| `req_301_golden_flujo_caja_libre_inicial_es_negativo_1_145_000` | −114_500_000          | `PRESUPUESTO!F27`                      |
-| `req_301_golden_anualizacion_ingresos_es_86_400_000`       | 8_640_000_000             | `PRESUPUESTO!J12 = 12 × 7.200.000`     |
+| Test                                                            | Valor esperado (centavos) | Celda Excel de referencia          |
+| --------------------------------------------------------------- | ------------------------- | ---------------------------------- |
+| `req_301_golden_total_ingresos_es_7_200_000`                    | 720_000_000               | `PRESUPUESTO!F12`                  |
+| `req_301_golden_total_gastos_es_8_345_000`                      | 834_500_000               | `PRESUPUESTO!F24`                  |
+| `req_301_golden_flujo_caja_libre_inicial_es_negativo_1_145_000` | −114_500_000              | `PRESUPUESTO!F27`                  |
+| `req_301_golden_anualizacion_ingresos_es_86_400_000`            | 8_640_000_000             | `PRESUPUESTO!J12 = 12 × 7.200.000` |
 
 **Estado esperado al correr**: **FALLA al import** (mismo módulo que
 `matriz.test.ts`). Cuando el módulo sea creado, estos tests detectarán
@@ -108,13 +108,13 @@ cualquier drift de 1 centavo contra el Excel.
 **Propósito**: validar `distribucionGastosPorCategoria` y
 `distribucionIngresosPorCategoria` con fixtures sintéticos.
 
-| Test                                                          | Escenario validado                                                                  |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `req_302_distribucion_gastos_categorias_con_porcentaje`       | 3 gastos en categorías distintas generan los porcentajes correctos.                 |
-| `req_302_distribucion_porcentajes_suman_100`                  | N porcentajes suman 100 ±0.01 (tolerancia de redondeo).                             |
-| `req_302_distribucion_ordenada_descendente`                   | Lista ordenada por `valor` DESC.                                                     |
-| `req_302_distribucion_ignora_categorias_sin_transacciones`    | Categorías del catálogo sin transacciones NO aparecen en la distribución.           |
-| `req_302_distribucion_usa_valores_normalizados_a_mensual`     | Trimestral de $300K → $100K mensual en el chart, no $300K.                          |
+| Test                                                       | Escenario validado                                                        |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `req_302_distribucion_gastos_categorias_con_porcentaje`    | 3 gastos en categorías distintas generan los porcentajes correctos.       |
+| `req_302_distribucion_porcentajes_suman_100`               | N porcentajes suman 100 ±0.01 (tolerancia de redondeo).                   |
+| `req_302_distribucion_ordenada_descendente`                | Lista ordenada por `valor` DESC.                                          |
+| `req_302_distribucion_ignora_categorias_sin_transacciones` | Categorías del catálogo sin transacciones NO aparecen en la distribución. |
+| `req_302_distribucion_usa_valores_normalizados_a_mensual`  | Trimestral de $300K → $100K mensual en el chart, no $300K.                |
 
 **Estado esperado al correr**: **FALLA al import** — el módulo
 `src/domain/agregaciones/graficos.ts` no existe. RED esperada.
@@ -164,7 +164,7 @@ export function calcularMatriz(
 export interface DistribucionPorcentual {
   label: string
   valor: Decimal
-  porcentaje: number  // 0..100, hasta 2 decimales
+  porcentaje: number // 0..100, hasta 2 decimales
 }
 
 export function distribucionGastosPorCategoria(

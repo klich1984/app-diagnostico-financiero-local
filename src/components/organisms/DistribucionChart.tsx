@@ -89,10 +89,7 @@ function renderPorcentajeLabel(entry: PieLabelRenderProps): string {
   return `${porcentaje.toFixed(1)}%`
 }
 
-export function DistribucionChart({
-  distribucion,
-  titulo,
-}: DistribucionChartProps): JSX.Element {
+export function DistribucionChart({ distribucion, titulo }: DistribucionChartProps): JSX.Element {
   if (distribucion.length === 0) {
     return (
       <div data-testid="distribucion-chart" className="p-4">
@@ -117,10 +114,7 @@ export function DistribucionChart({
     >
       <h3 className="text-sm font-medium text-slate-700">{titulo}</h3>
       <div className="mt-2 h-80">
-        <ResponsiveContainer
-          width={320}
-          height={320}
-        >
+        <ResponsiveContainer width={320} height={320}>
           <PieChart>
             <Pie
               data={data}

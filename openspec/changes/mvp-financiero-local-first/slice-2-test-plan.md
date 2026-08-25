@@ -1,9 +1,10 @@
 # Slice 2 — Plan de tests (fase RED)
 
 > Documento de planificación de la fase RED de Slice 2 (Épica 1: persistencia
-> + puente a Épica 2). Cubre REQ-103, REQ-104, REQ-105, REQ-106 y REQ-201.
-> El detalle por REQ vive en `openspec/changes/mvp-financiero-local-first/spec.md`
-> y `openspec/changes/mvp-financiero-local-first/design.md` §5/§6.
+>
+> - puente a Épica 2). Cubre REQ-103, REQ-104, REQ-105, REQ-106 y REQ-201.
+>   El detalle por REQ vive en `openspec/changes/mvp-financiero-local-first/spec.md`
+>   y `openspec/changes/mvp-financiero-local-first/design.md` §5/§6.
 
 ## 1. Alcance
 
@@ -34,45 +35,45 @@ Total: **17 tests** distribuidos en 5 archivos, más el helper `common/mod.rs`.
 
 ### `migrations_test.rs` (REQ-103)
 
-| Test                                                  | Mecanismo            | Estado RED                                |
-| ----------------------------------------------------- | -------------------- | ----------------------------------------- |
-| `req_103_creates_all_four_tables_on_first_run`        | Texto SQL en disco   | ASSERTION: el archivo no existe aún       |
-| `req_103_transacciones_table_has_integer_columns…`    | Texto SQL en disco   | ASSERTION: el archivo no existe aún       |
-| `req_103_applies_migrations_only_once_idempotent`     | Símbolo Rust         | COMPILE-FAIL: `migrations` no declarado   |
-| `req_103_migration_version_is_recorded_in_the…`       | Texto SQL en disco   | ASSERTION: el archivo no existe aún       |
+| Test                                               | Mecanismo          | Estado RED                              |
+| -------------------------------------------------- | ------------------ | --------------------------------------- |
+| `req_103_creates_all_four_tables_on_first_run`     | Texto SQL en disco | ASSERTION: el archivo no existe aún     |
+| `req_103_transacciones_table_has_integer_columns…` | Texto SQL en disco | ASSERTION: el archivo no existe aún     |
+| `req_103_applies_migrations_only_once_idempotent`  | Símbolo Rust       | COMPILE-FAIL: `migrations` no declarado |
+| `req_103_migration_version_is_recorded_in_the…`    | Texto SQL en disco | ASSERTION: el archivo no existe aún     |
 
 ### `sql_plugin_test.rs` (REQ-104)
 
-| Test                                                                  | Mecanismo                | Estado RED                                |
-| --------------------------------------------------------------------- | ------------------------ | ----------------------------------------- |
-| `req_104_cargo_toml_declares_sqlite_feature_for_tauri_plugin_sql`     | `Cargo.toml` en disco    | PASA (ya está la feature) — guard test    |
-| `req_104_capabilities_default_json_allows_sql_default_…`              | `capabilities/default.json` + símbolo Rust | MIXTO: el test 1 del archivo falla por la aserción sobre `sql:default`; los paths a `plugin` y `path` fallan al compilar |
-| `req_104_db_path_is_base_directory_app_misfinanzas_db`                | Símbolo Rust             | COMPILE-FAIL: `path` no declarado         |
+| Test                                                              | Mecanismo                                  | Estado RED                                                                                                               |
+| ----------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `req_104_cargo_toml_declares_sqlite_feature_for_tauri_plugin_sql` | `Cargo.toml` en disco                      | PASA (ya está la feature) — guard test                                                                                   |
+| `req_104_capabilities_default_json_allows_sql_default_…`          | `capabilities/default.json` + símbolo Rust | MIXTO: el test 1 del archivo falla por la aserción sobre `sql:default`; los paths a `plugin` y `path` fallan al compilar |
+| `req_104_db_path_is_base_directory_app_misfinanzas_db`            | Símbolo Rust                               | COMPILE-FAIL: `path` no declarado                                                                                        |
 
 ### `capabilities_test.rs` (REQ-105)
 
-| Test                                                                  | Mecanismo                | Estado RED                                |
-| --------------------------------------------------------------------- | ------------------------ | ----------------------------------------- |
-| `req_105_capabilities_default_json_contains_sql_default_permission`   | `capabilities/default.json` | ASSERTION FAIL: `sql:default` ausente  |
-| `req_105_capabilities_default_json_does_not_contain_fs_default_…`     | `capabilities/default.json` | PASA — guard test                       |
-| `req_105_capabilities_default_json_has_scope_to_main_window_only`     | `capabilities/default.json` | PASA — guard test                       |
+| Test                                                                | Mecanismo                   | Estado RED                            |
+| ------------------------------------------------------------------- | --------------------------- | ------------------------------------- |
+| `req_105_capabilities_default_json_contains_sql_default_permission` | `capabilities/default.json` | ASSERTION FAIL: `sql:default` ausente |
+| `req_105_capabilities_default_json_does_not_contain_fs_default_…`   | `capabilities/default.json` | PASA — guard test                     |
+| `req_105_capabilities_default_json_has_scope_to_main_window_only`   | `capabilities/default.json` | PASA — guard test                     |
 
 ### `db_path_test.rs` (REQ-106)
 
-| Test                                          | Mecanismo    | Estado RED                                |
-| --------------------------------------------- | ------------ | ----------------------------------------- |
-| `req_106_db_path_returns_a_path_inside_the…`  | Símbolo Rust | COMPILE-FAIL: `path` no declarado         |
-| `req_106_db_path_suffix_is_misfinanzas_db`    | Símbolo Rust | COMPILE-FAIL: `path` no declarado         |
-| `req_106_db_path_is_stable_across_calls`      | Símbolo Rust | COMPILE-FAIL: `path` no declarado         |
+| Test                                         | Mecanismo    | Estado RED                        |
+| -------------------------------------------- | ------------ | --------------------------------- |
+| `req_106_db_path_returns_a_path_inside_the…` | Símbolo Rust | COMPILE-FAIL: `path` no declarado |
+| `req_106_db_path_suffix_is_misfinanzas_db`   | Símbolo Rust | COMPILE-FAIL: `path` no declarado |
+| `req_106_db_path_is_stable_across_calls`     | Símbolo Rust | COMPILE-FAIL: `path` no declarado |
 
 ### `categorias_seed_test.rs` (REQ-201)
 
-| Test                                          | Mecanismo             | Estado RED                                |
-| --------------------------------------------- | --------------------- | ----------------------------------------- |
-| `req_201_categorias_table_has_14_rows_after_seed`         | Texto SQL en disco    | ASSERTION: el archivo no existe aún       |
-| `req_201_ingreso_categories_salario_otros_ingresos_…`     | Texto SQL en disco    | ASSERTION: el archivo no existe aún       |
-| `req_201_gasto_categories_hogar_alimentacion_…`           | Texto SQL en disco    | ASSERTION: el archivo no existe aún       |
-| `req_201_each_category_has_correct_grupo_pertenencia_…`   | Texto SQL + símbolo   | COMPILE-FAIL: `seeds` no declarado        |
+| Test                                                    | Mecanismo           | Estado RED                          |
+| ------------------------------------------------------- | ------------------- | ----------------------------------- |
+| `req_201_categorias_table_has_14_rows_after_seed`       | Texto SQL en disco  | ASSERTION: el archivo no existe aún |
+| `req_201_ingreso_categories_salario_otros_ingresos_…`   | Texto SQL en disco  | ASSERTION: el archivo no existe aún |
+| `req_201_gasto_categories_hogar_alimentacion_…`         | Texto SQL en disco  | ASSERTION: el archivo no existe aún |
+| `req_201_each_category_has_correct_grupo_pertenencia_…` | Texto SQL + símbolo | COMPILE-FAIL: `seeds` no declarado  |
 
 ## 4. Decisiones de diseño de los tests
 
@@ -111,7 +112,7 @@ Total: **17 tests** distribuidos en 5 archivos, más el helper `common/mod.rs`.
 5. **Tests que pasan hoy, intencionalmente**. `req_104_cargo_toml_…`,
    `req_105_capabilities_…_does_not_contain_…`,
    `req_105_…_has_scope_to_main_window_only` ya pasan. Son **guard
-   tests**: su propósito es *prevenir* que una refactorización futura
+   tests**: su propósito es _prevenir_ que una refactorización futura
    introduzca `fs:default` o pierda el scope a `main`. No se borran al
    pasar a GREEN.
 
@@ -144,7 +145,7 @@ La fase IMPL (delegada a otro agente) debe:
   línea), el conteo podría romperse. La IMPL puede ajustar el
   contador — o el IMPL puede comprometerse a una forma específica
   (recomendado: una sola multi-row `INSERT INTO Categorias VALUES
-  (...), (...), ...;` con 14 tuplas).
+(...), (...), ...;` con 14 tuplas).
 
 ## 7. Estado de esta fase
 

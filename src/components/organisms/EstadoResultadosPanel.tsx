@@ -21,27 +21,103 @@ interface KpiRow {
 }
 
 const KPI_ROWS: KpiRow[] = [
-  { sign: '(+)', label: 'INGRESOS MENSUALES', isHeader: true, getValue: (lado) => lado.total_ingresos.toNumber() },
-  { sign: '', label: 'Ingresos fijos', isIndent: true, getValue: (lado) => lado.ingresos_fijos.toNumber() },
-  { sign: '', label: 'Ingresos variables', isIndent: true, getValue: (lado) => lado.ingresos_variables.toNumber() },
-  { sign: '(-)', label: 'GASTOS FIJOS', isHeader: true, getValue: (lado) => lado.gastos_fijos_total.toNumber() },
-  { sign: '', label: 'Gastos fijos necesarios', isIndent: true, getValue: (lado) => lado.gastos_fijos_necesarios.toNumber() },
-  { sign: '', label: 'Gastos fijos provisiones', isIndent: true, getValue: (lado) => lado.gastos_fijos_provisiones.toNumber() },
-  { sign: '(-)', label: 'DEUDAS', isHeader: true, getValue: (lado) => lado.deudas_total.toNumber() },
-  { sign: '', label: 'Cuota deudas entidades', isIndent: true, getValue: (lado) => lado.cuota_deudas_entidades.toNumber() },
-  { sign: '', label: 'Cuota deudas conocidos', isIndent: true, getValue: (lado) => lado.cuota_deudas_conocidos.toNumber() },
-  { sign: '(=)', label: 'FLUJO DE AHORRO 1', isTotal: true, getValue: (lado) => lado.flujo_ahorro_1.toNumber() },
+  {
+    sign: '(+)',
+    label: 'INGRESOS MENSUALES',
+    isHeader: true,
+    getValue: (lado) => lado.total_ingresos.toNumber(),
+  },
+  {
+    sign: '',
+    label: 'Ingresos fijos',
+    isIndent: true,
+    getValue: (lado) => lado.ingresos_fijos.toNumber(),
+  },
+  {
+    sign: '',
+    label: 'Ingresos variables',
+    isIndent: true,
+    getValue: (lado) => lado.ingresos_variables.toNumber(),
+  },
+  {
+    sign: '(-)',
+    label: 'GASTOS FIJOS',
+    isHeader: true,
+    getValue: (lado) => lado.gastos_fijos_total.toNumber(),
+  },
+  {
+    sign: '',
+    label: 'Gastos fijos necesarios',
+    isIndent: true,
+    getValue: (lado) => lado.gastos_fijos_necesarios.toNumber(),
+  },
+  {
+    sign: '',
+    label: 'Gastos fijos provisiones',
+    isIndent: true,
+    getValue: (lado) => lado.gastos_fijos_provisiones.toNumber(),
+  },
+  {
+    sign: '(-)',
+    label: 'DEUDAS',
+    isHeader: true,
+    getValue: (lado) => lado.deudas_total.toNumber(),
+  },
+  {
+    sign: '',
+    label: 'Cuota deudas entidades',
+    isIndent: true,
+    getValue: (lado) => lado.cuota_deudas_entidades.toNumber(),
+  },
+  {
+    sign: '',
+    label: 'Cuota deudas conocidos',
+    isIndent: true,
+    getValue: (lado) => lado.cuota_deudas_conocidos.toNumber(),
+  },
+  {
+    sign: '(=)',
+    label: 'FLUJO DE AHORRO 1',
+    isTotal: true,
+    getValue: (lado) => lado.flujo_ahorro_1.toNumber(),
+  },
   {
     sign: '(-)',
     label: 'SALARIO PERSONAL',
     isHeader: true,
-    getValue: (lado) => (lado.salario_personal_objetivo ? lado.salario_personal_objetivo.toNumber() : 0),
+    getValue: (lado) =>
+      lado.salario_personal_objetivo ? lado.salario_personal_objetivo.toNumber() : 0,
   },
-  { sign: '(-)', label: 'GASTOS VARIABLES', isHeader: true, getValue: (lado) => lado.gastos_variables_total.toNumber() },
-  { sign: '', label: 'Gastos no tan necesarios', isIndent: true, getValue: (lado) => lado.gastos_no_tan_necesarios.toNumber() },
-  { sign: '', label: 'Gastos no necesarios', isIndent: true, getValue: (lado) => lado.gastos_no_necesarios.toNumber() },
-  { sign: '(=)', label: 'FLUJO DE AHORRO 2', isTotal: true, getValue: (lado) => lado.flujo_ahorro_2.toNumber() },
-  { sign: '', label: 'Capacidad inversión', isHighlight: true, getValue: (lado) => lado.capacidad_inversion.toNumber() },
+  {
+    sign: '(-)',
+    label: 'GASTOS VARIABLES',
+    isHeader: true,
+    getValue: (lado) => lado.gastos_variables_total.toNumber(),
+  },
+  {
+    sign: '',
+    label: 'Gastos no tan necesarios',
+    isIndent: true,
+    getValue: (lado) => lado.gastos_no_tan_necesarios.toNumber(),
+  },
+  {
+    sign: '',
+    label: 'Gastos no necesarios',
+    isIndent: true,
+    getValue: (lado) => lado.gastos_no_necesarios.toNumber(),
+  },
+  {
+    sign: '(=)',
+    label: 'FLUJO DE AHORRO 2',
+    isTotal: true,
+    getValue: (lado) => lado.flujo_ahorro_2.toNumber(),
+  },
+  {
+    sign: '',
+    label: 'Capacidad inversión',
+    isHighlight: true,
+    getValue: (lado) => lado.capacidad_inversion.toNumber(),
+  },
 ]
 
 export function EstadoResultadosPanel({

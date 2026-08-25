@@ -25,10 +25,10 @@
 
 ## REQs cubiertos
 
-| REQ       | Historia de usuario  | Alcance en este slice                                                                                          |
-| --------- | -------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **REQ-501** | HU-501 (Estado de Resultados) | Motor de cálculo `calcular_estado_resultados` que produce la vista dual Inicial vs Mejorado.            |
-| **REQ-502** | HU-502 (Salario Objetivo)     | El salario objetivo es un input del motor (no se persiste en el resultado Inicial).                  |
+| REQ         | Historia de usuario           | Alcance en este slice                                                                                      |
+| ----------- | ----------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **REQ-501** | HU-501 (Estado de Resultados) | Motor de cálculo `calcular_estado_resultados` que produce la vista dual Inicial vs Mejorado.               |
+| **REQ-502** | HU-502 (Salario Objetivo)     | El salario objetivo es un input del motor (no se persiste en el resultado Inicial).                        |
 | **REQ-605** | Cierre al centavo             | 6 golden tests que validan los KPIs contra las celdas reales del Excel (`D4`, `D14`, `D21`, `H23`, `E13`). |
 
 Las dependencias (REQ-301 matriz, REQ-403 presupuesto mejorado,
@@ -39,12 +39,12 @@ testeadas y aprobadas en slices anteriores.
 
 ## Archivos de tests creados
 
-| Archivo                                              | Cantidad de tests | Módulo target                                              |
-| ---------------------------------------------------- | ----------------- | ---------------------------------------------------------- |
-| `src-tauri/tests/kpis_test.rs`                       | 10                | `crate::kpis` (NO existe — T-503 backend)                   |
-| `src/domain/kpis/__tests__/index.test.ts`            | 11                | `src/domain/kpis/index.ts` (NO existe — T-503 frontend)    |
-| `src/domain/kpis/__tests__/golden-excel.test.ts`     | 6                 | `src/domain/kpis/index.ts` (NO existe — T-X01 golden)      |
-| **Total**                                            | **27 tests**      |                                                            |
+| Archivo                                          | Cantidad de tests | Módulo target                                           |
+| ------------------------------------------------ | ----------------- | ------------------------------------------------------- |
+| `src-tauri/tests/kpis_test.rs`                   | 10                | `crate::kpis` (NO existe — T-503 backend)               |
+| `src/domain/kpis/__tests__/index.test.ts`        | 11                | `src/domain/kpis/index.ts` (NO existe — T-503 frontend) |
+| `src/domain/kpis/__tests__/golden-excel.test.ts` | 6                 | `src/domain/kpis/index.ts` (NO existe — T-X01 golden)   |
+| **Total**                                        | **27 tests**      |                                                         |
 
 ---
 
@@ -57,18 +57,18 @@ Cubre el cálculo de los 4 KPIs terminales (FA1, FA2,
 Cap.Inv) en ambos lados (Inicial y Mejorado), la anualización
 `× 12` y la configuración del salario objetivo.
 
-| Test                                                | Escenario validado                                                                                  |
-| --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `req_501_kpis_inicial_total_ingresos_es_7_200_000`  | 32 transacciones → `inicial.total_ingresos = 720_000_000` centavos (match `PRESUPUESTO!F12`).       |
-| `req_501_kpis_inicial_fa1_es_2_140_000`            | `inicial.flujo_ahorro_1 = 214_000_000` centavos (match `ESTADO DE RESULTADOS!D14`).                 |
-| `req_501_kpis_inicial_fa2_es_neg_1_145_000`         | `inicial.flujo_ahorro_2 = -114_500_000` centavos (match `ESTADO DE RESULTADOS!D21`).                |
-| `req_501_kpis_inicial_cap_inv_es_neg_1_145_000`     | `inicial.capacidad_inversion = -114_500_000` centavos (= FA2 cuando `salario = None`).              |
-| `req_501_kpis_mejorado_fa1_es_2_140_000`            | `mejorado.flujo_ahorro_1 = 214_000_000` (igual al Inicial; Necesarios + Deudas no se simulan).      |
-| `req_501_kpis_mejorado_fa2_es_425_000`              | `mejorado.flujo_ahorro_2 = 42_500_000` centavos (match `ESTADO DE RESULTADOS!H21`).                 |
-| `req_501_kpis_mejorado_cap_inv_es_925_000`          | `mejorado.capacidad_inversion = 92_500_000` centavos (match `ESTADO DE RESULTADOS!H23`).            |
-| `req_501_kpis_mejorado_total_gastos_se_reduce`      | `mejorado.total_gastos = 627_500_000`; `inicial − mejorado = 207_000_000` (match `OPORTUNIDADES!C13`). |
-| `req_502_kpis_salario_default_es_500_000`           | Salario `$500,000 = 50_000_000` centavos se refleja en `mejorado.salario_personal_objetivo`.         |
-| `req_501_kpis_anualizacion_es_x12_fcl`              | `fcl_anual = flujo_caja_libre × 12` exacto (match `PRESUPUESTO!J27` y `PRESUPUESTO MEJORADO!L25×12`). |
+| Test                                               | Escenario validado                                                                                     |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `req_501_kpis_inicial_total_ingresos_es_7_200_000` | 32 transacciones → `inicial.total_ingresos = 720_000_000` centavos (match `PRESUPUESTO!F12`).          |
+| `req_501_kpis_inicial_fa1_es_2_140_000`            | `inicial.flujo_ahorro_1 = 214_000_000` centavos (match `ESTADO DE RESULTADOS!D14`).                    |
+| `req_501_kpis_inicial_fa2_es_neg_1_145_000`        | `inicial.flujo_ahorro_2 = -114_500_000` centavos (match `ESTADO DE RESULTADOS!D21`).                   |
+| `req_501_kpis_inicial_cap_inv_es_neg_1_145_000`    | `inicial.capacidad_inversion = -114_500_000` centavos (= FA2 cuando `salario = None`).                 |
+| `req_501_kpis_mejorado_fa1_es_2_140_000`           | `mejorado.flujo_ahorro_1 = 214_000_000` (igual al Inicial; Necesarios + Deudas no se simulan).         |
+| `req_501_kpis_mejorado_fa2_es_425_000`             | `mejorado.flujo_ahorro_2 = 42_500_000` centavos (match `ESTADO DE RESULTADOS!H21`).                    |
+| `req_501_kpis_mejorado_cap_inv_es_925_000`         | `mejorado.capacidad_inversion = 92_500_000` centavos (match `ESTADO DE RESULTADOS!H23`).               |
+| `req_501_kpis_mejorado_total_gastos_se_reduce`     | `mejorado.total_gastos = 627_500_000`; `inicial − mejorado = 207_000_000` (match `OPORTUNIDADES!C13`). |
+| `req_502_kpis_salario_default_es_500_000`          | Salario `$500,000 = 50_000_000` centavos se refleja en `mejorado.salario_personal_objetivo`.           |
+| `req_501_kpis_anualizacion_es_x12_fcl`             | `fcl_anual = flujo_caja_libre × 12` exacto (match `PRESUPUESTO!J27` y `PRESUPUESTO MEJORADO!L25×12`).  |
 
 **Estado esperado al correr**: **FALLA al compilar** — el módulo
 `src-tauri/src/kpis.rs` no existe todavía (y `pub mod kpis;` no
@@ -84,19 +84,19 @@ frontend, y exporta además dos funciones granulares
 (`calcularLadoInicial` y `calcularLadoMejorado`) que la UI
 puede consumir sin pagar el costo de calcular ambos lados.
 
-| Test                                              | Escenario validado                                                                  |
-| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `req_501_kpis_inicial_total_ingresos_es_7_200_000` | Igual al Rust counterpart.                                                          |
-| `req_501_kpis_inicial_fa1_es_2_140_000`           | Igual al Rust counterpart.                                                          |
-| `req_501_kpis_inicial_fa2_es_neg_1_145_000`       | Igual al Rust counterpart.                                                          |
-| `req_501_kpis_inicial_cap_inv_es_neg_1_145_000`   | Igual al Rust counterpart.                                                          |
-| `req_501_kpis_mejorado_fa1_es_2_140_000`          | Igual al Rust counterpart.                                                          |
-| `req_501_kpis_mejorado_fa2_es_425_000`            | Igual al Rust counterpart.                                                          |
-| `req_501_kpis_mejorado_cap_inv_es_925_000`        | Igual al Rust counterpart.                                                          |
-| `req_501_kpis_mejorado_total_gastos_es_6_275_000`  | `mejorado.total_gastos = 627_500_000` centavos (match `PRESUPUESTO MEJORADO!L23`).   |
-| `req_501_kpis_anualizacion_es_x12`                | `fcl_anual`, `fa2_anual`, `cap_inv_anual` cumplen exactamente `× 12`.                |
-| `req_501_calcularLadoInicial_retorna_solo_inicial` | La función granular del Inicial retorna solo `LadoEstado` (no `EstadoResultados`).  |
-| `req_501_calcularLadoMejorado_aplica_simulaciones_y_salario` | La función granular del Mejorado aplica simulaciones + salario correctamente. |
+| Test                                                         | Escenario validado                                                                 |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `req_501_kpis_inicial_total_ingresos_es_7_200_000`           | Igual al Rust counterpart.                                                         |
+| `req_501_kpis_inicial_fa1_es_2_140_000`                      | Igual al Rust counterpart.                                                         |
+| `req_501_kpis_inicial_fa2_es_neg_1_145_000`                  | Igual al Rust counterpart.                                                         |
+| `req_501_kpis_inicial_cap_inv_es_neg_1_145_000`              | Igual al Rust counterpart.                                                         |
+| `req_501_kpis_mejorado_fa1_es_2_140_000`                     | Igual al Rust counterpart.                                                         |
+| `req_501_kpis_mejorado_fa2_es_425_000`                       | Igual al Rust counterpart.                                                         |
+| `req_501_kpis_mejorado_cap_inv_es_925_000`                   | Igual al Rust counterpart.                                                         |
+| `req_501_kpis_mejorado_total_gastos_es_6_275_000`            | `mejorado.total_gastos = 627_500_000` centavos (match `PRESUPUESTO MEJORADO!L23`). |
+| `req_501_kpis_anualizacion_es_x12`                           | `fcl_anual`, `fa2_anual`, `cap_inv_anual` cumplen exactamente `× 12`.              |
+| `req_501_calcularLadoInicial_retorna_solo_inicial`           | La función granular del Inicial retorna solo `LadoEstado` (no `EstadoResultados`). |
+| `req_501_calcularLadoMejorado_aplica_simulaciones_y_salario` | La función granular del Mejorado aplica simulaciones + salario correctamente.      |
 
 **Estado esperado al correr**: **FALLA al import** — el módulo
 `src/domain/kpis/index.ts` no existe todavía. RED confirmada vía
@@ -109,14 +109,14 @@ Pinea cada KPI contra la celda exacta del Excel fuente. Si el
 IMPL o cualquier cambio futuro rompe la garantía de cierre al
 centavo, este archivo falla primero.
 
-| Test                                                | Celda del Excel                                                              |
-| --------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `req_605_golden_32_filas_ingresos_7_200_000`        | `PRESUPUESTO!F12` y `ESTADO DE RESULTADOS!D4` (también H4).                  |
-| `req_605_golden_32_filas_total_gastos_inicial_8_345_000` | `PRESUPUESTO!F24` + split de gastos_deudas, gastos_necesarios, etc.   |
-| `req_605_golden_32_filas_fa1_2_140_000`             | `ESTADO DE RESULTADOS!D14 = H14`.                                            |
-| `req_605_golden_32_filas_fa2_inicial_neg_1_145_000` | `ESTADO DE RESULTADOS!D21`.                                                  |
-| `req_605_golden_32_filas_cap_inv_mejorada_925_000`  | `ESTADO DE RESULTADOS!H23` (también `PRESUPUESTO MEJORADO!L25`).             |
-| `req_605_golden_32_filas_ahorro_anual_24_840_000`   | `OPORTUNIDADES DE MEJORA!E13`.                                               |
+| Test                                                     | Celda del Excel                                                     |
+| -------------------------------------------------------- | ------------------------------------------------------------------- |
+| `req_605_golden_32_filas_ingresos_7_200_000`             | `PRESUPUESTO!F12` y `ESTADO DE RESULTADOS!D4` (también H4).         |
+| `req_605_golden_32_filas_total_gastos_inicial_8_345_000` | `PRESUPUESTO!F24` + split de gastos_deudas, gastos_necesarios, etc. |
+| `req_605_golden_32_filas_fa1_2_140_000`                  | `ESTADO DE RESULTADOS!D14 = H14`.                                   |
+| `req_605_golden_32_filas_fa2_inicial_neg_1_145_000`      | `ESTADO DE RESULTADOS!D21`.                                         |
+| `req_605_golden_32_filas_cap_inv_mejorada_925_000`       | `ESTADO DE RESULTADOS!H23` (también `PRESUPUESTO MEJORADO!L25`).    |
+| `req_605_golden_32_filas_ahorro_anual_24_840_000`        | `OPORTUNIDADES DE MEJORA!E13`.                                      |
 
 **Estado esperado al correr**: **FALLA al import** — el módulo
 `src/domain/kpis/index.ts` no existe todavía. RED confirmada vía
@@ -126,24 +126,24 @@ centavo, este archivo falla primero.
 
 ## Valores dorados (golden values) bloqueados
 
-| KPI                          | Valor Excel                | Centavos       | Source cell                              |
-| ---------------------------- | -------------------------- | -------------- | ---------------------------------------- |
-| `inicial.total_ingresos`     | $7,200,000.00              | 720_000_000    | `PRESUPUESTO!F12`, `ESTADO DE RESULTADOS!D4` |
-| `inicial.gastos_necesarios` (sin deudas) | $3,860,000.00  | 386_000_000    | Excel §3.4 "Gastos fijos necesarios" + Provisiones |
-| `inicial.gastos_deudas`      | $1,200,000.00              | 120_000_000    | `PRESUPUESTO!F18` (Deudas entidades)     |
-| `inicial.gastos_no_tan_necesarios` | $1,665,000.00       | 166_500_000    | `PRESUPUESTO!D24`                        |
-| `inicial.gastos_no_necesarios` | $1,620,000.00            | 162_000_000    | `PRESUPUESTO!E24`                        |
-| `inicial.total_gastos`       | $8,345,000.00              | 834_500_000    | `PRESUPUESTO!F24`                        |
-| `inicial.flujo_ahorro_1`     | $2,140,000.00              | 214_000_000    | `ESTADO DE RESULTADOS!D14`               |
-| `inicial.flujo_ahorro_2`     | -$1,145,000.00             | -114_500_000   | `ESTADO DE RESULTADOS!D21`               |
-| `inicial.capacidad_inversion` | -$1,145,000.00            | -114_500_000   | `ESTADO DE RESULTADOS!D23`               |
-| `mejorado.flujo_ahorro_1`    | $2,140,000.00              | 214_000_000    | `ESTADO DE RESULTADOS!H14`               |
-| `mejorado.flujo_ahorro_2`    | $425,000.00                | 42_500_000     | `ESTADO DE RESULTADOS!H21`               |
-| `mejorado.capacidad_inversion` | $925,000.00              | 92_500_000     | `ESTADO DE RESULTADOS!H23`, `PRESUPUESTO MEJORADO!L25` |
-| `mejorado.total_gastos`      | $6,275,000.00              | 627_500_000    | `PRESUPUESTO MEJORADO!L23`               |
-| `inicial.fcl_anual`          | -$13,740,000.00            | -1_374_000_000 | `PRESUPUESTO!J27`                        |
-| `mejorado.cap_inv_anual`     | $11,100,000.00             | 1_110_000_000  | `PRESUPUESTO MEJORADO!L25 × 12`          |
-| **Ahorro anual total**       | **$24,840,000.00**         | **2_484_000_000** | **`OPORTUNIDADES DE MEJORA!E13`** (golden único de REQ-605) |
+| KPI                                      | Valor Excel        | Centavos          | Source cell                                                 |
+| ---------------------------------------- | ------------------ | ----------------- | ----------------------------------------------------------- |
+| `inicial.total_ingresos`                 | $7,200,000.00      | 720_000_000       | `PRESUPUESTO!F12`, `ESTADO DE RESULTADOS!D4`                |
+| `inicial.gastos_necesarios` (sin deudas) | $3,860,000.00      | 386_000_000       | Excel §3.4 "Gastos fijos necesarios" + Provisiones          |
+| `inicial.gastos_deudas`                  | $1,200,000.00      | 120_000_000       | `PRESUPUESTO!F18` (Deudas entidades)                        |
+| `inicial.gastos_no_tan_necesarios`       | $1,665,000.00      | 166_500_000       | `PRESUPUESTO!D24`                                           |
+| `inicial.gastos_no_necesarios`           | $1,620,000.00      | 162_000_000       | `PRESUPUESTO!E24`                                           |
+| `inicial.total_gastos`                   | $8,345,000.00      | 834_500_000       | `PRESUPUESTO!F24`                                           |
+| `inicial.flujo_ahorro_1`                 | $2,140,000.00      | 214_000_000       | `ESTADO DE RESULTADOS!D14`                                  |
+| `inicial.flujo_ahorro_2`                 | -$1,145,000.00     | -114_500_000      | `ESTADO DE RESULTADOS!D21`                                  |
+| `inicial.capacidad_inversion`            | -$1,145,000.00     | -114_500_000      | `ESTADO DE RESULTADOS!D23`                                  |
+| `mejorado.flujo_ahorro_1`                | $2,140,000.00      | 214_000_000       | `ESTADO DE RESULTADOS!H14`                                  |
+| `mejorado.flujo_ahorro_2`                | $425,000.00        | 42_500_000        | `ESTADO DE RESULTADOS!H21`                                  |
+| `mejorado.capacidad_inversion`           | $925,000.00        | 92_500_000        | `ESTADO DE RESULTADOS!H23`, `PRESUPUESTO MEJORADO!L25`      |
+| `mejorado.total_gastos`                  | $6,275,000.00      | 627_500_000       | `PRESUPUESTO MEJORADO!L23`                                  |
+| `inicial.fcl_anual`                      | -$13,740,000.00    | -1_374_000_000    | `PRESUPUESTO!J27`                                           |
+| `mejorado.cap_inv_anual`                 | $11,100,000.00     | 1_110_000_000     | `PRESUPUESTO MEJORADO!L25 × 12`                             |
+| **Ahorro anual total**                   | **$24,840,000.00** | **2_484_000_000** | **`OPORTUNIDADES DE MEJORA!E13`** (golden único de REQ-605) |
 
 ---
 
@@ -183,7 +183,9 @@ pub fn calcular_estado_resultados(
 
 ```ts
 // src/domain/kpis/index.ts
-export interface LadoEstado { /* mismo shape que el Rust, Decimal en vez de rust_decimal */ }
+export interface LadoEstado {
+  /* mismo shape que el Rust, Decimal en vez de rust_decimal */
+}
 export interface EstadoResultados {
   inicial: LadoEstado
   mejorado: LadoEstado

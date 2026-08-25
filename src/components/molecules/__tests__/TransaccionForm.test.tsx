@@ -227,9 +227,8 @@ describe('REQ-202: TransaccionForm (visibilidad del selector de Comportamiento)'
 
     // Comportamiento MUST still be visible — the previous build hid it
     // along with Naturaleza, forcing Ingreso rows to persist `comportamiento = NULL`.
-    const comportamientoSelect = container.querySelector<HTMLSelectElement>(
-      '[name="comportamiento"]',
-    )
+    const comportamientoSelect =
+      container.querySelector<HTMLSelectElement>('[name="comportamiento"]')
     expect(comportamientoSelect).not.toBeNull()
     expect(comportamientoSelect!.tagName).toBe('SELECT')
 
@@ -379,9 +378,7 @@ describe('REQ-V2-101 / Slice 12: TransaccionForm — edit mode', () => {
       )
     })
 
-    const cancelBtn = container.querySelector<HTMLButtonElement>(
-      '[data-testid="cancelar-edicion"]',
-    )
+    const cancelBtn = container.querySelector<HTMLButtonElement>('[data-testid="cancelar-edicion"]')
     expect(cancelBtn).not.toBeNull()
 
     await act(async () => {

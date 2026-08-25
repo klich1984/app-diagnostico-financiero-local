@@ -57,7 +57,8 @@
 //! below exercises the first one explicitly.
 
 use app_diagnostico_financiero_local_lib::commands::{
-    cmd_crear_perfil_impl, cmd_eliminar_simulacion_impl, cmd_eliminar_transaccion_impl,
+    cmd_crear_perfil_impl, cmd_update_perfil_impl, cmd_eliminar_perfil_impl,
+    cmd_eliminar_simulacion_impl, cmd_eliminar_transaccion_impl,
     cmd_insert_transaccion_impl, cmd_listar_simulaciones_impl, cmd_listar_transacciones_impl,
     cmd_obtener_categorias_impl, cmd_obtener_perfil_impl, cmd_obtener_perfiles_impl,
     cmd_update_transaccion_impl, cmd_upsert_simulacion_impl, CategoriaDto, SimulacionCompletaDto,
@@ -366,7 +367,6 @@ fn req_501_cmd_crear_perfil_rejects_empty_nombre() {
     let (conn, _yo_id) = fresh_db_with_user();
 
     let result = cmd_crear_perfil_impl(&conn, "".to_string(), 50_000_000);
-
     assert!(
         result.is_err(),
         "REQ-501 + REQ-602: cmd_crear_perfil_impl MUST reject an empty nombre (CHECK constraint)"
@@ -739,4 +739,75 @@ fn req_v2_101_cmd_update_transaccion_rejects_foreign_id() {
         original_valor, 500_000,
         "REQ-V2-101: a rejected update MUST NOT mutate the original valor_centavos"
     );
+}
+
+// ===========================================================================
+// REQ-V2-102: Renombrar y Eliminar perfiles (RED phase)
+// ===========================================================================
+
+/// REQ-V2-102: `cmd_update_perfil_impl` MUST update the name of an existing profile.
+///
+/// Scenario: Successful rename
+/// Given: An existing profile.
+/// When: `cmd_update_perfil_impl` is called with a new valid name.
+/// Then: The profile name is updated in the database.
+#[test]
+fn req_v2_102_cmd_update_perfil_updates_name() {
+    let (conn, yo_id) = fresh_db_with_user();
+
+    cmd_update_perfil_impl(&conn, yo_id, "Nuevo Nombre".to_string())
+        .expect("REQ-V2-102: cmd_update_perfil_impl must succeed for a valid rename");
+
+    let perfiles = cmd_obtener_perfiles_impl(&conn).unwrap();
+    let perfil = perfiles.iter().find(|p| p.id == yo_id).unwrap();
+    assert_eq!(
+        perfil.nombre, "Nuevo Nombre",
+        "REQ-V2-102: The profile name MUST be updated in the database"
+    );
+}
+
+/// REQ-V2-102: `cmd_update_perfil_impl` MUST reject an empty name.
+///
+/// Scenario: Invalid rename (empty name)
+/// Given: An existing profile.
+/// When: `cmd_update_perfil_impl` is called with an empty string.
+/// Then: It MUST return an error.
+#[test]
+fn req_v2_102_cmd_update_perfil_rejects_empty_name() {
+    let (conn, yo_id) = fresh_db_with_user();
+
+    let result = cmd_update_perfil_impl(&conn, yo_id, "   ".to_string());
+    assert!(
+        result.is_err(),
+        "REQ-V2-102: cmd_update_perfil_impl MUST reject an empty or whitespace-only name"
+    );
+}
+
+/// REQ-V2-102: `cmd_eliminar_perfil_impl` MUST delete the profile and cascade.
+///
+/// Scenario: Profile deletion
+/// Given: A profile with transactions.
+/// When: `cmd_eliminar_perfil_impl` is called with its id.
+/// Then: The profile is removed and all its transactions are deleted.
+#[test]
+fn req_v2_102_cmd_eliminar_perfil_deletes_profile_and_transactions() {
+    let (conn, p1_id) = fresh_db_with_user();
+    let p2_id = cmd_crear_perfil_impl(&conn, "Perfil 2".to_string(), 0).unwrap();
+
+    let categoria_id = categoria_id_for(&conn, "Gasto");
+    let input = gasto_input(p1_id, categoria_id, 1000);
+    cmd_insert_transaccion_impl(&conn, &input).unwrap();
+
+    // Delete p1
+    cmd_eliminar_perfil_impl(&conn, p1_id)
+        .expect("REQ-V2-102: cmd_eliminar_perfil_impl must succeed");
+
+    // Assert p1 is gone
+    let perfiles = cmd_obtener_perfiles_impl(&conn).unwrap();
+    assert!(!perfiles.iter().any(|p| p.id == p1_id), "REQ-V2-102: Profile MUST be deleted");
+    assert!(perfiles.iter().any(|p| p.id == p2_id), "REQ-V2-102: Other profiles MUST NOT be deleted");
+
+    // Assert p1's transactions are gone
+    let txs = cmd_listar_transacciones_impl(&conn, p1_id).unwrap();
+    assert!(txs.is_empty(), "REQ-V2-102: Profile's transactions MUST be deleted (ON DELETE CASCADE expected)");
 }

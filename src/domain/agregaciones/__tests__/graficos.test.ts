@@ -68,7 +68,9 @@ function categoriasFixture(): CategoriaMin[] {
  * Same reduced fixture used by `matriz.test.ts`. Defaults to a single
  * Ingreso row; callers overwrite what matters.
  */
-function tx(partial: Partial<TransaccionMin> & Pick<TransaccionMin, 'valor_centavos'>): TransaccionMin {
+function tx(
+  partial: Partial<TransaccionMin> & Pick<TransaccionMin, 'valor_centavos'>,
+): TransaccionMin {
   return {
     tipo_flujo: 'Ingreso',
     categoria_id: 1,
@@ -136,11 +138,36 @@ describe('REQ-302: distribución porcentual para gráficos', () => {
       { id: 5, nombre: 'E', grupo_pertenencia: 'GASTO' },
     ]
     const txs: TransaccionMin[] = [
-      tx({ tipo_flujo: 'Gasto', categoria_id: 1, naturaleza_necesidad: 'Necesario', valor_centavos: 100_000_000 }),
-      tx({ tipo_flujo: 'Gasto', categoria_id: 2, naturaleza_necesidad: 'Necesario', valor_centavos: 200_000_000 }),
-      tx({ tipo_flujo: 'Gasto', categoria_id: 3, naturaleza_necesidad: 'No necesario', valor_centavos: 300_000_000 }),
-      tx({ tipo_flujo: 'Gasto', categoria_id: 4, naturaleza_necesidad: 'No necesario', valor_centavos: 400_000_000 }),
-      tx({ tipo_flujo: 'Gasto', categoria_id: 5, naturaleza_necesidad: 'No necesario', valor_centavos: 1_000_000_000 }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 1,
+        naturaleza_necesidad: 'Necesario',
+        valor_centavos: 100_000_000,
+      }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 2,
+        naturaleza_necesidad: 'Necesario',
+        valor_centavos: 200_000_000,
+      }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 3,
+        naturaleza_necesidad: 'No necesario',
+        valor_centavos: 300_000_000,
+      }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 4,
+        naturaleza_necesidad: 'No necesario',
+        valor_centavos: 400_000_000,
+      }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 5,
+        naturaleza_necesidad: 'No necesario',
+        valor_centavos: 1_000_000_000,
+      }),
     ]
 
     const dist = distribucionGastosPorCategoria(txs, cats)
@@ -154,17 +181,28 @@ describe('REQ-302: distribución porcentual para gráficos', () => {
     // Expected order: Alimentacion (300) → Transporte (200) → Hogar (100).
     const cats = categoriasFixture()
     const txs: TransaccionMin[] = [
-      tx({ tipo_flujo: 'Gasto', categoria_id: 4, naturaleza_necesidad: 'Necesario', valor_centavos: 100_000_000 }),
-      tx({ tipo_flujo: 'Gasto', categoria_id: 5, naturaleza_necesidad: 'Necesario', valor_centavos: 300_000_000 }),
-      tx({ tipo_flujo: 'Gasto', categoria_id: 6, naturaleza_necesidad: 'No necesario', valor_centavos: 200_000_000 }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 4,
+        naturaleza_necesidad: 'Necesario',
+        valor_centavos: 100_000_000,
+      }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 5,
+        naturaleza_necesidad: 'Necesario',
+        valor_centavos: 300_000_000,
+      }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 6,
+        naturaleza_necesidad: 'No necesario',
+        valor_centavos: 200_000_000,
+      }),
     ]
 
     const dist = distribucionGastosPorCategoria(txs, cats)
-    expect(dist.map((d) => d.label)).toEqual([
-      'Alimentacion',
-      'Transporte',
-      'Hogar',
-    ])
+    expect(dist.map((d) => d.label)).toEqual(['Alimentacion', 'Transporte', 'Hogar'])
     // Also verify the percentages are sorted descending.
     const percentages = dist.map((d) => d.porcentaje)
     for (let i = 1; i < percentages.length; i++) {
@@ -177,9 +215,24 @@ describe('REQ-302: distribución porcentual para gráficos', () => {
     // Result list MUST contain exactly 3 entries — no empty buckets.
     const cats = categoriasFixture()
     const txs: TransaccionMin[] = [
-      tx({ tipo_flujo: 'Gasto', categoria_id: 4, naturaleza_necesidad: 'Necesario', valor_centavos: 100_000_000 }),
-      tx({ tipo_flujo: 'Gasto', categoria_id: 5, naturaleza_necesidad: 'Necesario', valor_centavos: 200_000_000 }),
-      tx({ tipo_flujo: 'Ingreso', categoria_id: 1, comportamiento: 'Fijo', valor_centavos: 1_000_000_000 }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 4,
+        naturaleza_necesidad: 'Necesario',
+        valor_centavos: 100_000_000,
+      }),
+      tx({
+        tipo_flujo: 'Gasto',
+        categoria_id: 5,
+        naturaleza_necesidad: 'Necesario',
+        valor_centavos: 200_000_000,
+      }),
+      tx({
+        tipo_flujo: 'Ingreso',
+        categoria_id: 1,
+        comportamiento: 'Fijo',
+        valor_centavos: 1_000_000_000,
+      }),
     ]
 
     const distGastos = distribucionGastosPorCategoria(txs, cats)

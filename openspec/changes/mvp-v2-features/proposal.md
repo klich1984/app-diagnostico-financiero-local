@@ -1,6 +1,7 @@
 # Change Proposal: MVP Financiero v2 - Edición, Gestión de Perfiles y Modo Mejorado
 
 ## Summary
+
 Este cambio define la versión v2 de la aplicación Diagnóstico Financiero Local. Incorpora la edición de transacciones existentes (CRUD completo), la gestión activa de perfiles multiusuario en la interfaz y base de datos, el toggle dinámico de Modo Mejorado en la matriz consolidada y mejoras de UX/Performance.
 
 ## Requirements Overview
@@ -23,5 +24,6 @@ Este cambio define la versión v2 de la aplicación Diagnóstico Financiero Loca
    - Ajuste fluido del contenedor principal para evitar desplazamientos horizontales.
 
 ## Impact Analysis
+
 - **Rust Backend**: Nueva función IPC `cmd_update_transaccion` en `commands.rs` y soporte CRUD completo en `db.rs` para perfiles.
 - **Frontend TS/React**: Actualizaciones en `tauri-commands.ts`, `ListaTransacciones.tsx`, `TransaccionForm.tsx` y `SelectorPerfil.tsx`.

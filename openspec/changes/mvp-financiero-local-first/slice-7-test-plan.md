@@ -14,9 +14,9 @@
 
 ## REQs cubiertos
 
-| REQ     | Título                                            | Slice origen |
-| ------- | ------------------------------------------------- | ------------ |
-| REQ-202 | CRUD de Transacciones + Integridad CHECK SQL      | Slice 3      |
+| REQ     | Título                                       | Slice origen |
+| ------- | -------------------------------------------- | ------------ |
+| REQ-202 | CRUD de Transacciones + Integridad CHECK SQL | Slice 3      |
 
 REQ-202 es el único REQ tocado por Slice 7 — el resto (REQ-201 sobre el
 catálogo de categorías, REQ-603 sobre aislamiento multi-perfil) ya
@@ -25,11 +25,11 @@ desde los tests como contrato cerrado.
 
 ## Archivos de tests creados
 
-| Archivo                                                            | Stack       | Tests | Estado     |
-| ------------------------------------------------------------------ | ----------- | ----- | ---------- |
-| `src-tauri/tests/commands_test.rs`                                 | Rust        | 5     | RED (no compila) |
-| `src/data/__tests__/tauri-commands.test.ts`                        | TypeScript  | 5     | RED (no resuelve import) |
-| **Total**                                                          |             | **10**|            |
+| Archivo                                     | Stack      | Tests  | Estado                   |
+| ------------------------------------------- | ---------- | ------ | ------------------------ |
+| `src-tauri/tests/commands_test.rs`          | Rust       | 5      | RED (no compila)         |
+| `src/data/__tests__/tauri-commands.test.ts` | TypeScript | 5      | RED (no resuelve import) |
+| **Total**                                   |            | **10** |                          |
 
 > Nota: el target del usuario ("~15 tests, 5+5+5") se reduce a 10 porque
 > los 5 tests de "algo más" del brief original se solapan con escenarios
@@ -43,13 +43,13 @@ desde los tests como contrato cerrado.
 
 Funciones / módulos que cada test valida:
 
-| Test                                              | Función / módulo                                              | Contrato pinneado                                                                                                            |
-| ------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `slice7_cmd_obtener_categorias_returns_all_14`    | `crate::commands::cmd_obtener_categorias_impl(&Connection)`   | Devuelve `Vec<CategoriaDto>` con exactamente 14 filas (4 Ingreso + 10 Gasto) sembradas por la migración `001_inicial.sql`.  |
-| `slice7_cmd_obtener_categorias_returns_correct_shape` | `crate::commands::cmd_obtener_categorias_impl(&Connection)` | Cada `CategoriaDto` expone `{ id: i64, nombre: String, grupo_pertenencia: String }` con tipos no vacíos y enum canónico.     |
-| `slice7_cmd_insert_transaccion_persists_to_db`    | `crate::commands::cmd_insert_transaccion_impl(&Connection, &TransaccionInput)` | Inserta fila, devuelve `id > 0`, y el row es consultable de vuelta con `list_by_user`.                                       |
-| `slice7_cmd_insert_transaccion_validates_value_positive` | `crate::commands::cmd_insert_transaccion_impl(...)`     | Devuelve `Err(_)` cuando `valor_centavos = 0` (CHECK constraint). No persiste fila.                                         |
-| `slice7_cmd_listar_transacciones_returns_only_user_rows` | `crate::commands::cmd_listar_transacciones_impl(&Connection, usuario_id: i64)` | Filtra estrictamente por `usuario_id`. No hay leak entre perfiles (REQ-603).                                                |
+| Test                                                     | Función / módulo                                                               | Contrato pinneado                                                                                                          |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `slice7_cmd_obtener_categorias_returns_all_14`           | `crate::commands::cmd_obtener_categorias_impl(&Connection)`                    | Devuelve `Vec<CategoriaDto>` con exactamente 14 filas (4 Ingreso + 10 Gasto) sembradas por la migración `001_inicial.sql`. |
+| `slice7_cmd_obtener_categorias_returns_correct_shape`    | `crate::commands::cmd_obtener_categorias_impl(&Connection)`                    | Cada `CategoriaDto` expone `{ id: i64, nombre: String, grupo_pertenencia: String }` con tipos no vacíos y enum canónico.   |
+| `slice7_cmd_insert_transaccion_persists_to_db`           | `crate::commands::cmd_insert_transaccion_impl(&Connection, &TransaccionInput)` | Inserta fila, devuelve `id > 0`, y el row es consultable de vuelta con `list_by_user`.                                     |
+| `slice7_cmd_insert_transaccion_validates_value_positive` | `crate::commands::cmd_insert_transaccion_impl(...)`                            | Devuelve `Err(_)` cuando `valor_centavos = 0` (CHECK constraint). No persiste fila.                                        |
+| `slice7_cmd_listar_transacciones_returns_only_user_rows` | `crate::commands::cmd_listar_transacciones_impl(&Connection, usuario_id: i64)` | Filtra estrictamente por `usuario_id`. No hay leak entre perfiles (REQ-603).                                               |
 
 #### Tipos exportados que el IMPL debe declarar
 
@@ -77,13 +77,13 @@ pub fn cmd_listar_transacciones_impl(conn: &Connection, usuario_id: i64) -> Resu
 
 Funciones / módulos que cada test valida:
 
-| Test                                                            | Función / módulo                              | Contrato pinneado                                                                                                |
-| --------------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `slice7_obtener_categorias_invokes_cmd_obtener_categorias`      | `obtenerCategorias()`                         | Llama `invoke('cmd_obtener_categorias')` sin payload.                                                            |
-| `slice7_obtener_categorias_returns_typed_array`                 | `obtenerCategorias()`                         | Devuelve el array resuelto, tipado como `CategoriaDto[]`.                                                       |
-| `slice7_insertar_transaccion_invokes_cmd_insert_transaccion_with_input` | `insertarTransaccion(input)`            | Llama `invoke('cmd_insert_transaccion', input)` y devuelve el `id` (number).                                    |
-| `slice7_listar_transacciones_invokes_cmd_listar_transacciones`  | `listarTransacciones()`                       | Llama `invoke('cmd_listar_transacciones')` sin payload (perfil activo lo resuelve el backend).                  |
-| `slice7_insertar_transaccion_propagates_errors`                 | `insertarTransaccion(input)`                  | Si `invoke` rechaza, la promesa devuelta también rechaza (sin tragar errores).                                   |
+| Test                                                                    | Función / módulo             | Contrato pinneado                                                                              |
+| ----------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `slice7_obtener_categorias_invokes_cmd_obtener_categorias`              | `obtenerCategorias()`        | Llama `invoke('cmd_obtener_categorias')` sin payload.                                          |
+| `slice7_obtener_categorias_returns_typed_array`                         | `obtenerCategorias()`        | Devuelve el array resuelto, tipado como `CategoriaDto[]`.                                      |
+| `slice7_insertar_transaccion_invokes_cmd_insert_transaccion_with_input` | `insertarTransaccion(input)` | Llama `invoke('cmd_insert_transaccion', input)` y devuelve el `id` (number).                   |
+| `slice7_listar_transacciones_invokes_cmd_listar_transacciones`          | `listarTransacciones()`      | Llama `invoke('cmd_listar_transacciones')` sin payload (perfil activo lo resuelve el backend). |
+| `slice7_insertar_transaccion_propagates_errors`                         | `insertarTransaccion(input)` | Si `invoke` rechaza, la promesa devuelta también rechaza (sin tragar errores).                 |
 
 #### Tipos exportados que el IMPL debe declarar
 
@@ -141,10 +141,10 @@ export async function listarTransacciones(): Promise<TransaccionCompletaDto[]>
 
 ## Comportamiento esperado (RED)
 
-| Comando                                                | Resultado esperado                                  |
-| ------------------------------------------------------ | --------------------------------------------------- |
-| `cd src-tauri && cargo test --no-run`                  | **FAIL** — no compila. Módulos `crate::commands::{cmd_obtener_categorias_impl, cmd_insert_transaccion_impl, cmd_listar_transacciones_impl, CategoriaDto}` no resueltos. |
-| `pnpm test` (raíz)                                     | **FAIL** — `../tauri-commands` no resuelve. Vitest reporta error de import antes de correr cualquier `it()`. |
+| Comando                               | Resultado esperado                                                                                                                                                      |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cd src-tauri && cargo test --no-run` | **FAIL** — no compila. Módulos `crate::commands::{cmd_obtener_categorias_impl, cmd_insert_transaccion_impl, cmd_listar_transacciones_impl, CategoriaDto}` no resueltos. |
+| `pnpm test` (raíz)                    | **FAIL** — `../tauri-commands` no resuelve. Vitest reporta error de import antes de correr cualquier `it()`.                                                            |
 
 Esta es la confirmación de que la fase RED está bien plantada: los
 tests NO pueden pasar sin el IMPL. Una vez que el IMPL introduzca los
@@ -168,12 +168,12 @@ agente de IMPL (separado) deberá:
 
 ## Riesgos identificados
 
-| Riesgo                                                          | Mitigación                                                                          |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| El IMPL introduce un wrapper con campos renombrados.            | Los nombres `grupo_pertenencia`, `valor_centavos`, `categoria_nombre` están pinneados por tests previos + este plan. |
-| El IMPL decide usar `tauri::State` directo en lugar del patrón `*_impl`. | Los tests están diseñados alrededor del patrón `*_impl`; si el IMPL diverge, debe reescribir los tests (y pedir re-revisión). |
-| El usuario solicita commits automáticos en RED.                 | El brief del usuario y el AGENTS.md son explícitos: **el usuario commitea y revisa**. No se ejecuta `git commit` en esta fase. |
-| Slice 7 excede el review budget de 400 líneas (sólo tests).     | Los 3 archivos pesan ~600 líneas en total, pero todos son tests. El IMPL debería entrar en otro slice si supera 400 líneas netas (verificar al cierre del RED). |
+| Riesgo                                                                   | Mitigación                                                                                                                                                      |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| El IMPL introduce un wrapper con campos renombrados.                     | Los nombres `grupo_pertenencia`, `valor_centavos`, `categoria_nombre` están pinneados por tests previos + este plan.                                            |
+| El IMPL decide usar `tauri::State` directo en lugar del patrón `*_impl`. | Los tests están diseñados alrededor del patrón `*_impl`; si el IMPL diverge, debe reescribir los tests (y pedir re-revisión).                                   |
+| El usuario solicita commits automáticos en RED.                          | El brief del usuario y el AGENTS.md son explícitos: **el usuario commitea y revisa**. No se ejecuta `git commit` en esta fase.                                  |
+| Slice 7 excede el review budget de 400 líneas (sólo tests).              | Los 3 archivos pesan ~600 líneas en total, pero todos son tests. El IMPL debería entrar en otro slice si supera 400 líneas netas (verificar al cierre del RED). |
 
 ## Archivos a commitear (sugerencia)
 
