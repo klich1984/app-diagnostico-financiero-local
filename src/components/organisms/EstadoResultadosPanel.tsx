@@ -199,10 +199,14 @@ export function EstadoResultadosPanel({
                 <td className={`px-3 py-1.5 ${row.isIndent ? 'pl-8 italic text-slate-600' : ''}`}>
                   {row.label}
                 </td>
-                <td className={`px-3 py-1.5 text-right font-mono ${getColorClass(inicialCentavos, !!row.isSemaphore)}`}>
+                <td
+                  className={`px-3 py-1.5 text-right font-mono ${getColorClass(inicialCentavos, !!row.isSemaphore)}`}
+                >
                   {formatCentavos(inicialCentavos)}
                 </td>
-                <td className={`px-3 py-1.5 text-right font-mono ${getColorClass(mejoradoCentavos, !!row.isSemaphore)}`}>
+                <td
+                  className={`px-3 py-1.5 text-right font-mono ${getColorClass(mejoradoCentavos, !!row.isSemaphore)}`}
+                >
                   {formatCentavos(mejoradoCentavos)}
                 </td>
               </tr>
