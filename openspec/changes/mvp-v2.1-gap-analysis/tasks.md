@@ -12,13 +12,16 @@
 ## Slices Restantes
 
 ### Slice 1: Mejoras de UX Frontend (Semáforo KPIs)
+
 - [x] **Modificar** `src/components/organisms/EstadoResultadosPanel.tsx`
   - Agregar lógica condicional para el color del semáforo en los KPIs (FA2 y Capacidad de Inversión).
   - Usar clases CSS: `text-red-500` si es `< 0`, `text-green-600` si es `>= 0`.
 
 ### Slice 2: Exportación CSV (2 Archivos)
+
 > **Decisión UX**: Exportar `transacciones.csv` y `estado_resultados.csv` por separado, pero en una sola acción (pidiendo al usuario seleccionar un directorio destino).
-- [ ] **Verificar** la lectura de la preferencia de `modo_mejorado_activo` desde SQLite en la inicialización (opcional/verificación).
-- [ ] **Modificar** `src-tauri/Cargo.toml` y `src-tauri/tauri.conf.json` para activar dependencias `tauri-plugin-fs` y `tauri-plugin-dialog`.
-- [ ] **Crear** `src/data/export-csv.ts` para manejar la lógica de transformación a CSV.
-- [ ] **Integrar** botón de exportación en la UI que dispare el selector de directorios y guarde ambos archivos.
+
+- [x] **Verificar** la lectura de la preferencia de `modo_mejorado_activo` desde SQLite en la inicialización (opcional/verificación).
+- [x] **Modificar** `src-tauri/Cargo.toml` y `src-tauri/tauri.conf.json` para activar dependencias `tauri-plugin-fs` y `tauri-plugin-dialog`.
+- [x] **Crear** `src/data/export-csv.ts` para manejar la lógica de transformación a CSV.
+- [x] **Integrar** botón de exportación en la UI que dispare el selector de directorios y guarde ambos archivos.
