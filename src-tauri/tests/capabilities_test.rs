@@ -32,24 +32,47 @@ fn req_105_capabilities_default_json_contains_sql_default_permission() {
     assert!(
         permissions.iter().any(|p| p == "sql:default"),
         "REQ-105: capabilities/default.json must contain `sql:default` \
-         in `permissions` (found: {:?})",
+        in `permissions` (found: {:?})",
         permissions,
     );
 }
 
-/// REQ-105 / Scenario: the WebView must NOT be granted filesystem or shell
-/// permissions. The MVP does not need them; granting them widens the attack
-/// surface unnecessarily (design §2 — "Capacidades mínimas").
+/// REQ-105 / Scenario: the WebView must NOT be granted shell, http, or os
+/// permissions — they are not needed and widen the attack surface
+/// (design §2 — "Capacidades mínimas").
+///
+/// NOTE (v2.1): `fs:default` was removed from the forbidden list because
+/// CSV export (REQ-V2.1-EXPORT) requires filesystem write access via
+/// `@tauri-apps/plugin-fs`. `dialog:default` is also required to let the
+/// user pick the destination directory.
 #[test]
-fn req_105_capabilities_default_json_does_not_contain_fs_default_or_shell_default() {
+fn req_105_capabilities_default_json_does_not_contain_shell_http_os() {
     let caps = parse_capabilities();
     let permissions = permissions_array(&caps);
 
-    for forbidden in ["fs:default", "shell:default", "http:default", "os:default"] {
+    for forbidden in ["shell:default", "http:default", "os:default"] {
         assert!(
             !permissions.iter().any(|p| p == forbidden),
             "REQ-105: capabilities/default.json must NOT grant `{forbidden}` \
-             (found permissions: {:?})",
+            (found permissions: {:?})",
+            permissions,
+        );
+    }
+}
+
+/// REQ-V2.1-EXPORT / Scenario: CSV/Excel export requires `fs:default` (read/write setup),
+/// `dialog:default` (native directory picker), and `fs:allow-write-file`
+/// to actually dump the generated binary Excel/CSV data to disk.
+#[test]
+fn req_v2_1_capabilities_contain_fs_and_dialog_for_csv_export() {
+    let caps = parse_capabilities();
+    let permissions = permissions_array(&caps);
+
+    for required in ["fs:default", "dialog:default", "fs:allow-write-file"] {
+        assert!(
+            permissions.iter().any(|p| p == required),
+            "REQ-V2.1-EXPORT: capabilities/default.json must grant `{required}` \
+            for CSV export (found: {:?})",
             permissions,
         );
     }
@@ -72,14 +95,14 @@ fn req_105_capabilities_default_json_has_scope_to_main_window_only() {
     assert!(
         window_names.contains(&"main"),
         "REQ-105: capabilities/default.json must scope to the `main` window \
-         (found windows: {:?})",
+        (found windows: {:?})",
         window_names,
     );
     assert_eq!(
         window_names.len(),
         1,
         "REQ-105: capabilities/default.json must scope to exactly one window \
-         (`main`), found {:?}",
+        (`main`), found {:?}",
         window_names,
     );
 }
