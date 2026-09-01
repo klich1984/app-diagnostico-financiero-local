@@ -17,12 +17,12 @@
 
 ## Archivos modificados / creados (4 archivos)
 
-| # | Archivo | Tipo | Tests | Estado RED |
-|---|---------|------|-------|------------|
-| 1 | `src-tauri/tests/commands_test.rs` | modificado | 4 nuevos | no compila (`cargo test --no-run` falla con `unresolved imports` de `cmd_*_perfil*_impl` y `UsuarioDto`) |
-| 2 | `src/data/__tests__/tauri-commands.test.ts` | modificado | 3 nuevos | los tests fallan en runtime (`TypeError: ... is not a function`); los wrappers `obtenerPerfiles`/`crearPerfil`/`obtenerPerfil` no existen |
-| 3 | `src/data/__tests__/perfil-activo.test.ts` | nuevo | 4 | falla a nivel de archivo (no se puede resolver `../perfil-activo`) |
-| 4 | `src/components/organisms/__tests__/SelectorPerfil.test.tsx` | nuevo | 5 | falla a nivel de archivo (no se puede resolver `../SelectorPerfil`) |
+| #   | Archivo                                                      | Tipo       | Tests    | Estado RED                                                                                                                                |
+| --- | ------------------------------------------------------------ | ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `src-tauri/tests/commands_test.rs`                           | modificado | 4 nuevos | no compila (`cargo test --no-run` falla con `unresolved imports` de `cmd_*_perfil*_impl` y `UsuarioDto`)                                  |
+| 2   | `src/data/__tests__/tauri-commands.test.ts`                  | modificado | 3 nuevos | los tests fallan en runtime (`TypeError: ... is not a function`); los wrappers `obtenerPerfiles`/`crearPerfil`/`obtenerPerfil` no existen |
+| 3   | `src/data/__tests__/perfil-activo.test.ts`                   | nuevo      | 4        | falla a nivel de archivo (no se puede resolver `../perfil-activo`)                                                                        |
+| 4   | `src/components/organisms/__tests__/SelectorPerfil.test.tsx` | nuevo      | 5        | falla a nivel de archivo (no se puede resolver `../SelectorPerfil`)                                                                       |
 
 **Total**: **16 tests** nuevos en 4 archivos (4 Rust + 3 TS wrapper + 4 localStorage + 5 component).
 
@@ -32,14 +32,15 @@
 
 Tests del binding que la IMPL debe satisfacer en `crate::commands`:
 
-| Test | Comando | Contrato esperado |
-|------|---------|-------------------|
-| `req_501_cmd_obtener_perfiles_returns_all_usuarios` | `cmd_obtener_perfiles_impl(&Connection)` | Devuelve `Vec<UsuarioDto>` con >=1 elemento; incluye el sembrado `'Yo'` |
-| `req_501_cmd_crear_perfil_inserts_new_usuario` | `cmd_crear_perfil_impl(&Connection, nombre, salario_centavos)` | Inserta fila, devuelve `id > 0`, aparece en el listado |
-| `req_501_cmd_crear_perfil_rejects_empty_nombre` | mismo | Devuelve `Err(_)` por CHECK `length(trim(nombre)) > 0`; no inserta |
-| `req_501_cmd_obtener_perfil_returns_by_id` | `cmd_obtener_perfil_impl(&Connection, id)` | Devuelve el DTO del sembrado `'Yo'` con `salario_personal_objetivo_centavos == 50_000_000` |
+| Test                                                | Comando                                                        | Contrato esperado                                                                          |
+| --------------------------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `req_501_cmd_obtener_perfiles_returns_all_usuarios` | `cmd_obtener_perfiles_impl(&Connection)`                       | Devuelve `Vec<UsuarioDto>` con >=1 elemento; incluye el sembrado `'Yo'`                    |
+| `req_501_cmd_crear_perfil_inserts_new_usuario`      | `cmd_crear_perfil_impl(&Connection, nombre, salario_centavos)` | Inserta fila, devuelve `id > 0`, aparece en el listado                                     |
+| `req_501_cmd_crear_perfil_rejects_empty_nombre`     | mismo                                                          | Devuelve `Err(_)` por CHECK `length(trim(nombre)) > 0`; no inserta                         |
+| `req_501_cmd_obtener_perfil_returns_by_id`          | `cmd_obtener_perfil_impl(&Connection, id)`                     | Devuelve el DTO del sembrado `'Yo'` con `salario_personal_objetivo_centavos == 50_000_000` |
 
 DTO esperado:
+
 ```rust
 #[derive(serde::Serialize, Clone, Debug)]
 pub struct UsuarioDto {
@@ -52,50 +53,62 @@ pub struct UsuarioDto {
 
 ### 2) `src/data/__tests__/tauri-commands.test.ts` (3 tests nuevos)
 
-| Test | Wrapper | Shape del payload IPC esperado |
-|------|---------|-------------------------------|
-| `obtenerPerfiles invokes cmd_obtener_perfiles` | `obtenerPerfiles()` | `invoke('cmd_obtener_perfiles')` (sin payload) |
-| `crearPerfil invokes cmd_crear_perfil with input` | `crearPerfil({nombre, salario})` | `invoke('cmd_crear_perfil', { input: {nombre, salario} })` (envuelto bajo `input`, igual que `insertarTransaccion`) |
-| `obtenerPerfil invokes cmd_obtener_perfil with id` | `obtenerPerfil(id)` | `invoke('cmd_obtener_perfil', { id })` (top-level, igual que `eliminarTransaccion`) |
+| Test                                               | Wrapper                          | Shape del payload IPC esperado                                                                                      |
+| -------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `obtenerPerfiles invokes cmd_obtener_perfiles`     | `obtenerPerfiles()`              | `invoke('cmd_obtener_perfiles')` (sin payload)                                                                      |
+| `crearPerfil invokes cmd_crear_perfil with input`  | `crearPerfil({nombre, salario})` | `invoke('cmd_crear_perfil', { input: {nombre, salario} })` (envuelto bajo `input`, igual que `insertarTransaccion`) |
+| `obtenerPerfil invokes cmd_obtener_perfil with id` | `obtenerPerfil(id)`              | `invoke('cmd_obtener_perfil', { id })` (top-level, igual que `eliminarTransaccion`)                                 |
 
 Tipos a anadir a `tauri-commands.ts`:
+
 ```typescript
-export interface UsuarioDto { id: number; nombre: string; salario_personal_objetivo_centavos: number; modo_mejorado_activo: boolean }
-export interface CrearPerfilInput { nombre: string; salario_personal_objetivo_centavos: number }
+export interface UsuarioDto {
+  id: number
+  nombre: string
+  salario_personal_objetivo_centavos: number
+  modo_mejorado_activo: boolean
+}
+export interface CrearPerfilInput {
+  nombre: string
+  salario_personal_objetivo_centavos: number
+}
 ```
 
 ### 3) `src/data/__tests__/perfil-activo.test.ts` (4 tests)
 
 Helper de persistencia del perfil activo en `localStorage`:
 
-| Test | Comportamiento esperado |
-|------|------------------------|
-| `obtenerPerfilActivo returns null when no profile is saved` | Sin storage => `null` |
-| `guardarPerfilActivo + obtenerPerfilActivo roundtrips` | `guardarPerfilActivo(42)` + `obtenerPerfilActivo()` => `42` |
-| `limpiarPerfilActivo removes the saved profile` | Tras limpiar => `null` |
-| `obtenerPerfilActivo returns null when localStorage has invalid JSON` | Storage corrupto => `null` (no throw) |
+| Test                                                                  | Comportamiento esperado                                     |
+| --------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `obtenerPerfilActivo returns null when no profile is saved`           | Sin storage => `null`                                       |
+| `guardarPerfilActivo + obtenerPerfilActivo roundtrips`                | `guardarPerfilActivo(42)` + `obtenerPerfilActivo()` => `42` |
+| `limpiarPerfilActivo removes the saved profile`                       | Tras limpiar => `null`                                      |
+| `obtenerPerfilActivo returns null when localStorage has invalid JSON` | Storage corrupto => `null` (no throw)                       |
 
 API a exportar desde `src/data/perfil-activo.ts`:
+
 ```typescript
 export function obtenerPerfilActivo(): number | null
 export function guardarPerfilActivo(id: number): void
 export function limpiarPerfilActivo(): void
 ```
+
 Storage key: `'mvp-fin:perfil-activo'`.
 
 ### 4) `src/components/organisms/__tests__/SelectorPerfil.test.tsx` (5 tests)
 
 Organism (Atomic Design) que renderiza el selector al abrir:
 
-| Test | Contrato |
-|------|----------|
-| `renders a full-screen overlay when shown` | `data-testid="selector-perfil"` presente en el DOM |
-| `renders one option per profile` | N elementos `[data-testid="opcion-perfil"]` por cada perfil |
-| `calls onSeleccionar with the right id when an option is clicked` | Click en opcion[1] -> `onSeleccionar(2)` |
-| `shows loading state when cargando=true` | `data-testid="selector-perfil-cargando"` presente |
-| `shows create-new button` | `data-testid="boton-crear-perfil"` siempre presente |
+| Test                                                              | Contrato                                                    |
+| ----------------------------------------------------------------- | ----------------------------------------------------------- |
+| `renders a full-screen overlay when shown`                        | `data-testid="selector-perfil"` presente en el DOM          |
+| `renders one option per profile`                                  | N elementos `[data-testid="opcion-perfil"]` por cada perfil |
+| `calls onSeleccionar with the right id when an option is clicked` | Click en opcion[1] -> `onSeleccionar(2)`                    |
+| `shows loading state when cargando=true`                          | `data-testid="selector-perfil-cargando"` presente           |
+| `shows create-new button`                                         | `data-testid="boton-crear-perfil"` siempre presente         |
 
 Props esperados:
+
 ```typescript
 interface SelectorPerfilProps {
   perfiles: UsuarioDto[]

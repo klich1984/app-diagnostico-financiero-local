@@ -40,11 +40,7 @@
 // environment) — no Tauri runtime, no IPC.
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import {
-  guardarPerfilActivo,
-  limpiarPerfilActivo,
-  obtenerPerfilActivo,
-} from '../perfil-activo'
+import { guardarPerfilActivo, limpiarPerfilActivo, obtenerPerfilActivo } from '../perfil-activo'
 
 const STORAGE_KEY = 'mvp-fin:perfil-activo'
 

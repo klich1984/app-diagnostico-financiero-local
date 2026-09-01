@@ -104,11 +104,7 @@ function materializar(
     // Porcentaje como Decimal hasta el final para evitar drift. El
     // `.toNumber()` solo opera sobre un valor ya redondeado a 2
     // decimales, así que no introduce error de IEEE-754 relevante.
-    const porcentaje = valor
-      .div(totalGeneral)
-      .mul(CIEN)
-      .toDecimalPlaces(DOS_DECIMALES)
-      .toNumber()
+    const porcentaje = valor.div(totalGeneral).mul(CIEN).toDecimalPlaces(DOS_DECIMALES).toNumber()
     items.push({
       label: cat.nombre,
       valor,

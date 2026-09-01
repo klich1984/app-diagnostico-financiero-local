@@ -338,19 +338,19 @@ El sistema debe exponer el valor visible "Total Gastos Mejorado" que cierra exac
 
 ## Resumen de Cobertura
 
-| Tipo                             | Cantidad     |
-| -------------------------------- | ------------ |
-| Requisitos D1 (Modal)            | 11           |
-| Requisitos D2 (Tab)             | 8            |
-| Requisitos REQ-605              | 1            |
-| Total nuevos escenarios          | 20           |
-| Escenarios heredados (spec base) | 38          |
+| Tipo                             | Cantidad |
+| -------------------------------- | -------- |
+| Requisitos D1 (Modal)            | 11       |
+| Requisitos D2 (Tab)              | 8        |
+| Requisitos REQ-605               | 1        |
+| Total nuevos escenarios          | 20       |
+| Escenarios heredados (spec base) | 38       |
 
-| REQ base extendido | Tipo de extensión |
-| ------------------ | ----------------- |
-| REQ-502           | 11 escenarios de UI (D1) |
-| REQ-403           | 8 escenarios de organism (D2) |
-| REQ-605           | 1 escenario de golden expuesto (D2) |
+| REQ base extendido | Tipo de extensión                   |
+| ------------------ | ----------------------------------- |
+| REQ-502            | 11 escenarios de UI (D1)            |
+| REQ-403            | 8 escenarios de organism (D2)       |
+| REQ-605            | 1 escenario de golden expuesto (D2) |
 
 ---
 

@@ -136,10 +136,7 @@ afterEach(() => {
 /// Render helper. Centralizes the `act()` wrap so each test can focus
 /// on the assertion, not the React plumbing. `cargando` defaults to
 /// `false`; the empty-state test sets it explicitly.
-function render(
-  matriz: MatrizPresupuestoData,
-  cargando: boolean = false,
-): void {
+function render(matriz: MatrizPresupuestoData, cargando: boolean = false): void {
   act(() => {
     root.render(<MatrizPresupuesto matriz={matriz} cargando={cargando} />)
   })

@@ -74,6 +74,14 @@ import { calcularMatrizMejorada, type Simulacion } from '../simulador/matriz-mej
  */
 export interface LadoEstado {
   total_ingresos: Decimal
+  ingresos_fijos: Decimal
+  ingresos_variables: Decimal
+  gastos_fijos_total: Decimal
+  gastos_fijos_necesarios: Decimal
+  gastos_fijos_provisiones: Decimal
+  deudas_total: Decimal
+  cuota_deudas_entidades: Decimal
+  cuota_deudas_conocidos: Decimal
   gastos_necesarios: Decimal
   gastos_no_tan_necesarios: Decimal
   gastos_no_necesarios: Decimal
@@ -119,9 +127,7 @@ export function esCategoriaDeudaPorNombre(nombre: string): boolean {
  * predicado "Deuda". El resultado se usa como set de búsqueda O(1) en
  * el bucle de gastos.
  */
-export function categoriasDeuda(
-  categorias: CategoriaMin[],
-): Set<number> {
+export function categoriasDeuda(categorias: CategoriaMin[]): Set<number> {
   const set = new Set<number>()
   for (const c of categorias) {
     if (esCategoriaDeudaPorNombre(c.nombre)) {
@@ -177,44 +183,66 @@ function componerLado(
 ): LadoEstado {
   const gastosDeudas = sumarDeudas(matriz, deudaIds, categorias)
 
-  // gastos_necesarios (excluyendo deudas) = totalNecesario − deudas.
-  // Sumamos los 10 buckets de Gasto cuyo naturaleza='Necesario' pero
-  // filtrando las categorias Deuda. Para mantener la implementación
-  // simple y exacta, volvemos a iterar la matriz y excluimos las
-  // categorias Deuda.
+  let ingresosFijos = CERO
+  let ingresosVariables = CERO
+  for (const ing of matriz.ingresos) {
+    ingresosFijos = ingresosFijos.plus(ing.fijo)
+    ingresosVariables = ingresosVariables.plus(ing.variable)
+  }
+
+  let cuotaDeudasEntidades = CERO
+  let cuotaDeudasConocidos = CERO
+  let gastosProvisiones = CERO
   let gastosNecesarios = CERO
   let gastosNoTanNec = CERO
   let gastosNoNec = CERO
+
   for (const g of matriz.gastos) {
     const cat = categorias.find((c) => c.nombre === g.categoria)
+    const nameLower = cat ? cat.nombre.toLowerCase() : g.categoria.toLowerCase()
+    if (nameLower.includes('entidades')) {
+      cuotaDeudasEntidades = cuotaDeudasEntidades.plus(g.total)
+    } else if (nameLower.includes('conocidos')) {
+      cuotaDeudasConocidos = cuotaDeudasConocidos.plus(g.total)
+    }
+
+    if (nameLower.includes('provision')) {
+      gastosProvisiones = gastosProvisiones.plus(g.necesario)
+    }
+
     const esDeuda = cat ? deudaIds.has(cat.id) : false
-    if (esDeuda) continue // ya cubierto por `gastosDeudas`
-    gastosNecesarios = gastosNecesarios.plus(g.necesario)
+    if (!esDeuda) {
+      gastosNecesarios = gastosNecesarios.plus(g.necesario)
+    }
     gastosNoTanNec = gastosNoTanNec.plus(g.noTanNecesario)
     gastosNoNec = gastosNoNec.plus(g.noNecesario)
   }
 
+  const gastosFijosNecesarios = gastosNecesarios.minus(gastosProvisiones)
+  const gastosFijosTotal = gastosFijosNecesarios.plus(gastosProvisiones)
+  const deudasTotal = cuotaDeudasEntidades.plus(cuotaDeudasConocidos)
+
   const totalGastos = matriz.totalGastos
   const ingresos = matriz.totalIngresos
 
-  // FA1 = ingresos − (Necesarios + Deudas). El Excel separa
-  // "Gastos fijos necesarios" y "Provisiones" para llegar al mismo
-  // número desde otra vía; nosotros vamos por la vía agregada.
-  const flujoAhorro1 = ingresos.minus(gastosNecesarios).minus(gastosDeudas)
-  // FCL = ingresos − total_gastos. Equivale al
-  // `matriz.flujoCajaLibre` ya calculado, pero lo recomponemos para
-  // que el contrato del KPI quede en un solo lugar.
+  const flujoAhorro1 = ingresos.minus(gastosFijosTotal).minus(deudasTotal)
   const flujoCajaLibre = ingresos.minus(totalGastos)
 
   const variablesTotal = gastosNoTanNec.plus(gastosNoNec)
   const salarioDec = salario ?? CERO
-  // FA2 = FA1 − salario − variables_total.
   const flujoAhorro2 = flujoAhorro1.minus(salarioDec).minus(variablesTotal)
-  // Cap.Inv = salario + FA2. Si salario es null, cae a FA2.
   const capacidadInversion = salarioDec.plus(flujoAhorro2)
 
   return {
     total_ingresos: ingresos,
+    ingresos_fijos: ingresosFijos,
+    ingresos_variables: ingresosVariables,
+    gastos_fijos_total: gastosFijosTotal,
+    gastos_fijos_necesarios: gastosFijosNecesarios,
+    gastos_fijos_provisiones: gastosProvisiones,
+    deudas_total: deudasTotal,
+    cuota_deudas_entidades: cuotaDeudasEntidades,
+    cuota_deudas_conocidos: cuotaDeudasConocidos,
     gastos_necesarios: gastosNecesarios,
     gastos_no_tan_necesarios: gastosNoTanNec,
     gastos_no_necesarios: gastosNoNec,
@@ -273,9 +301,10 @@ export function calcularLadoMejorado(
 ): LadoEstado {
   const deudaIds = categoriasDeuda(categorias)
   const matriz = calcularMatrizMejorada(transacciones, categorias, simulaciones)
-  const salario = salarioObjetivoCentavos === null || salarioObjetivoCentavos === undefined
-    ? null
-    : new Decimal(salarioObjetivoCentavos)
+  const salario =
+    salarioObjetivoCentavos === null || salarioObjetivoCentavos === undefined
+      ? null
+      : new Decimal(salarioObjetivoCentavos)
   return componerLado(matriz, categorias, deudaIds, salario)
 }
 

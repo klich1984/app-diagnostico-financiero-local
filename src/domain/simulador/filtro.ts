@@ -35,10 +35,7 @@ import type { TransaccionMin } from '../agregaciones'
  */
 export function esGastoNoEsencial(t: TransaccionMin): boolean {
   if (t.tipo_flujo !== 'Gasto') return false
-  return (
-    t.naturaleza_necesidad === 'No necesario' ||
-    t.naturaleza_necesidad === 'No tan necesario'
-  )
+  return t.naturaleza_necesidad === 'No necesario' || t.naturaleza_necesidad === 'No tan necesario'
 }
 
 /**
@@ -47,8 +44,6 @@ export function esGastoNoEsencial(t: TransaccionMin): boolean {
  * de entrada no se muta. Esto cumple el contrato de "función pura"
  * que los tests de slice 5 pinea.
  */
-export function filtrarGastosNoEsenciales(
-  transacciones: TransaccionMin[],
-): TransaccionMin[] {
+export function filtrarGastosNoEsenciales(transacciones: TransaccionMin[]): TransaccionMin[] {
   return transacciones.filter(esGastoNoEsencial)
 }

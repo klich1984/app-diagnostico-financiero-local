@@ -116,6 +116,10 @@ beforeEach(() => {
   // Reset the mock so call counts + queued resolutions don't leak
   // between tests.
   invokeMock.mockReset()
+
+  // REQ-V2-102: Ensure tests run with an active profile so the form
+  // can submit successfully without "No hay perfil activo" error.
+  localStorage.setItem('mvp-fin:perfil-activo', '1')
 })
 
 afterEach(() => {
@@ -124,6 +128,7 @@ afterEach(() => {
   })
   container.remove()
   vi.restoreAllMocks()
+  localStorage.clear()
 })
 
 describe('App: form reset after successful submit', () => {
@@ -146,9 +151,7 @@ describe('App: form reset after successful submit', () => {
     //    initial transacciones list (called once on mount via the second
     //    `useEffect`). Use ONE Ingreso categoria so the form renders
     //    without depending on the default 'Gasto' subset being populated.
-    invokeMock.mockResolvedValueOnce([
-      { id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' },
-    ])
+    invokeMock.mockResolvedValueOnce([{ id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' }])
     invokeMock.mockResolvedValueOnce([]) // initial listarTransacciones
 
     await act(async () => {
@@ -204,14 +207,10 @@ describe('App: form reset after successful submit', () => {
 
     // 7) Strengthened: the IPC contract was honored. The Rust side was
     //    called with `cmd_insert_transaccion` and a `{ input }` payload.
-    const insertCall = invokeMock.mock.calls.find(
-      (c) => c[0] === 'cmd_insert_transaccion',
-    )
+    const insertCall = invokeMock.mock.calls.find((c) => c[0] === 'cmd_insert_transaccion')
     expect(insertCall).toBeDefined()
     expect(insertCall?.[1]).toHaveProperty('input')
-    expect((insertCall?.[1] as { input: { concepto: string } }).input.concepto).toBe(
-      'Sueldo',
-    )
+    expect((insertCall?.[1] as { input: { concepto: string } }).input.concepto).toBe('Sueldo')
 
     // 8) And the success feedback is rendered (the "Guardado OK · id=42"
     //    line). This is a side-channel confirmation that we went through
@@ -229,9 +228,7 @@ describe('App: form reset after successful submit', () => {
   // to the user (the other fields are mostly numeric/select and harder
   // to spot accidentally pre-filled).
   it('app_does_not_retain_concepto_after_submit', async () => {
-    invokeMock.mockResolvedValueOnce([
-      { id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' },
-    ])
+    invokeMock.mockResolvedValueOnce([{ id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' }])
     invokeMock.mockResolvedValueOnce([])
 
     await act(async () => {
@@ -279,9 +276,7 @@ describe('App: form reset after successful submit', () => {
   // it composes organisms, not the other way around.
 
   it('slice10_app_renders_tabs_for_transacciones_and_presupuesto', async () => {
-    invokeMock.mockResolvedValueOnce([
-      { id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' },
-    ])
+    invokeMock.mockResolvedValueOnce([{ id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' }])
     invokeMock.mockResolvedValueOnce([]) // initial listarTransacciones
     invokeMock.mockResolvedValueOnce([]) // obtenerPerfiles (slice 9)
 
@@ -312,9 +307,7 @@ describe('App: form reset after successful submit', () => {
   // assert on specific matrix numbers here — that is the organism's
   // contract, covered in `MatrizPresupuesto.test.tsx`.
   it('slice10_app_shows_matriz_container_when_presupuesto_tab_is_active', async () => {
-    invokeMock.mockResolvedValueOnce([
-      { id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' },
-    ])
+    invokeMock.mockResolvedValueOnce([{ id: 1, nombre: 'Salario', grupo_pertenencia: 'Ingreso' }])
     invokeMock.mockResolvedValueOnce([]) // initial listarTransacciones
     invokeMock.mockResolvedValueOnce([]) // obtenerPerfiles (slice 9)
 
@@ -324,9 +317,7 @@ describe('App: form reset after successful submit', () => {
 
     // Sanity precondition: in the initial render the Matriz MUST NOT
     // be present (we land on the Transacciones tab by default).
-    expect(
-      container.querySelector('[data-testid="matriz-presupuesto"]'),
-    ).toBeNull()
+    expect(container.querySelector('[data-testid="matriz-presupuesto"]')).toBeNull()
 
     // Click the Presupuesto tab. The IMPL uses a `<button>` so we can
     // trigger it with a native click event wrapped in `act()`.
@@ -340,8 +331,83 @@ describe('App: form reset after successful submit', () => {
     })
 
     // Postcondition: the Matriz container is now in the DOM.
-    expect(
-      container.querySelector('[data-testid="matriz-presupuesto"]'),
-    ).not.toBeNull()
+    expect(container.querySelector('[data-testid="matriz-presupuesto"]')).not.toBeNull()
+  })
+})
+
+// =============================================================================
+// REQ-V2-103: Modo mejorado toggle (Phase 3)
+// =============================================================================
+//
+// Spec: `openspec/changes/mvp-v2-features/specs/mvp-v2-features/spec.md`
+//       §REQ-V2-103 (Toggle de Modo Mejorado).
+//
+// Scenarios covered:
+//   A. Toggle button is present in the DOM when a profile is active.
+//   B. Activating the toggle with NO simulations shows a warning banner
+//      and does NOT switch the presupuesto matrix to improved mode.
+//
+// RED PHASE: both tests MUST FAIL until `App.tsx` adds:
+//   * `data-testid="boton-toggle-modo-mejorado"` button
+//   * `data-testid="aviso-modo-mejorado-sin-simulaciones"` banner
+//
+// Mock order on mount (perfilActivo=1 from localStorage):
+//   invoke call #1 → obtenerCategorias
+//   invoke call #2 → listarTransacciones(1)
+//   invoke call #3 → obtenerSimulaciones(1)
+//   invoke call #4 → obtenerPerfiles()
+
+describe('REQ-V2-103: Modo mejorado toggle', () => {
+  // Scenario A: the toggle button must always be reachable when a
+  // profile is active, regardless of which tab is open.
+  //
+  // Given: app mounted with an active profile (id=1 in localStorage).
+  // When:  the component tree settles.
+  // Then:  a button with `data-testid="boton-toggle-modo-mejorado"`
+  //        is present somewhere in the DOM.
+  it('req_v2_103_renders_toggle_button_when_profile_is_active', async () => {
+    invokeMock.mockResolvedValueOnce([]) // obtenerCategorias
+    invokeMock.mockResolvedValueOnce([]) // listarTransacciones
+    invokeMock.mockResolvedValueOnce([]) // obtenerSimulaciones
+    invokeMock.mockResolvedValueOnce([]) // obtenerPerfiles
+
+    await act(async () => {
+      root.render(<App />)
+    })
+
+    const toggle = container.querySelector('[data-testid="boton-toggle-modo-mejorado"]')
+    expect(toggle).not.toBeNull()
+  })
+
+  // Scenario B: activating modo mejorado with no simulations must NOT
+  // silently switch to an empty "improved" matrix. Instead the UI must
+  // show an informational banner so the user understands why nothing
+  // changed.
+  //
+  // Given: app mounted, no simulations (obtenerSimulaciones → []).
+  // When:  user clicks the toggle button.
+  // Then:  the warning banner `data-testid="aviso-modo-mejorado-sin-simulaciones"`
+  //        appears in the DOM.
+  it('req_v2_103_shows_warning_when_activated_with_no_simulations', async () => {
+    invokeMock.mockResolvedValueOnce([]) // obtenerCategorias
+    invokeMock.mockResolvedValueOnce([]) // listarTransacciones
+    invokeMock.mockResolvedValueOnce([]) // obtenerSimulaciones (vacío)
+    invokeMock.mockResolvedValueOnce([]) // obtenerPerfiles
+
+    await act(async () => {
+      root.render(<App />)
+    })
+
+    const toggle = container.querySelector<HTMLButtonElement>(
+      '[data-testid="boton-toggle-modo-mejorado"]',
+    )
+    expect(toggle).not.toBeNull()
+
+    await act(async () => {
+      toggle?.click()
+    })
+
+    const warning = container.querySelector('[data-testid="aviso-modo-mejorado-sin-simulaciones"]')
+    expect(warning).not.toBeNull()
   })
 })

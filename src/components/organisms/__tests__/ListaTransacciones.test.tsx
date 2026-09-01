@@ -157,10 +157,7 @@ describe('REQ-202 / Slice 8: ListaTransacciones organism', () => {
   // Then:   there are exactly 2 `fila-transaccion` nodes AND each
   //         transaction's `concepto` is visible to the user.
   it('slice8_lista_transacciones_renders_one_row_per_transaction', () => {
-    render([
-      sampleTx,
-      { ...sampleTx, id: 2, concepto: 'Arriendo' },
-    ])
+    render([sampleTx, { ...sampleTx, id: 2, concepto: 'Arriendo' }])
 
     const rows = container.querySelectorAll('[data-testid="fila-transaccion"]')
     expect(rows.length).toBe(2)
@@ -221,9 +218,7 @@ describe('REQ-202 / Slice 8: ListaTransacciones organism', () => {
     const onEliminar = vi.fn().mockResolvedValue(undefined)
     render([sampleTx], false, onEliminar)
 
-    const deleteBtn = container.querySelector<HTMLButtonElement>(
-      '[data-testid="eliminar-1"]',
-    )
+    const deleteBtn = container.querySelector<HTMLButtonElement>('[data-testid="eliminar-1"]')
     expect(deleteBtn).not.toBeNull()
     expect(deleteBtn?.tagName).toBe('BUTTON')
 
@@ -235,5 +230,76 @@ describe('REQ-202 / Slice 8: ListaTransacciones organism', () => {
 
     expect(onEliminar).toHaveBeenCalledTimes(1)
     expect(onEliminar).toHaveBeenCalledWith(1)
+  })
+})
+
+// ===========================================================================
+// Slice 12 (mvp-v2): REQ-V2-101 — edit button per row.
+//
+// RED PHASE: the render helper below passes `onEditar` to
+// `ListaTransacciones`. That prop does NOT exist yet in
+// `ListaTransaccionesProps` — `pnpm test` MUST fail at the typecheck step.
+// That is the expected RED state.
+//
+// New prop contract:
+//   onEditar: (id: number) => void
+//
+// New data-testid contract:
+//   data-testid="editar-{id}"  — edit button per row
+// ===========================================================================
+
+/// Render helper for edit-mode tests. Passes `onEditar` so the typecheck
+/// RED fires when the prop is not declared in `ListaTransaccionesProps`.
+function renderWithEdit(
+  transacciones: TransaccionCompletaDto[],
+  onEliminar: (id: number) => void | Promise<void> = vi.fn(),
+  onEditar: (id: number) => void = vi.fn(),
+) {
+  act(() => {
+    root.render(
+      <ListaTransacciones
+        transacciones={transacciones}
+        cargando={false}
+        onEliminar={onEliminar}
+        onEditar={onEditar}
+      />,
+    )
+  })
+}
+
+describe('REQ-V2-101 / Slice 12: ListaTransacciones — edit button', () => {
+  // REQ-V2-101 / UI: each row MUST expose an edit button queryable via
+  // `data-testid="editar-{id}"`.
+  //
+  // Given:  one transaction with `id = 1`.
+  // When:   the organism is rendered with `onEditar`.
+  // Then:   a button node with `data-testid="editar-1"` is present.
+  it('req_v2_101_lista_renders_edit_button_per_row', () => {
+    renderWithEdit([sampleTx])
+
+    const editBtn = container.querySelector('[data-testid="editar-1"]')
+    expect(editBtn).not.toBeNull()
+    expect(editBtn?.tagName).toBe('BUTTON')
+  })
+
+  // REQ-V2-101 / UI: clicking the edit button MUST call `onEditar` with
+  // the row's `id` and only that id.
+  //
+  // Given:  one transaction with `id = 1` and a `vi.fn()` `onEditar`.
+  // When:   the edit button is clicked.
+  // Then:   `onEditar` is called exactly once with `1`.
+  it('req_v2_101_lista_calls_on_editar_with_row_id', async () => {
+    const onEditar = vi.fn()
+    renderWithEdit([sampleTx], vi.fn(), onEditar)
+
+    const editBtn = container.querySelector<HTMLButtonElement>('[data-testid="editar-1"]')
+    expect(editBtn).not.toBeNull()
+
+    await act(async () => {
+      editBtn?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    expect(onEditar).toHaveBeenCalledTimes(1)
+    expect(onEditar).toHaveBeenCalledWith(1)
   })
 })

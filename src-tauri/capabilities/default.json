@@ -1,7 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capacidades mínimas: core (ventana, eventos, app) + sql:default para que la WebView pueda leer y escribir la DB local. No fs, no shell, no http. Ver design.md §2 'Capacidades mínimas'.",
+  "description": "Capacidades: core (ventana, eventos, app) + sql:default para DB local + dialog:default y fs:default para exportar CSV.",
   "windows": ["main"],
-  "permissions": ["core:default", "sql:default", "sql:allow-execute", "sql:allow-select"]
+  "permissions": [
+    "core:default",
+    "sql:default",
+    "sql:allow-execute",
+    "sql:allow-select",
+    "dialog:default",
+    "fs:default",
+    "fs:allow-write-file"
+  ]
 }

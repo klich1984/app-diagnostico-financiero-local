@@ -385,12 +385,7 @@ function simulaciones12(): Simulacion[] {
 
 describe('REQ-605: cierre al centavo contra Excel fuente (32 transacciones)', () => {
   it('req_605_golden_32_filas_ingresos_7_200_000', () => {
-    const estado = calcularEstadoResultados(
-      transacciones32(),
-      categorias32(),
-      [],
-      null,
-    )
+    const estado = calcularEstadoResultados(transacciones32(), categorias32(), [], null)
     // Excel `PRESUPUESTO!F12` = $7,200,000.00 = 720_000_000 centavos.
     expect(estado.inicial.total_ingresos.equals(new Decimal(720_000_000))).toBe(true)
     // The Excel `ESTADO DE RESULTADOS!D4` mirrors PRESUPUESTO!F12.
@@ -398,12 +393,7 @@ describe('REQ-605: cierre al centavo contra Excel fuente (32 transacciones)', ()
   })
 
   it('req_605_golden_32_filas_total_gastos_inicial_8_345_000', () => {
-    const estado = calcularEstadoResultados(
-      transacciones32(),
-      categorias32(),
-      [],
-      null,
-    )
+    const estado = calcularEstadoResultados(transacciones32(), categorias32(), [], null)
     // Excel `PRESUPUESTO!F24` = $8,345,000.00 = 834_500_000 centavos.
     expect(estado.inicial.total_gastos.equals(new Decimal(834_500_000))).toBe(true)
 
@@ -420,12 +410,7 @@ describe('REQ-605: cierre al centavo contra Excel fuente (32 transacciones)', ()
   })
 
   it('req_605_golden_32_filas_fa1_2_140_000', () => {
-    const estado = calcularEstadoResultados(
-      transacciones32(),
-      categorias32(),
-      [],
-      null,
-    )
+    const estado = calcularEstadoResultados(transacciones32(), categorias32(), [], null)
     // Excel `ESTADO DE RESULTADOS!D14` = $2,140,000.00 = 214_000_000
     // centavos. H14 (mejorado) is the same value because Necesarios +
     // Deudas are not affected by the simulator.
@@ -434,12 +419,7 @@ describe('REQ-605: cierre al centavo contra Excel fuente (32 transacciones)', ()
   })
 
   it('req_605_golden_32_filas_fa2_inicial_neg_1_145_000', () => {
-    const estado = calcularEstadoResultados(
-      transacciones32(),
-      categorias32(),
-      [],
-      null,
-    )
+    const estado = calcularEstadoResultados(transacciones32(), categorias32(), [], null)
     // Excel `ESTADO DE RESULTADOS!D21` = -$1,145,000.00 =
     // -114_500_000 centavos. The Excel leaves `D16` blank on the
     // Inicial side (no salario descuento) — see locked decision #2.
@@ -476,9 +456,7 @@ describe('REQ-605: cierre al centavo contra Excel fuente (32 transacciones)', ()
     //   ahorro mensual = inicial − mejorado = 8,345,000 − 6,275,000
     //                 = 2,070,000 = 207_000_000 centavos.
     //   ahorro anual = 2,070,000 × 12 = 24,840,000 = 2_484_000_000.
-    const ahorro_mensual_centavos = estado.inicial.total_gastos.minus(
-      estado.mejorado.total_gastos,
-    )
+    const ahorro_mensual_centavos = estado.inicial.total_gastos.minus(estado.mejorado.total_gastos)
     expect(ahorro_mensual_centavos.equals(new Decimal(207_000_000))).toBe(true)
     const ahorro_anual = ahorro_mensual_centavos.mul(12)
     expect(ahorro_anual.equals(new Decimal(2_484_000_000))).toBe(true)

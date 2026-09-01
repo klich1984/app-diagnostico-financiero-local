@@ -102,14 +102,9 @@ afterEach(() => {
 
 /// Render helper. Centralizes the `act()` wrap so each test can focus
 /// on the assertion, not the React plumbing.
-function render(
-  distribucion: DistribucionPorcentual[],
-  titulo: string,
-): void {
+function render(distribucion: DistribucionPorcentual[], titulo: string): void {
   act(() => {
-    root.render(
-      <DistribucionChart distribucion={distribucion} titulo={titulo} />,
-    )
+    root.render(<DistribucionChart distribucion={distribucion} titulo={titulo} />)
   })
 }
 
@@ -181,8 +176,6 @@ describe('REQ-302 / Slice 13: DistribucionChart organism', () => {
   it('slice13_distribucion_chart_exposes_data_testid', () => {
     render(sampleData, 'Test')
 
-    expect(
-      container.querySelector('[data-testid="distribucion-chart"]'),
-    ).not.toBeNull()
+    expect(container.querySelector('[data-testid="distribucion-chart"]')).not.toBeNull()
   })
 })

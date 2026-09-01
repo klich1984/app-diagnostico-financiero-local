@@ -163,10 +163,7 @@ export function SimuladorPanel({
   // para que el render del input pueda leer esos campos. El filtro
   // (`gastosNoEsenciales`) sólo conoce la forma mínima, así que
   // necesitamos volver al array original para mostrar el label.
-  const txById = useMemo(
-    () => new Map(transacciones.map((t) => [t.id, t])),
-    [transacciones],
-  )
+  const txById = useMemo(() => new Map(transacciones.map((t) => [t.id, t])), [transacciones])
 
   // State local: el string crudo que el usuario tipeó en cada input,
   // indexado por `transaccion_id`. La clave es la PK de la transacción,
@@ -240,8 +237,7 @@ export function SimuladorPanel({
     const catsMin = categorias.map((c) => ({
       id: c.id,
       nombre: c.nombre,
-      grupo_pertenencia:
-        c.grupo_pertenencia === 'Ingreso' ? 'INGRESO' : 'GASTO',
+      grupo_pertenencia: c.grupo_pertenencia === 'Ingreso' ? 'INGRESO' : 'GASTO',
     })) as unknown as Parameters<typeof calcularMatrizMejorada>[1]
     const simsMin = previewSimulaciones.map((s) => ({
       transaccion_id: s.transaccion_id,
@@ -264,22 +260,23 @@ export function SimuladorPanel({
       actual += t.valor_centavos / factorMensual(t.frecuencia)
     }
     let simulado = 0
-    for (const s of previewSimulaciones) {
-      const tx = txById.get(s.transaccion_id)
-      if (!tx) continue
-      simulado += s.nuevo_valor_centavos / factorMensual(tx.frecuencia)
+    for (const t of gastosNoEsenciales) {
+      const id = t.id as number
+      const sim = previewSimulaciones.find((s) => s.transaccion_id === id)
+      if (sim) {
+        simulado += sim.nuevo_valor_centavos
+      } else {
+        simulado += t.valor_centavos / factorMensual(t.frecuencia)
+      }
     }
     return actual - simulado
-  }, [gastosNoEsenciales, previewSimulaciones, txById])
+  }, [gastosNoEsenciales, previewSimulaciones])
 
   // Flag global: ¿hay alguna fila con cambios sin aplicar? Lo usamos
   // para anotar la sección de Resultados con un "(preview)" sutil que
   // recuerda al usuario que está mirando valores tipeados que todavía
   // no se persisten.
-  const hasPendingChanges = useMemo(
-    () => Object.keys(inputValues).length > 0,
-    [inputValues],
-  )
+  const hasPendingChanges = useMemo(() => Object.keys(inputValues).length > 0, [inputValues])
 
   if (cargando) {
     return (
@@ -300,24 +297,19 @@ export function SimuladorPanel({
   return (
     <div data-testid="simulador-panel" className="space-y-6 p-4">
       <section>
-        <h2 className="text-lg font-semibold text-slate-900">
-          Simulá tus gastos no esenciales
-        </h2>
+        <h2 className="text-lg font-semibold text-slate-900">Simulá tus gastos no esenciales</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Cambiá los valores abajo para ver cómo mejora tu flujo de caja
-          libre.
+          Cambiá los valores abajo para ver cómo mejora tu flujo de caja libre.
         </p>
 
         <ul className="mt-4 space-y-2">
           {gastosNoEsenciales.map((t) => {
-            // `t.id` is optional on `TransaccionMin` pero SIEMPRE está
-            // presente en las filas que devuelve `listarTransacciones`
-            // (la PK autoincrement nunca es NULL). El `!` es seguro
-            // porque el origen es el DTO del IPC, no input del usuario.
             const id = t.id as number
             const dto = txById.get(id)
             const sim = simulaciones.find((s) => s.transaccion_id === id)
-            const currentValue = sim ? sim.nuevo_valor_centavos : t.valor_centavos
+            const currentValue = sim
+              ? sim.nuevo_valor_centavos
+              : Math.round(t.valor_centavos / factorMensual(t.frecuencia))
             return (
               <li
                 key={id}
@@ -329,7 +321,8 @@ export function SimuladorPanel({
                     {dto?.concepto ?? t.concepto}
                   </div>
                   <div className="text-xs text-slate-500">
-                    {dto?.categoria_nombre ?? '—'} · {t.frecuencia} ·{' '}
+                    {dto?.categoria_nombre ?? '—'} ·{' '}
+                    {t.frecuencia === 'Mensual' ? 'Mensual' : `Mensual (${t.frecuencia} orig.)`} ·{' '}
                     {dto?.naturaleza_necesidad ?? '—'}
                   </div>
                 </div>
@@ -338,12 +331,6 @@ export function SimuladorPanel({
                     type="text"
                     inputMode="decimal"
                     data-testid={`simulador-input-${id}`}
-                    // CONTROLADO: el value SIEMPRE refleja el state local
-                    // (lo que el usuario tipeó). El `valueFor` cae al
-                    // formateo en PESOS solo en la inicialización, así el
-                    // re-render del padre no pisa lo que el usuario está
-                    // escribiendo.
-                    //
                     // Slice 12 (REQ-402): el onChange SOLO actualiza el
                     // state local — ya NO dispara el debounce. El commit
                     // a SQLite queda en manos del botón "Aplicar" →
@@ -351,7 +338,7 @@ export function SimuladorPanel({
                     // usuario edita.
                     value={valueFor(id, currentValue)}
                     onChange={(e) => {
-                      const raw = e.target.value
+                      const raw = e.target.value.replace(/[^0-9.,\-]/g, '')
                       setInputValues((prev) => ({ ...prev, [id]: raw }))
                     }}
                     aria-label={`Nuevo valor propuesto para ${dto?.concepto ?? t.concepto}`}
@@ -374,11 +361,7 @@ export function SimuladorPanel({
                       const raw = inputValues[id]
                       if (raw === undefined) return
                       const centavos = parsePesosInput(raw)
-                      if (
-                        centavos === null ||
-                        dto === undefined ||
-                        dto.usuario_id === undefined
-                      ) {
+                      if (centavos === null || dto === undefined || dto.usuario_id === undefined) {
                         return
                       }
                       void onUpsert({
@@ -420,9 +403,7 @@ export function SimuladorPanel({
         data-testid="simulador-resultados"
         className="rounded-md border border-slate-200 bg-white p-4"
       >
-        <h2 className="text-base font-semibold text-slate-900">
-          Resultados de la simulación
-        </h2>
+        <h2 className="text-base font-semibold text-slate-900">Resultados de la simulación</h2>
         <dl className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div>
             <dt className="text-xs uppercase text-slate-500">Ahorro mensual</dt>
@@ -433,9 +414,7 @@ export function SimuladorPanel({
             >
               {formatCentavos(ahorroMensual)}
               {hasPendingChanges ? (
-                <span className="ml-1 text-xs text-slate-400">
-                  (preview)
-                </span>
+                <span className="ml-1 text-xs text-slate-400">(preview)</span>
               ) : null}
             </dd>
           </div>
@@ -448,9 +427,7 @@ export function SimuladorPanel({
             >
               {formatCentavos(ahorroMensual * 12)}
               {hasPendingChanges ? (
-                <span className="ml-1 text-xs text-slate-400">
-                  (preview)
-                </span>
+                <span className="ml-1 text-xs text-slate-400">(preview)</span>
               ) : null}
             </dd>
           </div>
@@ -458,9 +435,7 @@ export function SimuladorPanel({
             <dt className="text-xs uppercase text-slate-500">Nuevo FCL</dt>
             <dd
               className={`text-base font-mono font-medium ${
-                matrizMejorada.flujoCajaLibre.isNegative()
-                  ? 'text-red-700'
-                  : 'text-green-700'
+                matrizMejorada.flujoCajaLibre.isNegative() ? 'text-red-700' : 'text-green-700'
               }`}
             >
               {formatCentavos(matrizMejorada.flujoCajaLibre.toNumber())}

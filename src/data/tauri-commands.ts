@@ -55,6 +55,7 @@ export interface CategoriaDto {
  * activo; eso es responsabilidad del backend.
  */
 export interface TransaccionInputDto {
+  usuario_id: number
   tipo_flujo: 'Ingreso' | 'Gasto'
   categoria_id: number
   concepto: string
@@ -136,8 +137,8 @@ export async function insertarTransaccion(input: TransaccionInputDto): Promise<n
  * necesita pasarlo. Orden: `created_at DESC, id DESC` (la más reciente
  * primero), igual que el reporte de Excel fuente.
  */
-export async function listarTransacciones(): Promise<TransaccionCompletaDto[]> {
-  return invoke<TransaccionCompletaDto[]>('cmd_listar_transacciones')
+export async function listarTransacciones(usuarioId: number): Promise<TransaccionCompletaDto[]> {
+  return invoke<TransaccionCompletaDto[]>('cmd_listar_transacciones', { usuarioId })
 }
 
 /**
@@ -225,8 +226,27 @@ export async function obtenerPerfil(id: number): Promise<UsuarioDto> {
   return invoke<UsuarioDto>('cmd_obtener_perfil', { id })
 }
 
+/**
+ * Renames an existing profile.
+ *
+ * Contrato IPC: `invoke('cmd_update_perfil', { id, nombre })`
+ */
+export async function renombrarPerfil(id: number, nuevoNombre: string): Promise<void> {
+  return invoke<void>('cmd_update_perfil', { id, nombre: nuevoNombre })
+}
+
+/**
+ * Deletes a profile and all associated data (CASCADE).
+ *
+ * Contrato IPC: `invoke('cmd_eliminar_perfil', { id })`
+ */
+export async function eliminarPerfil(id: number): Promise<void> {
+  return invoke<void>('cmd_eliminar_perfil', { id })
+}
+
 // ===========================================================================
 // Slice 11: REQ-602 + REQ-603 — wrappers para los 3 comandos del Simulador.
+
 //
 // Las keys de payload usan camelCase para `input` (renombrado por serde
 // en el struct `UpsertSimulacionInput` del lado Rust) y top-level snake_case
@@ -282,9 +302,7 @@ export interface UpsertSimulacionInput {
  * Contrato IPC: `invoke('cmd_listar_simulaciones', { usuarioId })`
  * con `usuarioId` como top-level key.
  */
-export async function obtenerSimulaciones(
-  usuarioId: number,
-): Promise<SimulacionCompletaDto[]> {
+export async function obtenerSimulaciones(usuarioId: number): Promise<SimulacionCompletaDto[]> {
   return invoke<SimulacionCompletaDto[]>('cmd_listar_simulaciones', {
     usuarioId,
   })
@@ -350,4 +368,45 @@ export async function actualizarSalarioObjetivo(
   input: ActualizarSalarioObjetivoInput,
 ): Promise<void> {
   await invoke<void>('cmd_update_salario_objetivo', { input })
+}
+
+// ===========================================================================
+// Slice 12 (mvp-v2): REQ-V2-101 — wrapper `actualizarTransaccion`.
+//
+// El Rust struct `UpdateTransaccionInput` usa `#[serde(rename_all = "camelCase")]`,
+// por lo que los campos cruzan el IPC como camelCase: `usuarioId`, no
+// `usuario_id`. El nombre del parámetro Rust es `payload`, así que el
+// payload se envuelve bajo la key `payload` (distinto a los wrappers que
+// usan `input` — aquí el parámetro Rust se llama `payload` expresamente).
+// ===========================================================================
+
+/**
+ * Input para editar una transacción existente.
+ *
+ * Los campos camelCase (`usuarioId`) coinciden con el struct Rust
+ * `UpdateTransaccionInput` anotado con `#[serde(rename_all = "camelCase")]`.
+ * El backend valida que el `id` pertenezca al `usuarioId` antes de
+ * persistir el cambio (guarda de ownership, REQ-V2-101 + REQ-603).
+ */
+export interface ActualizarTransaccionInput {
+  id: number
+  usuarioId: number
+  input: TransaccionInputDto
+}
+
+/**
+ * Actualiza una transacción existente y devuelve la fila hidratada.
+ *
+ * El backend valida ownership (`id` debe pertenecer a `usuarioId`) antes
+ * de persistir — si no, la promesa rechaza con un mensaje descriptivo.
+ * La UI debe envolver la llamada en try/catch y refrescar la lista tras
+ * una edición exitosa.
+ *
+ * Contrato IPC: `invoke('cmd_update_transaccion', { payload: { id, usuarioId, input } })`
+ * con el objeto completo bajo la key `payload` (nombre del parámetro Rust).
+ */
+export async function actualizarTransaccion(
+  payload: ActualizarTransaccionInput,
+): Promise<TransaccionCompletaDto> {
+  return invoke<TransaccionCompletaDto>('cmd_update_transaccion', { payload })
 }

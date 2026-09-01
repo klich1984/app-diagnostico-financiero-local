@@ -21,11 +21,11 @@
 
 ## REQs cubiertos
 
-| REQ       | Historia de usuario  | Alcance en este slice                                                                                          |
-| --------- | -------------------- | -------------------------------------------------------------------------------------------------------------- |
-| **REQ-401** | HU-401 (Simulador)   | Filtro de gastos no esenciales (naturaleza `No necesario` / `No tan necesario`).                             |
-| **REQ-402** | HU-402 (Recálculo)   | Debounce + flush-on-close de la persistencia de propuestas del Simulador.                                       |
-| **REQ-403** | HU-403 (Mejorado)    | Left join entre `Transacciones` y `Simulador` para generar el presupuesto mejorado.                            |
+| REQ         | Historia de usuario | Alcance en este slice                                                               |
+| ----------- | ------------------- | ----------------------------------------------------------------------------------- |
+| **REQ-401** | HU-401 (Simulador)  | Filtro de gastos no esenciales (naturaleza `No necesario` / `No tan necesario`).    |
+| **REQ-402** | HU-402 (Recálculo)  | Debounce + flush-on-close de la persistencia de propuestas del Simulador.           |
+| **REQ-403** | HU-403 (Mejorado)   | Left join entre `Transacciones` y `Simulador` para generar el presupuesto mejorado. |
 
 Las dependencias de los REQs (REQ-202 transacciones, REQ-203
 normalización, REQ-301 agregación SUMIFS, REQ-603 multi-perfil) ya
@@ -35,13 +35,13 @@ están testeadas y aprobadas en slices anteriores.
 
 ## Archivos de tests creados
 
-| Archivo                                                        | Cantidad de tests | Módulo target                                                       |
-| -------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------- |
-| `src-tauri/tests/simulador_repo_test.rs`                       | 5                 | `crate::simulador::repo` (NO existe — T-402 + T-403 backend)        |
-| `src/domain/simulador/__tests__/filtro.test.ts`                | 5                 | `src/domain/simulador/filtro.ts` (NO existe — T-401)                |
-| `src/domain/simulador/__tests__/matriz-mejorada.test.ts`       | 6                 | `src/domain/simulador/matriz-mejorada.ts` (NO existe — T-404)       |
-| `src/domain/simulador/__tests__/debounce.test.ts`              | 5                 | `src/domain/simulador/debounce.ts` (NO existe — T-402 frontend)     |
-| **Total**                                                      | **21 tests**      |                                                                     |
+| Archivo                                                  | Cantidad de tests | Módulo target                                                   |
+| -------------------------------------------------------- | ----------------- | --------------------------------------------------------------- |
+| `src-tauri/tests/simulador_repo_test.rs`                 | 5                 | `crate::simulador::repo` (NO existe — T-402 + T-403 backend)    |
+| `src/domain/simulador/__tests__/filtro.test.ts`          | 5                 | `src/domain/simulador/filtro.ts` (NO existe — T-401)            |
+| `src/domain/simulador/__tests__/matriz-mejorada.test.ts` | 6                 | `src/domain/simulador/matriz-mejorada.ts` (NO existe — T-404)   |
+| `src/domain/simulador/__tests__/debounce.test.ts`        | 5                 | `src/domain/simulador/debounce.ts` (NO existe — T-402 frontend) |
+| **Total**                                                | **21 tests**      |                                                                 |
 
 ---
 
@@ -53,13 +53,13 @@ están testeadas y aprobadas en slices anteriores.
 CRUD mínimo necesario para que el frontend pueda persistir y
 recuperar propuestas de mejora por transacción.
 
-| Test                                                      | Comportamiento esperado                                                                    |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `req_402_repo_inserts_simulacion_for_transaccion`         | `upsert(transaccion_id, nuevo_valor_centavos)` inserta una fila y devuelve su id.          |
-| `req_402_repo_updates_simulacion_in_place`                | Un segundo `upsert` para la misma `transaccion_id` actualiza in place (no duplica filas). |
-| `req_402_repo_lists_simulaciones_for_user`                | `list_by_user(usuario_id)` retorna simulaciones JOINeadas con `concepto` y `categoria_nombre`. |
-| `req_402_repo_rejects_negative_nuevo_valor`               | `upsert(... -1)` falla por el CHECK constraint `>= 0` de la columna.                       |
-| `req_402_repo_deletes_simulacion_on_user_request`         | `delete(transaccion_id)` remueve la propuesta; la transacción base queda intacta.          |
+| Test                                              | Comportamiento esperado                                                                        |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `req_402_repo_inserts_simulacion_for_transaccion` | `upsert(transaccion_id, nuevo_valor_centavos)` inserta una fila y devuelve su id.              |
+| `req_402_repo_updates_simulacion_in_place`        | Un segundo `upsert` para la misma `transaccion_id` actualiza in place (no duplica filas).      |
+| `req_402_repo_lists_simulaciones_for_user`        | `list_by_user(usuario_id)` retorna simulaciones JOINeadas con `concepto` y `categoria_nombre`. |
+| `req_402_repo_rejects_negative_nuevo_valor`       | `upsert(... -1)` falla por el CHECK constraint `>= 0` de la columna.                           |
+| `req_402_repo_deletes_simulacion_on_user_request` | `delete(transaccion_id)` remueve la propuesta; la transacción base queda intacta.              |
 
 **Estado esperado al correr**: **FALLA al compilar** — el módulo
 `src-tauri/src/simulador/repo.rs` no existe todavía (y
@@ -72,13 +72,13 @@ ser mejorados (`No necesario` / `No tan necesario`). Es la
 abstracción más simple del slice y se reutiliza tanto por
 `PanelSimulador` como por `calcularMatrizMejorada`.
 
-| Test                                              | Escenario validado                                                                   |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `req_401_filtro_incluye_No_necesario`             | Gasto con `naturaleza_necesidad='No necesario'` retorna `true`.                      |
-| `req_401_filtro_incluye_No_tan_necesario`         | Gasto con `naturaleza_necesidad='No tan necesario'` retorna `true`.                  |
-| `req_401_filtro_excluye_Necesario`                | Gasto con `naturaleza_necesidad='Necesario'` retorna `false`.                        |
-| `req_401_filtro_excluye_Ingreso`                  | Ingreso (independientemente de `naturaleza_necesidad`) retorna `false`.             |
-| `req_401_filtro_retorna_solo_no_esenciales`        | Una lista mixta retorna solo los gastos no esenciales (orden preservado, sin mutar). |
+| Test                                        | Escenario validado                                                                   |
+| ------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `req_401_filtro_incluye_No_necesario`       | Gasto con `naturaleza_necesidad='No necesario'` retorna `true`.                      |
+| `req_401_filtro_incluye_No_tan_necesario`   | Gasto con `naturaleza_necesidad='No tan necesario'` retorna `true`.                  |
+| `req_401_filtro_excluye_Necesario`          | Gasto con `naturaleza_necesidad='Necesario'` retorna `false`.                        |
+| `req_401_filtro_excluye_Ingreso`            | Ingreso (independientemente de `naturaleza_necesidad`) retorna `false`.              |
+| `req_401_filtro_retorna_solo_no_esenciales` | Una lista mixta retorna solo los gastos no esenciales (orden preservado, sin mutar). |
 
 **Estado esperado al correr**: **FALLA al import** — el módulo
 `src/domain/simulador/filtro.ts` no existe todavía. RED esperada.
@@ -91,14 +91,14 @@ cada gasto simulado por su propuesta, dejando intactos Ingresos y
 gastos no simulados. Incluye el golden test contra el dataset de
 32 transacciones del Excel.
 
-| Test                                                       | Escenario validado                                                                          |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `req_403_matriz_mejorada_reemplaza_gasto_simulado`        | Un gasto de $300k con simulación de $100k → matriz usa $100k.                              |
-| `req_403_matriz_mejorada_preserva_gasto_no_simulado`      | Un gasto de $200k sin simulación → matriz usa $200k.                                       |
-| `req_403_matriz_mejorada_no_toca_ingresos`                | Un Ingreso con `Simulacion` asociada (defensivo) → matriz usa el valor base.               |
-| `req_403_matriz_mejorada_reduce_flujo_caja_libre_negativo`| Dataset sintético con base FCL negativo → improved FCL refleja exactamente el delta.        |
-| `req_403_matriz_mejorada_diferencia_es_ahorro_total`      | `base − improved` = suma de `(base − new)` por cada simulación.                            |
-| `req_403_matriz_mejorada_golden_32_rows`                  | Las 32 transacciones + 12 simulaciones del Excel → `totalGastos = 6,275,000` (golden).     |
+| Test                                                       | Escenario validado                                                                     |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `req_403_matriz_mejorada_reemplaza_gasto_simulado`         | Un gasto de $300k con simulación de $100k → matriz usa $100k.                          |
+| `req_403_matriz_mejorada_preserva_gasto_no_simulado`       | Un gasto de $200k sin simulación → matriz usa $200k.                                   |
+| `req_403_matriz_mejorada_no_toca_ingresos`                 | Un Ingreso con `Simulacion` asociada (defensivo) → matriz usa el valor base.           |
+| `req_403_matriz_mejorada_reduce_flujo_caja_libre_negativo` | Dataset sintético con base FCL negativo → improved FCL refleja exactamente el delta.   |
+| `req_403_matriz_mejorada_diferencia_es_ahorro_total`       | `base − improved` = suma de `(base − new)` por cada simulación.                        |
+| `req_403_matriz_mejorada_golden_32_rows`                   | Las 32 transacciones + 12 simulaciones del Excel → `totalGastos = 6,275,000` (golden). |
 
 **Estado esperado al correr**: **FALLA al import** — el módulo
 `src/domain/simulador/matriz-mejorada.ts` no existe todavía.
@@ -118,13 +118,13 @@ RED esperada.
 `FilaSimulador` (panel) y `useFlushOnClose` (hook). Permite
 coalescer cambios en vuelo y drenarlos al cerrar la ventana.
 
-| Test                                                  | Escenario validado                                                              |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `req_402_debounce_delays_call_by_delay`               | `call(x)` + avance < `delayMs` ⇒ `fn` no se invoca.                            |
-| `req_402_debounce_invokes_after_delay`               | `call(x)` + avance ≥ `delayMs` ⇒ `fn` se invoca una vez con `x`.              |
-| `req_402_debounce_coalesces_multiple_calls`          | 3 `call` rápidos ⇒ `fn` se invoca una sola vez con el último valor.            |
-| `req_402_debounce_flush_invokes_immediately`         | `call(x)` + `flush()` antes del delay ⇒ `fn(x)` sincrónico; el timer se cancela. |
-| `req_402_debounce_cancel_prevents_pending_call`      | `call(x)` + `cancel()` ⇒ el delay puede transcurrir sin invocar `fn`.          |
+| Test                                            | Escenario validado                                                               |
+| ----------------------------------------------- | -------------------------------------------------------------------------------- |
+| `req_402_debounce_delays_call_by_delay`         | `call(x)` + avance < `delayMs` ⇒ `fn` no se invoca.                              |
+| `req_402_debounce_invokes_after_delay`          | `call(x)` + avance ≥ `delayMs` ⇒ `fn` se invoca una vez con `x`.                 |
+| `req_402_debounce_coalesces_multiple_calls`     | 3 `call` rápidos ⇒ `fn` se invoca una sola vez con el último valor.              |
+| `req_402_debounce_flush_invokes_immediately`    | `call(x)` + `flush()` antes del delay ⇒ `fn(x)` sincrónico; el timer se cancela. |
+| `req_402_debounce_cancel_prevents_pending_call` | `call(x)` + `cancel()` ⇒ el delay puede transcurrir sin invocar `fn`.            |
 
 **Estado esperado al correr**: **FALLA al import** — el módulo
 `src/domain/simulador/debounce.ts` no existe todavía.
@@ -168,7 +168,7 @@ export function filtrarGastosNoEsenciales(transacciones: Transaccion[]): Transac
 // src/domain/simulador/matriz-mejorada.ts
 export interface Simulacion {
   transaccion_id: number
-  nuevo_valor_centavos: number  // MONTHLY value in centavos
+  nuevo_valor_centavos: number // MONTHLY value in centavos
 }
 
 export function calcularMatrizMejorada(
@@ -224,7 +224,7 @@ Resultado esperado:
   golden-mvp.test.ts de slice 4) pasan.
 - **cargo test --no-run --test simulador_repo_test**: error de
   compilación con `cannot find 'simulador' in
-  'app_diagnostico_financiero_local_lib'`.
+'app_diagnostico_financiero_local_lib'`.
 
 ---
 

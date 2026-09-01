@@ -49,6 +49,20 @@ export interface TransaccionInput {
 export interface TransaccionFormProps {
   categorias: CategoriaOption[]
   onSubmit: (input: TransaccionInput) => void | Promise<void>
+  /** When provided the form runs in edit mode: fields are pre-filled and
+   *  the submit label changes to "Guardar cambios". */
+  initialValue?: {
+    id: number
+    tipo_flujo: TipoFlujo
+    categoria_id: number
+    concepto: string
+    frecuencia: Frecuencia
+    comportamiento: Comportamiento | null | undefined
+    naturaleza_necesidad: NaturalezaNecesidad | null | undefined
+    valor_centavos: number
+  }
+  /** Called when the user clicks the cancel button (edit mode only). */
+  onCancelar?: () => void
 }
 
 const FRECUENCIAS: Frecuencia[] = ['Mensual', 'Bimensual', 'Trimestral', 'Semestral', 'Anual']
@@ -62,7 +76,12 @@ interface FormErrors {
   valor?: string
 }
 
-export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps): JSX.Element {
+export function TransaccionForm({
+  categorias,
+  onSubmit,
+  initialValue,
+  onCancelar,
+}: TransaccionFormProps): JSX.Element {
   const [tipoFlujo, setTipoFlujo] = useState<TipoFlujo>('Gasto')
   const [concepto, setConcepto] = useState('')
   const [valorRaw, setValorRaw] = useState('')
@@ -92,6 +111,21 @@ export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps):
       setCategoriaId(categoriasFiltradas[0].id)
     }
   }, [categoriasFiltradas, categoriaId])
+
+  // Sync all form fields from `initialValue` when entering edit mode.
+  // Runs once when `initialValue` changes (e.g. user clicks Editar on a row).
+  useEffect(() => {
+    if (!initialValue) return
+    setTipoFlujo(initialValue.tipo_flujo)
+    setConcepto(initialValue.concepto)
+    setFrecuencia(initialValue.frecuencia)
+    setComportamiento((initialValue.comportamiento as Comportamiento) ?? 'Fijo')
+    setNaturaleza((initialValue.naturaleza_necesidad as NaturalezaNecesidad) ?? 'Necesario')
+    // Convert centavos back to the decimal string the user sees (divide by 100).
+    setValorRaw(String(initialValue.valor_centavos / 100))
+    setCategoriaId(initialValue.categoria_id)
+    setErrors({})
+  }, [initialValue])
 
   // Cuando cambia el tipo de flujo, sincronizamos la categoría para que
   // el select siempre apunte a una categoría válida del subconjunto
@@ -293,12 +327,12 @@ export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps):
           inputMode="decimal"
           value={valorRaw}
           onChange={(e) => {
-              // Only allow digits, dots (thousands separator), commas
-              // (decimal separator) and minus sign. Everything else is
-              // stripped silently so the user never sees invalid chars.
-              const sanitized = e.target.value.replace(/[^0-9.,\-]/g, '')
-              setValorRaw(sanitized)
-            }}
+            // Only allow digits, dots (thousands separator), commas
+            // (decimal separator) and minus sign. Everything else is
+            // stripped silently so the user never sees invalid chars.
+            const sanitized = e.target.value.replace(/[^0-9.,\-]/g, '')
+            setValorRaw(sanitized)
+          }}
           placeholder="1.500.000,50"
           className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
           aria-invalid={Boolean(errors.valor)}
@@ -315,8 +349,19 @@ export function TransaccionForm({ categorias, onSubmit }: TransaccionFormProps):
         type="submit"
         className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
       >
-        Guardar
+        {initialValue ? 'Guardar cambios' : 'Guardar'}
       </button>
+
+      {initialValue && onCancelar ? (
+        <button
+          type="button"
+          data-testid="cancelar-edicion"
+          onClick={onCancelar}
+          className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
+        >
+          Cancelar
+        </button>
+      ) : null}
     </form>
   )
 }

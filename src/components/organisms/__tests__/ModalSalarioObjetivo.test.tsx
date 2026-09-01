@@ -100,10 +100,7 @@ function setInputValue(value: string): void {
   act(() => {
     // React trackea el value via descriptor; asignar directamente dispara
     // un change event sintético para que el onChange handler corra.
-    const setter = Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      'value',
-    )?.set
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
     setter?.call(input, value)
     input.dispatchEvent(new Event('input', { bubbles: true }))
     input.dispatchEvent(new Event('change', { bubbles: true }))
@@ -246,16 +243,12 @@ describe('ModalSalarioObjetivo — REQ-502-D1 modal salario objetivo', () => {
 
     // Render inicial con perfilActivoId = 1
     render(500_000_000, onGuardar, onCancelar, 1)
-    expect(
-      container.querySelector('[data-testid="modal-salario-objetivo"]'),
-    ).not.toBeNull()
+    expect(container.querySelector('[data-testid="modal-salario-objetivo"]')).not.toBeNull()
 
     // Simulamos cambio de perfil: re-renderizamos con perfilActivoId = null.
     // El componente debe ocultarse (regla del contrato: null → modal no se renderiza).
     render(500_000_000, onGuardar, onCancelar, null)
-    expect(
-      container.querySelector('[data-testid="modal-salario-objetivo"]'),
-    ).toBeNull()
+    expect(container.querySelector('[data-testid="modal-salario-objetivo"]')).toBeNull()
   })
 
   it('REQ-502-D1-9 onGuardar rejection shows error inline and keeps modal open', async () => {
@@ -266,9 +259,7 @@ describe('ModalSalarioObjetivo — REQ-502-D1 modal salario objetivo', () => {
     await clickGuardar()
 
     // El modal sigue abierto.
-    expect(
-      container.querySelector('[data-testid="modal-salario-objetivo"]'),
-    ).not.toBeNull()
+    expect(container.querySelector('[data-testid="modal-salario-objetivo"]')).not.toBeNull()
     // El error del IPC se muestra inline.
     expect(getErrorText()).toContain('IPC failure')
     // onCancelar NO fue invocado (el modal no se cerró por error).

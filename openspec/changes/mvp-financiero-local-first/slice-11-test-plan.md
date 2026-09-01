@@ -21,11 +21,11 @@
 
 ## Archivos modificados / creados (3 archivos)
 
-| # | Archivo | Tipo | Tests nuevos | Estado RED |
-|---|---------|------|--------------|------------|
-| 1 | `src-tauri/tests/commands_test.rs` | modificado | 4 nuevos | no compila (`cargo test --no-run` falla con `unresolved imports` de `cmd_*_simulacion*_impl` y `SimulacionCompletaDto`) |
-| 2 | `src/data/__tests__/tauri-commands.test.ts` | modificado | 3 nuevos | fallan en runtime (`TypeError: ... is not a function`); los wrappers `obtenerSimulaciones` / `upsertSimulacion` / `eliminarSimulacion` no existen |
-| 3 | `src/components/organisms/__tests__/SimuladorPanel.test.tsx` | nuevo | 4 | falla el archivo entero (no se puede resolver `../SimuladorPanel`) |
+| #   | Archivo                                                      | Tipo       | Tests nuevos | Estado RED                                                                                                                                        |
+| --- | ------------------------------------------------------------ | ---------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `src-tauri/tests/commands_test.rs`                           | modificado | 4 nuevos     | no compila (`cargo test --no-run` falla con `unresolved imports` de `cmd_*_simulacion*_impl` y `SimulacionCompletaDto`)                           |
+| 2   | `src/data/__tests__/tauri-commands.test.ts`                  | modificado | 3 nuevos     | fallan en runtime (`TypeError: ... is not a function`); los wrappers `obtenerSimulaciones` / `upsertSimulacion` / `eliminarSimulacion` no existen |
+| 3   | `src/components/organisms/__tests__/SimuladorPanel.test.tsx` | nuevo      | 4            | falla el archivo entero (no se puede resolver `../SimuladorPanel`)                                                                                |
 
 **Total**: **11 tests** nuevos en 3 archivos (4 Rust + 3 TS wrapper + 4 component).
 
@@ -35,12 +35,12 @@
 
 Tests del binding que la IMPL debe satisfacer en `crate::commands`:
 
-| Test | Comando | Contrato esperado |
-|------|---------|-------------------|
-| `req_602_cmd_listar_simulaciones_returns_empty_initially` | `cmd_listar_simulaciones_impl(&Connection, usuario_id: i64)` | DB recién sembrada ⇒ `Vec<SimulacionCompletaDto>` con `len() == 0` |
-| `req_602_cmd_upsert_simulacion_inserts_new_simulation` | `cmd_upsert_simulacion_impl(&Connection, transaccion_id: i64, nuevo_valor_centavos: i64, usuario_id: i64)` | Inserta fila nueva (no había previa), devuelve `id > 0`, aparece en el listado con el valor enviado |
-| `req_602_cmd_upsert_simulacion_updates_existing` | mismo | Segundo upsert sobre la misma `transaccion_id` ⇒ `len == 1` y `nuevo_valor_centavos` refrescado (semántica UPSERT, no INSERT duplicado) |
-| `req_602_cmd_eliminar_simulacion_removes_row` | `cmd_eliminar_simulacion_impl(&Connection, transaccion_id: i64)` | Borra la propuesta por `transaccion_id`; el listado posterior queda vacío |
+| Test                                                      | Comando                                                                                                    | Contrato esperado                                                                                                                       |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `req_602_cmd_listar_simulaciones_returns_empty_initially` | `cmd_listar_simulaciones_impl(&Connection, usuario_id: i64)`                                               | DB recién sembrada ⇒ `Vec<SimulacionCompletaDto>` con `len() == 0`                                                                      |
+| `req_602_cmd_upsert_simulacion_inserts_new_simulation`    | `cmd_upsert_simulacion_impl(&Connection, transaccion_id: i64, nuevo_valor_centavos: i64, usuario_id: i64)` | Inserta fila nueva (no había previa), devuelve `id > 0`, aparece en el listado con el valor enviado                                     |
+| `req_602_cmd_upsert_simulacion_updates_existing`          | mismo                                                                                                      | Segundo upsert sobre la misma `transaccion_id` ⇒ `len == 1` y `nuevo_valor_centavos` refrescado (semántica UPSERT, no INSERT duplicado) |
+| `req_602_cmd_eliminar_simulacion_removes_row`             | `cmd_eliminar_simulacion_impl(&Connection, transaccion_id: i64)`                                           | Borra la propuesta por `transaccion_id`; el listado posterior queda vacío                                                               |
 
 DTO esperado (espejo de `Simulador` JOIN Transacciones, mismo shape
 que el binding TS):
@@ -64,11 +64,11 @@ pub struct SimulacionCompletaDto {
 
 ### 2) `src/data/__tests__/tauri-commands.test.ts` (3 tests nuevos)
 
-| Test | Wrapper | Shape del payload IPC esperado |
-|------|---------|-------------------------------|
-| `obtenerSimulaciones invokes cmd_listar_simulaciones` | `obtenerSimulaciones(usuarioId)` | `invoke('cmd_listar_simulaciones', { usuarioId })` |
+| Test                                                        | Wrapper                                                            | Shape del payload IPC esperado                                            |
+| ----------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `obtenerSimulaciones invokes cmd_listar_simulaciones`       | `obtenerSimulaciones(usuarioId)`                                   | `invoke('cmd_listar_simulaciones', { usuarioId })`                        |
 | `upsertSimulacion invokes cmd_upsert_simulacion with input` | `upsertSimulacion({transaccionId, nuevoValorCentavos, usuarioId})` | `invoke('cmd_upsert_simulacion', { input: {…} })` (envuelto bajo `input`) |
-| `eliminarSimulacion invokes cmd_eliminar_simulacion` | `eliminarSimulacion(transaccionId)` | `invoke('cmd_eliminar_simulacion', { transaccionId })` (top-level) |
+| `eliminarSimulacion invokes cmd_eliminar_simulacion`        | `eliminarSimulacion(transaccionId)`                                | `invoke('cmd_eliminar_simulacion', { transaccionId })` (top-level)        |
 
 Tipos a añadir a `tauri-commands.ts`:
 
@@ -88,29 +88,23 @@ export interface UpsertSimulacionInput {
   usuarioId: number
 }
 
-export async function obtenerSimulaciones(
-  usuarioId: number,
-): Promise<SimulacionCompletaDto[]>
+export async function obtenerSimulaciones(usuarioId: number): Promise<SimulacionCompletaDto[]>
 
-export async function upsertSimulacion(
-  input: UpsertSimulacionInput,
-): Promise<number>
+export async function upsertSimulacion(input: UpsertSimulacionInput): Promise<number>
 
-export async function eliminarSimulacion(
-  transaccionId: number,
-): Promise<void>
+export async function eliminarSimulacion(transaccionId: number): Promise<void>
 ```
 
 ### 3) `src/components/organisms/__tests__/SimuladorPanel.test.tsx` (4 tests)
 
 Organism (Atomic Design) que renderiza el Panel Simulador:
 
-| Test | Contrato |
-|------|----------|
-| `renders the list of non-essential gastos` | Texto contiene `Cafe premium` (fila No-tan-necesario) |
-| `does NOT render gastos that are Necesario` | Texto NO contiene `Arriendo` (fila Necesario, fuera del universo del Simulador) |
-| `renders empty state when no non-essential gastos` | Texto matchea `/no hay gastos no esenciales/i` |
-| `calls onUpsert when an input changes` | Tras tipear `50000` en el input `[data-testid="simulador-input-1"]` y esperar >300ms (debounce) ⇒ `onUpsert({transaccionId: 1, nuevoValorCentavos: 50000, usuarioId: 1})` |
+| Test                                               | Contrato                                                                                                                                                                  |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `renders the list of non-essential gastos`         | Texto contiene `Cafe premium` (fila No-tan-necesario)                                                                                                                     |
+| `does NOT render gastos that are Necesario`        | Texto NO contiene `Arriendo` (fila Necesario, fuera del universo del Simulador)                                                                                           |
+| `renders empty state when no non-essential gastos` | Texto matchea `/no hay gastos no esenciales/i`                                                                                                                            |
+| `calls onUpsert when an input changes`             | Tras tipear `50000` en el input `[data-testid="simulador-input-1"]` y esperar >300ms (debounce) ⇒ `onUpsert({transaccionId: 1, nuevoValorCentavos: 50000, usuarioId: 1})` |
 
 Props esperadas (binding con la IMPL):
 
@@ -127,9 +121,9 @@ interface SimuladorPanelProps {
 
 Contrato de `data-testid` (para IMPL y e2e):
 
-- `simulador-panel`     — root container
+- `simulador-panel` — root container
 - `simulador-input-{id}` — input por cada gasto simulable (id = `Transaccion.id`)
-- `simulador-vacio`     — placeholder del empty state
+- `simulador-vacio` — placeholder del empty state
 
 El organismo DEBE reutilizar el filtro existente
 `src/domain/simulador/filtro.ts` (`filtrarGastosNoEsenciales`) para
@@ -173,14 +167,14 @@ Esta fase NO crea ningún archivo de implementación. Queda pendiente
 para la fase IMPL:
 
 - `src-tauri/src/commands.rs` — agregar el DTO `SimulacionCompletaDto`
-  + los 3 `cmd_*_simulacion*_impl` + los 3 wrappers
-  `#[tauri::command]`. Reutilizar el `simulador::repo` que ya existe
-  (las funciones `upsert`, `list_by_user`, `delete` están mergeadas;
-  los `_impl` solo las envuelven y proyectan a `SimulacionCompletaDto`).
+  - los 3 `cmd_*_simulacion*_impl` + los 3 wrappers
+    `#[tauri::command]`. Reutilizar el `simulador::repo` que ya existe
+    (las funciones `upsert`, `list_by_user`, `delete` están mergeadas;
+    los `_impl` solo las envuelven y proyectan a `SimulacionCompletaDto`).
 - `src-tauri/src/lib.rs` — registrar los 3 nuevos commands en
   `tauri::generate_handler!`.
 - `src/data/tauri-commands.ts` — agregar los tipos `SimulacionCompletaDto`
-  + `UpsertSimulacionInput` y los 3 wrappers.
+  - `UpsertSimulacionInput` y los 3 wrappers.
 - `src/components/organisms/SimuladorPanel.tsx` — implementar el
   organism. **Reglas duras**: (1) reutilizar
   `filtrarGastosNoEsenciales` de `domain/simulador/filtro.ts`; (2)
@@ -224,5 +218,5 @@ para la fase IMPL:
 4. **Filtro Necesario**: la IMPL DEBE importar
    `filtrarGastosNoEsenciales` de
    `src/domain/simulador/filtro.ts`. El test `does NOT render gastos
-   that are Necesario` falla si la IMPL renderiza directamente las
+that are Necesario` falla si la IMPL renderiza directamente las
    `transacciones` recibidas sin filtrar.

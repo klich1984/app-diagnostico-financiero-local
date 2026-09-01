@@ -379,21 +379,13 @@ describe('REQ-301 + REQ-605: golden test contra dataset 32 transacciones', () =>
   it('req_301_golden_total_ingresos_es_7_200_000', () => {
     const matriz = calcularMatriz(transacciones32(), categorias32())
     // Excel PRESUPUESTO!F12 = 7,200,000.00 = 720_000_000 centavos.
-    expectCloseToCentavo(
-      matriz.totalIngresos,
-      new Decimal(720_000_000),
-      'totalIngresos',
-    )
+    expectCloseToCentavo(matriz.totalIngresos, new Decimal(720_000_000), 'totalIngresos')
   })
 
   it('req_301_golden_total_gastos_es_8_345_000', () => {
     const matriz = calcularMatriz(transacciones32(), categorias32())
     // Excel PRESUPUESTO!F24 = 8,345,000.00 = 834_500_000 centavos.
-    expectCloseToCentavo(
-      matriz.totalGastos,
-      new Decimal(834_500_000),
-      'totalGastos',
-    )
+    expectCloseToCentavo(matriz.totalGastos, new Decimal(834_500_000), 'totalGastos')
   })
 
   it('req_301_golden_flujo_caja_libre_inicial_es_negativo_1_145_000', () => {
@@ -401,11 +393,7 @@ describe('REQ-301 + REQ-605: golden test contra dataset 32 transacciones', () =>
     // Excel PRESUPUESTO!F27 = -1,145,000.00 = -114_500_000 centavos.
     // FA2 inicial NO descuenta salario personal objetivo (decision del
     // Excel, ver §6.2 del analisis-plantilla-financiera.md).
-    expectCloseToCentavo(
-      matriz.flujoCajaLibre,
-      new Decimal(-114_500_000),
-      'flujoCajaLibre',
-    )
+    expectCloseToCentavo(matriz.flujoCajaLibre, new Decimal(-114_500_000), 'flujoCajaLibre')
   })
 
   it('req_301_golden_anualizacion_ingresos_es_86_400_000', () => {

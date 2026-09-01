@@ -19,6 +19,8 @@ pub mod transacciones;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_sql::Builder::default().build())
         .setup(|_app| Ok(()))
         .invoke_handler(tauri::generate_handler![
@@ -33,6 +35,9 @@ pub fn run() {
             commands::cmd_upsert_simulacion,
             commands::cmd_eliminar_simulacion,
             commands::cmd_update_salario_objetivo,
+            commands::cmd_update_transaccion,
+            commands::cmd_update_perfil,
+            commands::cmd_eliminar_perfil,
         ])
         .run(tauri::generate_context!())
         .expect("error al iniciar MVP Financiero");

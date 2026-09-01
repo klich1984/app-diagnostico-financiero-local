@@ -47,6 +47,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react-dom/test-utils'
 import { TransaccionForm, type TransaccionFormProps } from '../TransaccionForm'
+import type { TransaccionCompletaDto } from '../../../data/tauri-commands'
 
 // Minimal stub of the categories the form needs to render the dependent
 // `categoria` select (REQ-201: dependent selects by tipo_flujo).
@@ -226,9 +227,8 @@ describe('REQ-202: TransaccionForm (visibilidad del selector de Comportamiento)'
 
     // Comportamiento MUST still be visible — the previous build hid it
     // along with Naturaleza, forcing Ingreso rows to persist `comportamiento = NULL`.
-    const comportamientoSelect = container.querySelector<HTMLSelectElement>(
-      '[name="comportamiento"]',
-    )
+    const comportamientoSelect =
+      container.querySelector<HTMLSelectElement>('[name="comportamiento"]')
     expect(comportamientoSelect).not.toBeNull()
     expect(comportamientoSelect!.tagName).toBe('SELECT')
 
@@ -279,5 +279,113 @@ describe('REQ-202: TransaccionForm (sync de categoriaId tras remount)', () => {
     expect(arg).toBeDefined()
     expect(arg!.categoria_id).toBeGreaterThan(0)
     expect(arg!.categoria_id).toBe(5)
+  })
+})
+
+// ===========================================================================
+// Slice 12 (mvp-v2): REQ-V2-101 — edit mode (initialValue + onCancelar).
+//
+// RED PHASE: the renders below pass `initialValue` and `onCancelar` props
+// that do NOT exist yet in `TransaccionFormProps` — `pnpm test` MUST fail
+// at the typecheck step. That is the expected RED state.
+//
+// New prop contract:
+//   initialValue?: TransaccionCompletaDto  — preloads all form fields
+//   onCancelar?:   () => void              — triggered by cancel button
+//
+// New data-testid contract:
+//   data-testid="cancelar-edicion"  — cancel button (only rendered in edit mode)
+// ===========================================================================
+
+/// Fixture for edit mode tests.
+const editableTx: TransaccionCompletaDto = {
+  id: 7,
+  usuario_id: 1,
+  tipo_flujo: 'Gasto',
+  categoria_id: 2,
+  categoria_nombre: 'Hogar',
+  concepto: 'Internet actualizado',
+  frecuencia: 'Mensual',
+  comportamiento: 'Fijo',
+  naturaleza_necesidad: 'Necesario',
+  valor_centavos: 999_000,
+  created_at: 1_700_000_000,
+  updated_at: 1_700_000_001,
+}
+
+describe('REQ-V2-101 / Slice 12: TransaccionForm — edit mode', () => {
+  // REQ-V2-101 / UI: when `initialValue` is provided, the form MUST
+  // preload the `concepto` field with the existing value.
+  //
+  // Given:  `initialValue` with `concepto = 'Internet actualizado'`.
+  // When:   the form is rendered in edit mode.
+  // Then:   `input[name="concepto"]` has `value === 'Internet actualizado'`.
+  it('req_v2_101_form_preloads_concepto_from_initial_value', () => {
+    act(() => {
+      root.render(
+        <TransaccionForm
+          categorias={stubCategorias}
+          onSubmit={onSubmit}
+          initialValue={editableTx}
+        />,
+      )
+    })
+
+    const conceptoInput = container.querySelector<HTMLInputElement>('input[name="concepto"]')
+    expect(conceptoInput).not.toBeNull()
+    expect(conceptoInput?.value).toBe('Internet actualizado')
+  })
+
+  // REQ-V2-101 / UI: when `initialValue` is provided, the submit button
+  // label MUST change to "Guardar cambios" to signal edit mode to the user.
+  //
+  // Given:  `initialValue` is present.
+  // When:   the form is rendered.
+  // Then:   the submit button text matches /guardar cambios/i.
+  it('req_v2_101_form_shows_guardar_cambios_label_in_edit_mode', () => {
+    act(() => {
+      root.render(
+        <TransaccionForm
+          categorias={stubCategorias}
+          onSubmit={onSubmit}
+          initialValue={editableTx}
+        />,
+      )
+    })
+
+    const btn = container.querySelector<HTMLButtonElement>('button[type="submit"]')
+    expect(btn).not.toBeNull()
+    expect(btn?.textContent ?? '').toMatch(/guardar cambios/i)
+  })
+
+  // REQ-V2-101 / UI: when `initialValue` and `onCancelar` are provided,
+  // the form MUST render a cancel button. Clicking it MUST call `onCancelar`
+  // exactly once (without submitting).
+  //
+  // Given:  `initialValue` + a `vi.fn()` `onCancelar`.
+  // When:   the cancel button is clicked.
+  // Then:   `onCancelar` is called once AND `onSubmit` is never called.
+  it('req_v2_101_form_calls_on_cancelar_when_cancel_is_clicked', async () => {
+    const onCancelar = vi.fn()
+    act(() => {
+      root.render(
+        <TransaccionForm
+          categorias={stubCategorias}
+          onSubmit={onSubmit}
+          initialValue={editableTx}
+          onCancelar={onCancelar}
+        />,
+      )
+    })
+
+    const cancelBtn = container.querySelector<HTMLButtonElement>('[data-testid="cancelar-edicion"]')
+    expect(cancelBtn).not.toBeNull()
+
+    await act(async () => {
+      cancelBtn?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    })
+
+    expect(onCancelar).toHaveBeenCalledTimes(1)
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 })

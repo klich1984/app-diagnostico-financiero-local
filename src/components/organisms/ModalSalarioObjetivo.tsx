@@ -81,7 +81,7 @@ export function ModalSalarioObjetivo({
   }
 
   function onChangeInput(e: React.ChangeEvent<HTMLInputElement>): void {
-    const texto = e.target.value
+    const texto = e.target.value.replace(/[^0-9.,\-]/g, '')
     setInputTexto(texto)
     // Limpia el error de IPC al re-editar (REQ-502-D1-9 no lo pinea pero
     // es UX consistente).
@@ -108,8 +108,7 @@ export function ModalSalarioObjetivo({
       // state.
     } catch (err) {
       // Error IPC: el modal NO se cierra (REQ-502-D1-9).
-      const mensaje =
-        err instanceof Error ? err.message : 'Error desconocido al guardar'
+      const mensaje = err instanceof Error ? err.message : 'Error desconocido al guardar'
       setErrorIpc(mensaje)
       setGuardando(false)
     }
@@ -133,9 +132,7 @@ export function ModalSalarioObjetivo({
   // lo que el usuario está tipeando.
   useEffect(() => {
     if (guardando) return
-    setInputTexto(
-      salarioActualCentavos !== null ? formatCentavos(salarioActualCentavos) : '',
-    )
+    setInputTexto(salarioActualCentavos !== null ? formatCentavos(salarioActualCentavos) : '')
     setErrorValidacion(null)
     setErrorIpc(null)
   }, [salarioActualCentavos, guardando])
@@ -160,22 +157,15 @@ export function ModalSalarioObjetivo({
       aria-labelledby="modal-salario-titulo"
     >
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2
-          id="modal-salario-titulo"
-          className="text-lg font-semibold text-slate-900"
-        >
+        <h2 id="modal-salario-titulo" className="text-lg font-semibold text-slate-900">
           Editar salario personal objetivo
         </h2>
         <p className="mt-1 text-xs text-slate-500">
-          Este valor se descuenta del Flujo de Ahorro 2 en el Estado de Resultados
-          Mejorado.
+          Este valor se descuenta del Flujo de Ahorro 2 en el Estado de Resultados Mejorado.
         </p>
 
         <div className="mt-4">
-          <label
-            htmlFor="modal-salario-input"
-            className="block text-sm font-medium text-slate-700"
-          >
+          <label htmlFor="modal-salario-input" className="block text-sm font-medium text-slate-700">
             Salario objetivo (pesos)
           </label>
           <input
@@ -192,11 +182,7 @@ export function ModalSalarioObjetivo({
         </div>
 
         {mensajeErrorVisible !== null ? (
-          <p
-            data-testid="modal-salario-error"
-            className="mt-2 text-sm text-red-700"
-            role="alert"
-          >
+          <p data-testid="modal-salario-error" className="mt-2 text-sm text-red-700" role="alert">
             {mensajeErrorVisible}
           </p>
         ) : null}
