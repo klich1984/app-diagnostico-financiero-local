@@ -271,4 +271,15 @@ describe('REQ-501 + REQ-502 / Slice 14 + REQ-V2-105: EstadoResultadosPanel organ
 
     expect(container.querySelector('[data-testid="btn-editar-salario"]')).toBeNull()
   })
+
+  // MVP v2.1 Gap Analysis / Slice 1: Semaphore KPIs
+  // Los KPIs FA2 y Capacidad de Inversión deben tener clases CSS condicionales.
+  it('mvp_v2_1_semaphore_applies_red_and_green_classes_to_kpis', () => {
+    render(sampleEstado, null, 1)
+
+    const html = container.innerHTML
+    // Check if the conditional classes exist in the DOM
+    expect(html).toContain('text-red-500')
+    expect(html).toContain('text-green-600')
+  })
 })

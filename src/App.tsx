@@ -69,6 +69,7 @@ import {
   distribucionGastosPorCategoria,
   distribucionIngresosPorCategoria,
 } from './domain/agregaciones/graficos'
+import { exportarExcel } from './data/export-excel'
 
 class AppErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null }
@@ -592,6 +593,21 @@ function App(): JSX.Element {
                   }`}
                 >
                   {modoMejorado ? '✓ Modo mejorado' : 'Modo mejorado'}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      await exportarExcel(transacciones, estadoResultado)
+                      alert('Archivo Excel exportado correctamente.')
+                    } catch (e) {
+                      console.error('Error exportando Excel:', e)
+                      alert('Error exportando Excel. Revisa la consola.')
+                    }
+                  }}
+                  className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
+                >
+                  Exportar a Excel
                 </button>
                 <button
                   type="button"
