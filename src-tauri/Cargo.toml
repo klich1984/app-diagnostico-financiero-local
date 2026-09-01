@@ -36,6 +36,8 @@ sha2 = "0.10"
 # así que este crate es la única forma autorizada de hacer cálculos
 # monetarios del lado backend (ver design.md §1 reglas arquitectónicas).
 rust_decimal = { version = "1", features = ["serde-with-str"] }
+tauri-plugin-fs = "2.0.0-rc.6"
+tauri-plugin-dialog = "2.0.0-rc.8"
 
 [dev-dependencies]
 # Slice 7 (REQ-202 persistencia IPC) — los tests de `db.rs` necesitan un
