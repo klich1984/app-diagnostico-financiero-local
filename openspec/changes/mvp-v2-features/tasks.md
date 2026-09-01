@@ -52,12 +52,12 @@ Chain strategy: feature-branch-chain
 
 ## Phase 4: Cierre SDD y verificación
 
-- [ ] 4.1 Consolidar fuente SDD: conservar `specs/mvp-v2-features/spec.md`; eliminar o convertir `openspec/changes/mvp-v2-features/spec.md` en puntero.
+- [x] 4.1 Consolidar fuente SDD: conservar `specs/mvp-v2-features/spec.md`; eliminar o convertir `openspec/changes/mvp-v2-features/spec.md` en puntero.
 - [x] 4.2 `README.md` actualizado (tests 238, sección DB para desarrolladores, tabla v2, estructura de organismos).
-- [ ] 4.3 Ejecutar DoD final: `pnpm test`, `pnpm build`, `cargo test`; confirmar 238 verde.
+- [x] 4.3 Ejecutar DoD final: `pnpm test`, `pnpm build`, `cargo test`; confirmar 238 verde.
 
 ## DoD
 
-- [ ] Cada pendiente tuvo RED antes de GREEN, sin `@testing-library/react` ni deps nuevas injustificadas.
-- [ ] IPC solo vía `src/data/tauri-commands.ts`; organismos cableados en `src/App.tsx`.
-- [ ] Tasks se marcan `[x]` durante apply y el usuario hace commits manualmente.
+- [x] Cada pendiente tuvo RED antes de GREEN, sin `@testing-library/react` ni deps nuevas injustificadas.
+- [x] IPC solo vía `src/data/tauri-commands.ts`; organismos cableados en `src/App.tsx`.
+- [x] Tasks se marcan `[x]` durante apply y el usuario hace commits manualmente.
