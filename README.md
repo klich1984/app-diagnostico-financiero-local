@@ -4,6 +4,8 @@ Aplicación de escritorio para gestión financiera personal construida con **Tau
 
 > Documentación funcional y arquitectónica: ver [`openspec/changes/mvp-financiero-local-first/`](openspec/changes/mvp-financiero-local-first/).
 > Análisis de la plantilla financiera de origen: [`docs/analisis-plantilla-financiera.md`](docs/analisis-plantilla-financiera.md).
+> Documentación del diseño UX/UI de V3: [`docs/DESIGN.md`](docs/DESIGN.md) y [`docs/PRODUCT.md`](docs/PRODUCT.md).
+> Planificación Ágil Original: [`docs/MVP-Financiero-Local_Tecnologias-y-SCRUM.md`](docs/MVP-Financiero-Local_Tecnologias-y-SCRUM.md).
 
 ---
 
@@ -18,6 +20,8 @@ Ver [`MVP-COMPLETE.md`](openspec/changes/mvp-financiero-local-first/MVP-COMPLETE
 | v2 Phase 1 | Tasks 1.1–1.6  | Edición de transacciones                         | ✅ done |
 | v2 Phase 2 | Tasks 2.1–2.4  | Gestión de perfiles (crear, renombrar, eliminar) | ✅ done |
 | v2 Phase 3 | Tasks 3.1–3.2  | Toggle modo mejorado                             | ✅ done |
+| v2 Gap Analysis | Tasks 1.1-2.1 | Cierre SDD, Exportación a Excel y refactorización final | ✅ done |
+| V3 Redesign | UX/UI        | Migración a Impeccable Design (Dark Mode, Sidebar, Raleway) | 🏗️ wip |
 
 **Tests:** 238 verde (169 frontend + 69 backend), 0 fallando.
 
