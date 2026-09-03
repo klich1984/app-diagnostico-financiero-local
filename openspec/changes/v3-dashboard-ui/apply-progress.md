@@ -2,7 +2,7 @@
 
 **Fecha**: 2026-09-03
 **Modo**: Standard (sin Strict TDD)
-**Unidad de trabajo actual**: Phase 2 — Micro-chunk 2.3 + 2.4 (Sidebar)
+**Unidad de trabajo actual**: Phase 2 — Micro-chunk 2.5 + 2.6 (RightDrawer)
 
 ---
 
@@ -14,17 +14,28 @@
 - [x] **2.2** Crear tests unitarios en `src/components/templates/__tests__/DashboardLayout.test.tsx` verificando renderizado de slots y visibilidad de drawer.
 - [x] **2.3** Crear `src/components/organisms/Sidebar.tsx` preservando `data-testid="tab-*"`, roles ARIA, paleta V3 Dark Mode (`bg-zinc-900`, acento Salmón), chip de perfil y toggle modo mejorado.
 - [x] **2.4** Crear tests unitarios en `src/components/organisms/__tests__/Sidebar.test.tsx` — 22 tests verificando: presencia de todos los data-testid, tab activa (aria-selected), callbacks onTabChange y onToggleModoMejorado, perfil activo con nombre/null, selectorPerfilSlot inyectado y roles ARIA (tablist, tab).
+- [x] **2.5** Crear `src/components/organisms/RightDrawer.tsx` con panel colapsable (`data-testid="right-drawer"`), cabecera con título, botón "Cerrar" (`data-testid="right-drawer-close"`), `aria-hidden` condicional y contenedor con scroll para children.
+- [x] **2.6** Crear tests unitarios en `src/components/organisms/__tests__/RightDrawer.test.tsx` — 11 tests verificando: data-testid del panel y botón, aria-hidden según isOpen, título en cabecera, callback onClose al click, children renderizados (uno, múltiples, null), y aria-label refleja titulo.
 
 ## Tareas pendientes
 
-- [ ] 2.5 Crear `src/components/organisms/RightDrawer.tsx`
-- [ ] 2.6 Crear tests unitarios en `src/components/organisms/__tests__/RightDrawer.test.tsx`
 - [ ] 3.1 Declarar estado `drawerOpen` y orquestar `DashboardLayout` en `src/App.tsx`
 - [ ] 3.2 Conectar `TransaccionForm` dentro del slot `drawer` en `src/App.tsx`
 - [ ] 3.3 Mapear vistas centrales en el slot `main` de `src/App.tsx`
 - [ ] 3.4 Asegurar que `SelectorPerfil` se renderice como overlay `fixed inset-0 z-50` en `src/App.tsx`
 - [ ] 4.1 Ejecutar suite completa con `npm test` (170+ tests al 100%)
 - [ ] 4.2 Validar consistencia de `tabular-nums` y ajuste 1080p sin scroll global
+
+---
+
+## Evidencia de la unidad de trabajo (Work Unit Evidence) — Phase 2 micro-chunk 2.5+2.6
+
+| Evidencia | Resultado |
+|-----------|-----------|
+| Comando de test enfocado | `npx vitest run src/components/organisms/__tests__/RightDrawer.test.tsx` → **11/11 ✅ passed** (3.95s) |
+| Comando de test de regresión (3 archivos) | `npx vitest run src/components/templates/__tests__/DashboardLayout.test.tsx src/components/organisms/__tests__/Sidebar.test.tsx src/components/organisms/__tests__/RightDrawer.test.tsx` → **42/42 ✅ passed** (DashboardLayout 9/9 + Sidebar 22/22 + RightDrawer 11/11) |
+| Runtime harness | `N/A` — RightDrawer es componente dumb (presentación pura, sin estado, sin IPC, sin rutas de ejecución runtime). El posicionamiento y transiciones CSS son responsabilidad del DashboardLayout padre. |
+| Límite de rollback | Eliminar `src/components/organisms/RightDrawer.tsx` y `src/components/organisms/__tests__/RightDrawer.test.tsx`. Ningún otro archivo fue modificado en este micro-chunk. |
 
 ---
 
@@ -74,15 +85,17 @@
 | `src/types/tabs.ts` | Creado | Tipo compartido `TabActiva` extraído de App.tsx para evitar dependencia circular; Sidebar y sus tests lo importan de aquí |
 | `src/components/organisms/Sidebar.tsx` | Creado | Nav vertical: 5 tabs con data-testid, role="tab", aria-selected; toggle modo mejorado (aria-pressed); chip perfil activo; selectorPerfilSlot ReactNode; colores V3 Dark Mode (`bg-zinc-900`, texto `slate-400`, activo `salmon`) |
 | `src/components/organisms/__tests__/Sidebar.test.tsx` | Creado | 22 tests: estructura ARIA (nav, tablist, tab × 5), data-testid × 7, tab activa aria-selected, callbacks onTabChange y onToggleModoMejorado, perfil activo nombre/null, selectorPerfilSlot inyectado |
+| `src/components/organisms/RightDrawer.tsx` | Creado | Panel `<section>` con `data-testid="right-drawer"`, `aria-hidden` condicional, cabecera con `<h2>` (titulo) + botón cerrar (`data-testid="right-drawer-close"`), área de contenido scrollable para children; colores V3 Dark Mode (`bg-zinc-900`, bordes `border-white/10`) |
+| `src/components/organisms/__tests__/RightDrawer.test.tsx` | Creado | 11 tests: data-testid del panel y botón, aria-hidden según isOpen, titulo en h2, callback onClose, children inyectados (uno/múltiples/null), aria-label refleja titulo |
 
 ---
 
 ## Presupuesto de revisión
 
-- **Líneas cambiadas (acumulado Phase 1 + 2.1+2.2 + 2.3+2.4)**: +41 (Phase 1) + ~120 (2.1+2.2) + ~175 (2.3+2.4) ≈ **+336 / -1** total
-- **Riesgo presupuesto 400 líneas**: Bajo (aún dentro del presupuesto estimado de ~280; la granularidad de los tests elevó el conteo pero el riesgo sigue siendo manejable)
+- **Líneas cambiadas (acumulado Phase 1 + 2.1+2.2 + 2.3+2.4 + 2.5+2.6)**: ~336 (prev) + ~95 (RightDrawer + test) ≈ **+431 / -1** total
+- **Riesgo presupuesto 400 líneas**: Bajo-Moderado (acumulado supera el estimado original de ~280 por la cobertura de tests, pero se mantiene cohesivo como Single PR dada la granularidad micro-chunk)
 - **Modo de entrega**: Single PR
-- **Límite de la unidad actual**: Phase 2 micro-chunk 2.3+2.4 — inicia desde `src/types/` vacío, termina con Sidebar + tipos compartidos + 22 tests pasando
+- **Límite de la unidad actual**: Phase 2 micro-chunk 2.5+2.6 — inicia desde `organisms/` sin RightDrawer, termina con RightDrawer + 11 tests pasando
 
 ---
 
@@ -100,8 +113,14 @@
 - **Implementación**: se creó `src/types/tabs.ts` en lugar de exportar desde `App.tsx`.
 - **Razón**: App.tsx define `TabActiva` localmente dentro de la función `App()` (línea 151), lo que impide exportarlo sin modificar App.tsx (reservado para Task 3.1). Crear un archivo de tipos compartido es la solución más segura para los tests existentes y para la fase de integración.
 
+### Desviación 3: RightDrawer — sin lógica de posicionamiento inline
+
+- **Design.md §Estrategia Responsiva**: describe clases de posicionamiento (`fixed inset-y-0`, `translate-x-full`, etc.) para el RightDrawer.
+- **Implementación**: esas clases viven en `DashboardLayout.tsx` (en el `<aside data-testid="dashboard-drawer">`), NO dentro de `RightDrawer.tsx`. El componente RightDrawer se limita a su estructura interna (cabecera + área scrollable).
+- **Razón**: la instrucción del orquestador especifica explícitamente que "la mecánica de sliding y posicionamiento es responsabilidad del padre `DashboardLayout`". Esta separación es correcta y sigue el principio dumb-component.
+
 ---
 
 ## Estado
 
-**6/12 tareas completadas** (Phase 1: 2/2 ✅ · Phase 2: 2.1+2.2+2.3+2.4 ✅). Listo para micro-chunk 2.5+2.6 (RightDrawer).
+**8/12 tareas completadas** (Phase 1: 2/2 ✅ · Phase 2: 2.1+2.2+2.3+2.4+2.5+2.6 ✅). Listo para Phase 3 (integración en App.tsx).
