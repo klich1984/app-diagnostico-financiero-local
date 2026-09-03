@@ -1,3 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    @apply bg-zinc-950 text-slate-200 font-sans antialiased;
+  }
+
+  /* Ensure numeric columns render with tabular (fixed-width) figures globally */
+  body {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* Explicit utility alias — ensures tabular-nums is surfaceable via class or Tailwind JIT */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}

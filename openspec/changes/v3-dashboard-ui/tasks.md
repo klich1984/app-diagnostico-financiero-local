@@ -25,8 +25,8 @@ Chain strategy: pending
 
 ## Phase 1: Fundaciones y Configuración Visual V3
 
-- [ ] 1.1 Configurar paleta Salmón (`salmon: '#f05454'`) y tipografía Raleway en `tailwind.config.js`.
-- [ ] 1.2 Agregar imports de fuentes Raleway, estilos base Dark Mode (`bg-zinc-950`) y regla utilitaria `tabular-nums` en `src/index.css`.
+- [x] 1.1 Configurar paleta Salmón (`salmon: '#f05454'`) y tipografía Raleway en `tailwind.config.js`.
+- [x] 1.2 Agregar imports de fuentes Raleway, estilos base Dark Mode (`bg-zinc-950`) y regla utilitaria `tabular-nums` en `src/index.css`.
 
 ## Phase 2: Componentes de Presentación Puros (Dumb Components)
 
