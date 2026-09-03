@@ -30,8 +30,8 @@ Chain strategy: pending
 
 ## Phase 2: Componentes de Presentación Puros (Dumb Components)
 
-- [ ] 2.1 Crear `src/components/templates/DashboardLayout.tsx` con contenedor Flexbox `h-screen overflow-hidden` y 3 slots (`sidebar`, `main`, `drawer`).
-- [ ] 2.2 Crear tests unitarios en `src/components/templates/__tests__/DashboardLayout.test.tsx` verificando renderizado de slots y visibilidad de drawer.
+- [x] 2.1 Crear `src/components/templates/DashboardLayout.tsx` con contenedor Flexbox `h-screen overflow-hidden` y 3 slots (`sidebar`, `main`, `drawer`).
+- [x] 2.2 Crear tests unitarios en `src/components/templates/__tests__/DashboardLayout.test.tsx` verificando renderizado de slots y visibilidad de drawer.
 - [ ] 2.3 Crear `src/components/organisms/Sidebar.tsx` preservando `data-testid="tab-transacciones"`, `data-testid="tab-presupuesto"`, `data-testid="tab-simulador"`, `data-testid="tab-presupuesto-mejorado"`, `data-testid="tab-resultados"`, `data-testid="perfil-activo-chip"`, `data-testid="boton-toggle-modo-mejorado"`.
 - [ ] 2.4 Crear tests unitarios en `src/components/organisms/__tests__/Sidebar.test.tsx` verificando navegación de tabs y callbacks de perfil.
 - [ ] 2.5 Crear `src/components/organisms/RightDrawer.tsx` con panel colapsable (`data-testid="right-drawer"`), backdrop y contenedor para `TransaccionForm`.
