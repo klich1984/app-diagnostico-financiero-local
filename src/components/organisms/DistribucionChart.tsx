@@ -93,8 +93,8 @@ export function DistribucionChart({ distribucion, titulo }: DistribucionChartPro
   if (distribucion.length === 0) {
     return (
       <div data-testid="distribucion-chart" className="p-4">
-        <h3 className="text-sm font-medium text-slate-700">{titulo}</h3>
-        <p className="mt-2 text-sm text-slate-500">No hay datos para mostrar.</p>
+        <h3 className="text-sm font-medium text-slate-300">{titulo}</h3>
+        <p className="mt-2 text-sm text-slate-400">No hay datos para mostrar.</p>
       </div>
     )
   }
@@ -110,9 +110,9 @@ export function DistribucionChart({ distribucion, titulo }: DistribucionChartPro
   return (
     <div
       data-testid="distribucion-chart"
-      className="rounded-md border border-slate-200 bg-white p-4"
+      className="rounded-md border border-white/10 bg-zinc-900 p-4"
     >
-      <h3 className="text-sm font-medium text-slate-700">{titulo}</h3>
+      <h3 className="text-sm font-medium text-slate-300">{titulo}</h3>
       <div className="mt-2 h-80">
         <ResponsiveContainer width={320} height={320}>
           <PieChart>

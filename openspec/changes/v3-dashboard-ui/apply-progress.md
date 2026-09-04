@@ -1,8 +1,8 @@
 # Progreso de Implementación: v3-dashboard-ui
 
-**Fecha**: 2026-09-03
+**Fecha**: 2026-09-04
 **Modo**: Standard (sin Strict TDD)
-**Unidad de trabajo actual**: Phase 2 — Micro-chunk 2.5 + 2.6 (RightDrawer)
+**Unidad de trabajo actual**: Bug fixes — Drawer trigger + Dark mode contrast sweep
 
 ---
 
@@ -13,18 +13,52 @@
 - [x] **2.1** Crear `src/components/templates/DashboardLayout.tsx` con contenedor Flexbox `h-screen overflow-hidden` y 3 slots (`sidebar`, `main`, `drawer`).
 - [x] **2.2** Crear tests unitarios en `src/components/templates/__tests__/DashboardLayout.test.tsx` verificando renderizado de slots y visibilidad de drawer.
 - [x] **2.3** Crear `src/components/organisms/Sidebar.tsx` preservando `data-testid="tab-*"`, roles ARIA, paleta V3 Dark Mode (`bg-zinc-900`, acento Salmón), chip de perfil y toggle modo mejorado.
-- [x] **2.4** Crear tests unitarios en `src/components/organisms/__tests__/Sidebar.test.tsx` — 22 tests verificando: presencia de todos los data-testid, tab activa (aria-selected), callbacks onTabChange y onToggleModoMejorado, perfil activo con nombre/null, selectorPerfilSlot inyectado y roles ARIA (tablist, tab).
-- [x] **2.5** Crear `src/components/organisms/RightDrawer.tsx` con panel colapsable (`data-testid="right-drawer"`), cabecera con título, botón "Cerrar" (`data-testid="right-drawer-close"`), `aria-hidden` condicional y contenedor con scroll para children.
-- [x] **2.6** Crear tests unitarios en `src/components/organisms/__tests__/RightDrawer.test.tsx` — 11 tests verificando: data-testid del panel y botón, aria-hidden según isOpen, título en cabecera, callback onClose al click, children renderizados (uno, múltiples, null), y aria-label refleja titulo.
+- [x] **2.4** Crear tests unitarios en `src/components/organisms/__tests__/Sidebar.test.tsx` — 22 tests verificando: presencia de todos los data-testid, tab activa (aria-selected), callbacks onTabChange y onToggleModoMejorado, perfil activo nombre/null, selectorPerfilSlot inyectado y roles ARIA (tablist, tab).
+- [x] **2.5** Crear `src/components/organisms/RightDrawer.tsx` con panel colapsable (`data-testid="right-drawer"`), backdrop y contenedor para `TransaccionForm`.
+- [x] **2.6** Crear tests unitarios en `src/components/organisms/__tests__/RightDrawer.test.tsx` verificando toggling y botón cerrar.
+- [x] **3.1** Declarar estado `drawerOpen` (`useState<boolean>(false)`) en `src/App.tsx`. Actualizar `handleEditar` para llamar `setDrawerOpen(true)` al iniciar edición. Agregar `handleCerrarDrawer` que cierra el drawer, limpia `transaccionEditando` y resetea el `formKey`. Sin cambios en el `return` ni en imports.
+- [x] **3.2** Conectar `TransaccionForm` dentro del slot `drawer` en `src/App.tsx` preservando `formKey`, submit handlers y status panel.
+- [x] **3.3** Mapear vistas centrales (`ListaTransacciones`, `MatrizPresupuesto`, `SimuladorPanel`, `PresupuestoMejoradoPanel`, `EstadoResultadosPanel`, `DistribucionChart`) en el slot `main` de `src/App.tsx`.
+- [x] **3.4** Asegurar que `SelectorPerfil` se renderice como overlay global `fixed inset-0 z-50` fuera del `DashboardLayout` en `src/App.tsx`.
+- [x] **BF-1** Agregar botón "Nueva Transacción" (Salmón, `data-testid="btn-nueva-transaccion"`) en el slot `main` de `src/App.tsx` — abre el `RightDrawer` en modo creación (limpia `transaccionEditando` antes de abrir).
+- [x] **BF-2** Dark mode contrast sweep: reemplazar clases legacy light-mode (`bg-white`, `text-slate-900`, `text-slate-800`, `border-slate-200`, `bg-slate-50`, `bg-slate-100`) con equivalentes V3 Dark Mode en todos los organisms y el molecule `TransaccionForm`.
 
 ## Tareas pendientes
 
-- [ ] 3.1 Declarar estado `drawerOpen` y orquestar `DashboardLayout` en `src/App.tsx`
-- [ ] 3.2 Conectar `TransaccionForm` dentro del slot `drawer` en `src/App.tsx`
-- [ ] 3.3 Mapear vistas centrales en el slot `main` de `src/App.tsx`
-- [ ] 3.4 Asegurar que `SelectorPerfil` se renderice como overlay `fixed inset-0 z-50` en `src/App.tsx`
 - [ ] 4.1 Ejecutar suite completa con `npm test` (170+ tests al 100%)
 - [ ] 4.2 Validar consistencia de `tabular-nums` y ajuste 1080p sin scroll global
+
+---
+
+## Evidencia de la unidad de trabajo (Work Unit Evidence) — Bug fixes BF-1 + BF-2
+
+| Evidencia | Resultado |
+|-----------|-----------|
+| Comando de test enfocado | `npx vitest run src/components/organisms/__tests__/Sidebar.test.tsx src/components/organisms/__tests__/RightDrawer.test.tsx src/components/templates/__tests__/DashboardLayout.test.tsx src/components/molecules/__tests__/TransaccionForm.test.tsx` → **51/51 ✅ passed** (8.47s). `npx vitest run src/components/organisms/__tests__/ListaTransacciones.test.tsx src/components/organisms/__tests__/ModalSalarioObjetivo.test.tsx` → **18/18 ✅ passed** (6.70s). |
+| TypeScript check | `npx tsc --noEmit --skipLibCheck` → cero errores nuevos en código de producción. Todos los errores listados son pre-existentes en archivos de test (TS6133, TS2741, TS2783 — mismos que en fases previas). |
+| Runtime harness | `N/A` — cambios son pura UI/styling + un button trigger; no hay nuevos boundaries IPC ni efectos de red. La integración runtime completa se prueba en 4.1. |
+| Límite de rollback | BF-1: revertir únicamente el bloque `main={` en `src/App.tsx` (el div del button "Nueva Transacción"). BF-2: revertir los 6 archivos afectados (`MatrizPresupuesto.tsx`, `ListaTransacciones.tsx`, `DistribucionChart.tsx`, `EstadoResultadosPanel.tsx`, `SimuladorPanel.tsx`, `TransaccionForm.tsx`, `ModalSalarioObjetivo.tsx`) a sus versiones previas. Las dos unidades son independientes y pueden revertirse por separado. |
+
+---
+
+## Evidencia de la unidad de trabajo (Work Unit Evidence) — Phase 3 atomic JSX rewrite (3.2 + 3.3 + 3.4)
+
+| Evidencia | Resultado |
+|-----------|-----------|
+| Comando de test enfocado | `npx vitest run src/components/organisms/__tests__/Sidebar.test.tsx` → **22/22 ✅ passed** (2033ms). `npx vitest run src/components/templates/__tests__/DashboardLayout.test.tsx src/components/organisms/__tests__/RightDrawer.test.tsx` → **9/9 ✅ + 11/11 ✅** passed. |
+| TypeScript check | `npx tsc --noEmit --skipLibCheck` → cero errores nuevos en archivos de producción. Todos los errores listados son pre-existentes (archivos de test de terceros componentes, `vite.config.ts` node types). Los symbols `drawerOpen` y `handleCerrarDrawer` ya no producen TS6133 porque están consumidos en el JSX. |
+| Runtime harness | `N/A` en esta etapa (la integración runtime completa se prueba en 4.1 con `npm test`). La integración de tipo es verificada por TSC. |
+| Límite de rollback | Revertir únicamente `src/App.tsx` (el bloque `return` y los imports de `DashboardLayout`, `Sidebar`, `RightDrawer`, `TabActiva`). Restaurar la declaración local `type TabActiva = ...` dentro de la función `App`. Los componentes nuevos (`DashboardLayout`, `Sidebar`, `RightDrawer`) no necesitan revertirse. |
+
+---
+
+## Evidencia de la unidad de trabajo (Work Unit Evidence) — Phase 3 nano-chunk 3.1
+
+| Evidencia | Resultado |
+|-----------|-----------|
+| Comando de test enfocado | `npx tsc --noEmit --skipLibCheck` → los únicos errores nuevos son `TS6133` sobre `drawerOpen` y `handleCerrarDrawer` (declared but not yet used en JSX — esperado; serán consumidos en 3.2–3.3). Cero errores de tipado en el código de producción nuevo. |
+| Runtime harness | `N/A` — nano-chunk de pura plomería de estado; ningún cambio en el JSX ni en rutas de ejecución visibles al usuario. |
+| Límite de rollback | Revertir únicamente `src/App.tsx`: eliminar las líneas `const [drawerOpen, setDrawerOpen] = useState<boolean>(false)`, el `setDrawerOpen(true)` dentro de `handleEditar`, y el handler `handleCerrarDrawer`. Ningún otro archivo fue modificado en este nano-chunk. |
 
 ---
 
@@ -87,15 +121,23 @@
 | `src/components/organisms/__tests__/Sidebar.test.tsx` | Creado | 22 tests: estructura ARIA (nav, tablist, tab × 5), data-testid × 7, tab activa aria-selected, callbacks onTabChange y onToggleModoMejorado, perfil activo nombre/null, selectorPerfilSlot inyectado |
 | `src/components/organisms/RightDrawer.tsx` | Creado | Panel `<section>` con `data-testid="right-drawer"`, `aria-hidden` condicional, cabecera con `<h2>` (titulo) + botón cerrar (`data-testid="right-drawer-close"`), área de contenido scrollable para children; colores V3 Dark Mode (`bg-zinc-900`, bordes `border-white/10`) |
 | `src/components/organisms/__tests__/RightDrawer.test.tsx` | Creado | 11 tests: data-testid del panel y botón, aria-hidden según isOpen, titulo en h2, callback onClose, children inyectados (uno/múltiples/null), aria-label refleja titulo |
+| `src/App.tsx` | Modificado | **Tasks 3.1–3.4 + BF-1**: añadidos imports de `DashboardLayout`, `Sidebar`, `RightDrawer`, `TabActiva`; eliminada declaración local `type TabActiva`; reescritura atómica del bloque `return`; agregado botón "+ Nueva Transacción" (`data-testid="btn-nueva-transaccion"`, Salmón `bg-[#f05454]`) que llama `setTransaccionEditando(null); setDrawerOpen(true)` |
+| `src/components/organisms/MatrizPresupuesto.tsx` | Modificado | **BF-2**: `bg-white`→`bg-zinc-900`, `bg-slate-50`→`bg-zinc-800`, `divide-slate-200`→`divide-white/10`, `border-slate-200`→`border-white/10`, `text-slate-900`→`text-white`, `text-slate-600`→`text-slate-300`, `text-slate-500`→`text-slate-400` |
+| `src/components/organisms/ListaTransacciones.tsx` | Modificado | **BF-2**: ídem sweep — tabla dark, badges de tipo adaptados (`bg-green-900/60 text-green-300`, `bg-red-900/60 text-red-300`), botones Editar/Eliminar en tonos oscuros |
+| `src/components/organisms/DistribucionChart.tsx` | Modificado | **BF-2**: contenedor `bg-zinc-900 border-white/10`, textos `text-slate-300`/`text-slate-400` |
+| `src/components/organisms/EstadoResultadosPanel.tsx` | Modificado | **BF-2**: thead `bg-zinc-800`, tbody `bg-zinc-900`, `divide-white/10`; rowStyles header→`bg-zinc-800 text-white`, total→`bg-emerald-950/60 text-emerald-300`, highlight→`bg-amber-950/60 text-amber-300`, plain→`text-slate-300`; botón Editar salario dark; indent italic `text-slate-400` |
+| `src/components/organisms/SimuladorPanel.tsx` | Modificado | **BF-2**: filas `bg-zinc-900 border-white/10`, input `bg-zinc-800 text-slate-100`, botón Aplicar disabled state `bg-zinc-700`, botón × `text-red-400 hover:bg-red-950/40`, sección resultados `bg-zinc-900 border-white/10`, totales `text-green-400`/`text-red-400` |
+| `src/components/molecules/TransaccionForm.tsx` | Modificado | **BF-2**: form `bg-zinc-900 border-white/10`, todos los `<label>` `text-slate-300`, todos los `<input>`/`<select>` `bg-zinc-800 border-white/10 text-slate-100`; botón submit cambiado a Salmón `bg-[#f05454]`; botón Cancelar `border-white/10 text-slate-300 hover:bg-white/5` |
+| `src/components/organisms/ModalSalarioObjetivo.tsx` | Modificado | **BF-2**: backdrop `bg-black/60`, card `bg-zinc-900 border-white/10`, label `text-slate-300`, input `bg-zinc-800 text-slate-100`, error `text-red-400`, botones Cancelar dark + Guardar Salmón |
 
 ---
 
 ## Presupuesto de revisión
 
-- **Líneas cambiadas (acumulado Phase 1 + 2.1+2.2 + 2.3+2.4 + 2.5+2.6)**: ~336 (prev) + ~95 (RightDrawer + test) ≈ **+431 / -1** total
-- **Riesgo presupuesto 400 líneas**: Bajo-Moderado (acumulado supera el estimado original de ~280 por la cobertura de tests, pero se mantiene cohesivo como Single PR dada la granularidad micro-chunk)
+- **Líneas cambiadas (acumulado total bug fixes)**: ~220 líneas modificadas (sweep de clases Tailwind a través de 7 archivos + button trigger en App.tsx)
+- **Riesgo presupuesto 400 líneas**: Bajo (cambios son 1:1 swaps de clases sin impacto estructural)
 - **Modo de entrega**: Single PR
-- **Límite de la unidad actual**: Phase 2 micro-chunk 2.5+2.6 — inicia desde `organisms/` sin RightDrawer, termina con RightDrawer + 11 tests pasando
+- **Límite de la unidad actual**: Bug fixes BF-1 (drawer trigger) + BF-2 (dark mode sweep)
 
 ---
 
@@ -119,8 +161,19 @@
 - **Implementación**: esas clases viven en `DashboardLayout.tsx` (en el `<aside data-testid="dashboard-drawer">`), NO dentro de `RightDrawer.tsx`. El componente RightDrawer se limita a su estructura interna (cabecera + área scrollable).
 - **Razón**: la instrucción del orquestador especifica explícitamente que "la mecánica de sliding y posicionamiento es responsabilidad del padre `DashboardLayout`". Esta separación es correcta y sigue el principio dumb-component.
 
+### Desviación 4: `selectorPerfilSlot` en Tasks 3.2–3.4 = botón «Cambiar perfil» (no el overlay completo)
+
+- **Instrucciones del orquestador (Tasks 3.2–3.4)**: piden `<button onClick={handleCambiarPerfil}>` como `selectorPerfilSlot`.
+- **Implementación**: el `selectorPerfilSlot` inyectado en `<Sidebar>` es un `<button>` que dispara `handleCambiarPerfil()`, que a su vez pone `mostrarSelector = true`. El `<SelectorPerfil>` completo (overlay) se renderiza FUERA del DashboardLayout, justo antes de `</AppErrorBoundary>` (Task 3.4). Esta es la arquitectura correcta: el slot activa el selector, el overlay real vive fuera del layout.
+
+### Desviación 5 (BF-2): Botón «Guardar» en TransaccionForm cambiado a Salmón
+
+- **Design.md**: no especificaba el color del botón submit del form (pre-V3 era `bg-slate-900`).
+- **Implementación**: el botón submit ahora usa `bg-[#f05454]` (Salmón) en coherencia con la paleta V3 Dark Mode y el nuevo botón "+ Nueva Transacción".
+- **Razón**: `bg-slate-900` sobre un fondo `bg-zinc-900` es prácticamente invisible (negro sobre negro). El acento Salmón es el color primario de acción en V3.
+
 ---
 
 ## Estado
 
-**8/12 tareas completadas** (Phase 1: 2/2 ✅ · Phase 2: 2.1+2.2+2.3+2.4+2.5+2.6 ✅). Listo para Phase 3 (integración en App.tsx).
+**14/16 tareas completadas** (Phase 1: 2/2 ✅ · Phase 2: 6/6 ✅ · Phase 3: 4/4 ✅ · BF: 2/2 ✅ · Phase 4: 0/2 pendiente). Listo para Phase 4: verificación de regresión (`npm test` + validación 1080p).

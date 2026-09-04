@@ -56,55 +56,55 @@ export function ListaTransacciones({
 
   return (
     <div data-testid="lista-transacciones" className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-slate-200">
-        <thead className="bg-slate-50">
+      <table className="min-w-full divide-y divide-white/10">
+        <thead className="bg-zinc-800">
           <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-500">
+            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-400">
               Concepto
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-500">
+            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-400">
               Tipo
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-500">
+            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-400">
               Frecuencia
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-500">
+            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-400">
               Valor
             </th>
-            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-500">
+            <th className="px-4 py-2 text-left text-xs font-medium uppercase text-slate-400">
               Categoría
             </th>
-            <th className="px-4 py-2 text-right text-xs font-medium uppercase text-slate-500">
+            <th className="px-4 py-2 text-right text-xs font-medium uppercase text-slate-400">
               Acciones
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200 bg-white">
+        <tbody className="divide-y divide-white/10 bg-zinc-900">
           {transacciones.map((t) => (
             <tr key={t.id} data-testid="fila-transaccion">
-              <td className="px-4 py-2 text-sm text-slate-900">{t.concepto}</td>
+              <td className="px-4 py-2 text-sm text-slate-100">{t.concepto}</td>
               <td className="px-4 py-2 text-sm">
                 <span
                   className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
                     t.tipo_flujo === 'Ingreso'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
+                      ? 'bg-green-900/60 text-green-300'
+                      : 'bg-red-900/60 text-red-300'
                   }`}
                 >
                   {t.tipo_flujo}
                 </span>
               </td>
-              <td className="px-4 py-2 text-sm text-slate-600">{t.frecuencia}</td>
-              <td className="px-4 py-2 text-sm font-mono text-slate-900">
+              <td className="px-4 py-2 text-sm text-slate-300">{t.frecuencia}</td>
+              <td className="px-4 py-2 text-sm font-mono text-slate-100">
                 {formatCentavos(t.valor_centavos)}
               </td>
-              <td className="px-4 py-2 text-sm text-slate-600">{t.categoria_nombre}</td>
+              <td className="px-4 py-2 text-sm text-slate-300">{t.categoria_nombre}</td>
               <td className="px-4 py-2 text-right">
                 <button
                   type="button"
                   data-testid={`editar-${t.id}`}
                   onClick={() => onEditar(t.id)}
-                  className="mr-3 text-xs text-slate-600 hover:text-slate-900"
+                  className="mr-3 text-xs text-slate-400 hover:text-slate-100"
                 >
                   Editar
                 </button>
@@ -112,7 +112,7 @@ export function ListaTransacciones({
                   type="button"
                   data-testid={`eliminar-${t.id}`}
                   onClick={() => onEliminar(t.id)}
-                  className="text-xs text-red-600 hover:text-red-800"
+                  className="text-xs text-red-400 hover:text-red-300"
                 >
                   Eliminar
                 </button>

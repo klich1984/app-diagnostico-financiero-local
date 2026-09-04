@@ -39,10 +39,10 @@ Chain strategy: pending
 
 ## Phase 3: Cableado e Integración en App.tsx
 
-- [ ] 3.1 Declarar estado `drawerOpen` y orquestar `DashboardLayout` con `Sidebar`, `MainStage` y `RightDrawer` en `src/App.tsx`.
-- [ ] 3.2 Conectar `TransaccionForm` dentro del slot `drawer` en `src/App.tsx` preservando `formKey`, submit handlers y status panel.
-- [ ] 3.3 Mapear vistas centrales (`ListaTransacciones`, `MatrizPresupuesto`, `SimuladorPanel`, `PresupuestoMejoradoPanel`, `EstadoResultadosPanel`, `DistribucionChart`) en el slot `main` de `src/App.tsx`.
-- [ ] 3.4 Asegurar que `SelectorPerfil` se renderice como overlay global `fixed inset-0 z-50` fuera del `DashboardLayout` en `src/App.tsx`.
+- [x] 3.1 Declarar estado `drawerOpen` y orquestar `DashboardLayout` con `Sidebar`, `MainStage` y `RightDrawer` en `src/App.tsx`.
+- [x] 3.2 Conectar `TransaccionForm` dentro del slot `drawer` en `src/App.tsx` preservando `formKey`, submit handlers y status panel.
+- [x] 3.3 Mapear vistas centrales (`ListaTransacciones`, `MatrizPresupuesto`, `SimuladorPanel`, `PresupuestoMejoradoPanel`, `EstadoResultadosPanel`, `DistribucionChart`) en el slot `main` de `src/App.tsx`.
+- [x] 3.4 Asegurar que `SelectorPerfil` se renderice como overlay global `fixed inset-0 z-50` fuera del `DashboardLayout` en `src/App.tsx`.
 
 ## Phase 4: Verificación y Pruebas de Regresión
 
