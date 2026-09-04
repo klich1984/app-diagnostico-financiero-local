@@ -262,6 +262,12 @@ function App(): JSX.Element {
   // transacción (handleEditar) y se cierra con el botón de cerrar del drawer.
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
 
+  // BF-delete: ID de la transacción pendiente de confirmación de eliminación.
+  // `null` = no hay confirmación activa. Usamos React state en lugar de
+  // `window.confirm` porque Tauri WebViews bloquean los diálogos nativos del browser
+  // y el confirm devuelve `true` instantáneamente sin mostrar nada al usuario.
+  const [idAEliminar, setIdAEliminar] = useState<number | null>(null)
+
   // Slice 8: refetch helper. Reutilizado en mount + post-insert + post-delete.
   // El flag `cancelado` evita `setState` si el componente se desmonta
   // mientras la promesa está en vuelo (cleanup del `useEffect`).
@@ -495,18 +501,13 @@ function App(): JSX.Element {
     }
   }
 
-  // Slice 8: handler de eliminar. Confirmación nativa + IPC + refetch.
-  const handleEliminar = async (id: number): Promise<void> => {
-    if (!window.confirm('¿Eliminar esta transacción?')) return
-    try {
-      await eliminarTransaccion(id)
-      // eslint-disable-next-line no-console
-      console.log('Transaccion eliminada:', id)
-      await refetchTransacciones()
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Error eliminando:', e)
-    }
+  // Slice 8: handler de eliminar. Abre el modal de confirmación React en lugar
+  // de `window.confirm` — los WebViews de Tauri bloquean los diálogos nativos
+  // del browser, por lo que `window.confirm` retorna `true` inmediatamente sin
+  // mostrar ninguna UI al usuario. La eliminación efectiva ocurre en el handler
+  // del botón «Eliminar» del modal (`idAEliminar` state).
+  const handleEliminar = (id: number): void => {
+    setIdAEliminar(id)
   }
 
   // Slice 12 (REQ-V2-101): handler de editar. Carga la transacción en el
@@ -783,6 +784,49 @@ function App(): JSX.Element {
           onCrear={handleCrearPerfil}
         />
       ) : null}
+
+      {/* BF-delete: modal de confirmación de eliminación de transacción.
+          Reemplaza `window.confirm` que Tauri WebViews bloquean silenciosamente.
+          z-[100] para quedar por encima del SelectorPerfil (z-50). */}
+      {idAEliminar !== null && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-white/10 p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-slate-100 mb-2">Confirmar eliminación</h3>
+            <p className="text-sm text-slate-300 mb-6">
+              ¿Estás seguro de que querés eliminar esta transacción? Esta acción no se puede
+              deshacer.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIdAEliminar(null)}
+                className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const id = idAEliminar
+                  setIdAEliminar(null)
+                  try {
+                    await eliminarTransaccion(id)
+                    // eslint-disable-next-line no-console
+                    console.log('Transaccion eliminada:', id)
+                    await refetchTransacciones()
+                  } catch (e) {
+                    // eslint-disable-next-line no-console
+                    console.error('Error eliminando:', e)
+                  }
+                }}
+                className="px-4 py-2 text-sm font-medium bg-red-900/80 text-red-100 hover:bg-red-900 rounded-md"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppErrorBoundary>
   )
 }
