@@ -46,5 +46,5 @@ Chain strategy: pending
 
 ## Phase 4: Verificación y Pruebas de Regresión
 
-- [ ] 4.1 Ejecutar suite completa con `npm test` verificando que los 170+ tests pasen al 100% sin regresiones en `src/__tests__/App.test.tsx`.
-- [ ] 4.2 Validar consistencia de clases `tabular-nums` y ajuste 1080p sin scroll global.
+- [x] 4.1 Ejecutar suite completa con `npm test` verificando que los 170+ tests pasen al 100% sin regresiones en `src/__tests__/App.test.tsx`.
+- [x] 4.2 Validar consistencia de clases `tabular-nums` y ajuste 1080p sin scroll global.

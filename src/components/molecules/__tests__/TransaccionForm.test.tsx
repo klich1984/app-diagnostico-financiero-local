@@ -58,11 +58,8 @@ const stubCategorias: TransaccionFormProps['categorias'] = [
 ]
 
 // Tracks the last call to `onSubmit` so each test can inspect what the
-// form would have sent to the store / IPC layer.
-let lastSubmitted: unknown = null
-const onSubmit = vi.fn((input) => {
-  lastSubmitted = input
-})
+// form would have sent to the store / IPC layer via onSubmit.mock.calls.
+const onSubmit = vi.fn()
 
 let container: HTMLDivElement
 let root: Root
@@ -71,7 +68,6 @@ beforeEach(() => {
   container = document.createElement('div')
   document.body.appendChild(container)
   root = createRoot(container)
-  lastSubmitted = null
   onSubmit.mockClear()
 })
 
