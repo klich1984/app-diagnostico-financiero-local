@@ -48,3 +48,9 @@ Chain strategy: pending
 
 - [x] 4.1 Ejecutar suite completa con `npm test` verificando que los 170+ tests pasen al 100% sin regresiones en `src/__tests__/App.test.tsx`.
 - [x] 4.2 Validar consistencia de clases `tabular-nums` y ajuste 1080p sin scroll global.
+
+## Missed Scope (Post-Verify additions)
+
+- [x] MS-1 Dark Mode sweep for `SelectorPerfil.tsx` — replace all legacy Light Mode classes with V3 Dark Mode tokens. Salmon accent on primary action buttons.
+- [x] MS-2 Add `darkMode: 'class'` to `tailwind.config.js` — enables Tailwind's class-based dark mode toggle as foundation for future Light Mode switch.
+- [ ] MS-3 Light Mode toggle — see architectural findings in apply-progress. Deferred: requires `dark:` prefix retrofit across all components or CSS variables approach.
