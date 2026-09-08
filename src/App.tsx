@@ -30,7 +30,7 @@
 // reference. The user explicitly requested keeping the `console.log` for
 // debugging — there are 4 of them, see below.
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Component, type ReactNode } from 'react'
 import {
   actualizarTransaccion,
@@ -70,6 +70,10 @@ import {
   distribucionIngresosPorCategoria,
 } from './domain/agregaciones/graficos'
 import { exportarExcel } from './data/export-excel'
+import { DashboardLayout } from './components/templates/DashboardLayout'
+import { Sidebar } from './components/organisms/Sidebar'
+import { RightDrawer } from './components/organisms/RightDrawer'
+import type { TabActiva } from './types/tabs'
 
 class AppErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null }
@@ -121,6 +125,8 @@ function App(): JSX.Element {
   const [estadoSubmit, setEstadoSubmit] = useState<'idle' | 'guardando' | 'ok' | 'error'>('idle')
   const [idInsertado, setIdInsertado] = useState<number | null>(null)
   const [errorSubmit, setErrorSubmit] = useState<string | null>(null)
+  // Ref para limpiar el auto-dismiss del mensaje de éxito al desmontar.
+  const submitSuccessTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Slice 8: estado de la lista de transacciones persistidas.
   const [transacciones, setTransacciones] = useState<TransaccionCompletaDto[]>([])
@@ -148,8 +154,8 @@ function App(): JSX.Element {
   //     del Simulador (sliders + matriz mejorada).
   // El estado es local; no se persiste — al reabrir la app volvemos a
   // 'transacciones' (es el flujo principal del usuario).
-  type TabActiva =
-    'transacciones' | 'presupuesto' | 'simulador' | 'presupuesto-mejorado' | 'resultados'
+  // V3 (Task 3.2–3.4): TabActiva ahora se importa desde src/types/tabs.ts
+  // para que Sidebar también pueda consumirla sin dependencia circular.
   const [tabActiva, setTabActiva] = useState<TabActiva>('transacciones')
 
   const [salarioObjetivoCentavos, setSalarioObjetivoCentavos] = useState<number | null>(null)
@@ -158,6 +164,19 @@ function App(): JSX.Element {
   // se persiste por perfil en esta iteración (decisión de producto).
   // `false` = modo base (default); `true` = modo mejorado.
   const [modoMejorado, setModoMejorado] = useState(false)
+
+  // Tech debt (v3-theme-toggle): toggle de tema Light/Dark Mode.
+  // Default `true` = dark — mantiene el comportamiento existente en primera
+  // carga; el `useEffect` sincroniza la clase `dark` en <html>.
+  const [modoOscuro, setModoOscuro] = useState(true)
+
+  useEffect(() => {
+    if (modoOscuro) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [modoOscuro])
 
   // Slice 11: estado del panel del Simulador. Se carga cuando cambia
   // el perfil activo (no al montar — el selector ya filtró por perfil).
@@ -250,6 +269,17 @@ function App(): JSX.Element {
   const [transaccionEditando, setTransaccionEditando] = useState<TransaccionCompletaDto | null>(
     null,
   )
+
+  // V3 (Task 3.1): estado de visibilidad del RightDrawer. `false` = cerrado (default).
+  // Se abre automáticamente cuando el usuario hace click en «Editar» sobre una
+  // transacción (handleEditar) y se cierra con el botón de cerrar del drawer.
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false)
+
+  // BF-delete: ID de la transacción pendiente de confirmación de eliminación.
+  // `null` = no hay confirmación activa. Usamos React state en lugar de
+  // `window.confirm` porque Tauri WebViews bloquean los diálogos nativos del browser
+  // y el confirm devuelve `true` instantáneamente sin mostrar nada al usuario.
+  const [idAEliminar, setIdAEliminar] = useState<number | null>(null)
 
   // Slice 8: refetch helper. Reutilizado en mount + post-insert + post-delete.
   // El flag `cancelado` evita `setState` si el componente se desmonta
@@ -462,6 +492,16 @@ function App(): JSX.Element {
       console.log('Transaccion persistida con id:', id)
       setIdInsertado(id)
       setEstadoSubmit('ok')
+      // Bug fix (Bug 3): auto-dismiss the success message after 3 s.
+      // Cancela cualquier timer previo para evitar race conditions si el
+      // usuario envía dos forms en rápida sucesión.
+      if (submitSuccessTimeout.current !== null) {
+        clearTimeout(submitSuccessTimeout.current)
+      }
+      submitSuccessTimeout.current = setTimeout(() => {
+        setEstadoSubmit('idle')
+        submitSuccessTimeout.current = null
+      }, 3000)
       // Slice 8: refrescar la lista para mostrar la fila recién creada.
       await refetchTransacciones()
       // Reset del form: bump del `key` fuerza remount con estado inicial.
@@ -474,27 +514,30 @@ function App(): JSX.Element {
     }
   }
 
-  // Slice 8: handler de eliminar. Confirmación nativa + IPC + refetch.
-  const handleEliminar = async (id: number): Promise<void> => {
-    if (!window.confirm('¿Eliminar esta transacción?')) return
-    try {
-      await eliminarTransaccion(id)
-      // eslint-disable-next-line no-console
-      console.log('Transaccion eliminada:', id)
-      await refetchTransacciones()
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error('Error eliminando:', e)
-    }
+  // Slice 8: handler de eliminar. Abre el modal de confirmación React en lugar
+  // de `window.confirm` — los WebViews de Tauri bloquean los diálogos nativos
+  // del browser, por lo que `window.confirm` retorna `true` inmediatamente sin
+  // mostrar ninguna UI al usuario. La eliminación efectiva ocurre en el handler
+  // del botón «Eliminar» del modal (`idAEliminar` state).
+  const handleEliminar = (id: number): void => {
+    setIdAEliminar(id)
   }
 
   // Slice 12 (REQ-V2-101): handler de editar. Carga la transacción en el
   // form sin IPC — los datos ya están en `transacciones`.
+  // V3 (Task 3.1): abre el RightDrawer automáticamente al iniciar la edición.
+  // El scroll ya no aplica porque el form vive dentro del drawer lateral.
   const handleEditar = (id: number): void => {
     const tx = transacciones.find((t) => t.id === id) ?? null
     setTransaccionEditando(tx)
-    // Scroll suave al form para que el usuario vea que se pre-llenó.
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setDrawerOpen(true)
+  }
+
+  // V3 (Task 3.1): cierra el RightDrawer y vuelve al modo creación.
+  const handleCerrarDrawer = (): void => {
+    setDrawerOpen(false)
+    setTransaccionEditando(null)
+    setFormKey((k) => k + 1)
   }
 
   // Slice 12 (REQ-V2-101): handler de guardar edición. Llama al IPC de
@@ -563,79 +606,155 @@ function App(): JSX.Element {
 
   return (
     <AppErrorBoundary>
-      <main className="min-h-screen bg-slate-50 p-8">
-        <section className="mx-auto max-w-5xl">
-          <h1 className="mb-2 text-3xl font-bold text-slate-900">Diagnostico Financiero Local</h1>
-          <p className="mb-8 text-slate-600">
-            Aplicación local-first para gestión financiera personal.
-          </p>
+      <DashboardLayout
+        drawerOpen={drawerOpen}
+        sidebar={
+          <Sidebar
+            tabActiva={tabActiva}
+            onTabChange={setTabActiva}
+            perfilActivoNombre={perfilActivoNombre}
+            modoMejorado={modoMejorado}
+            onToggleModoMejorado={() => setModoMejorado((m) => !m)}
+            modoOscuro={modoOscuro}
+            onToggleTema={() => setModoOscuro((m) => !m)}
+            onExportarExcel={async () => {
+              try {
+                const path = await exportarExcel(transacciones, estadoResultado)
+                // Bug fix (Bug 1): solo alertamos si el usuario no canceló
+                // el diálogo nativo. exportarExcel devuelve null en cancelación.
+                if (path) {
+                  alert('Archivo Excel exportado correctamente.')
+                }
+              } catch (e) {
+                console.error('Error exportando Excel:', e)
+                alert('Error exportando Excel. Revisa la consola.')
+              }
+            }}
+            selectorPerfilSlot={
+              <button
+                type="button"
+                onClick={handleCambiarPerfil}
+                className="mt-1 w-full rounded-md px-3 py-1 text-left text-xs text-slate-500 dark:text-slate-500 transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-slate-300"
+              >
+                Cambiar perfil
+              </button>
+            }
+          />
+        }
+        main={
+          <div className="flex h-full flex-col p-6">
+            {/* Bug fix: trigger button for creating new transactions.
+                The TransaccionForm lives inside RightDrawer; without this
+                button there is no way for the user to open a blank form
+                (handleEditar only covers the edit path). Salmon accent
+                matches the V3 Dark Mode palette (tailwind.config.js). */}
+            <div className="mb-4 flex items-center justify-between">
+              <button
+                type="button"
+                data-testid="btn-nueva-transaccion"
+                onClick={() => {
+                  setTransaccionEditando(null)
+                  setDrawerOpen(true)
+                }}
+                className="rounded-md bg-[#f05454] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#d94444] focus:outline-none focus:ring-2 focus:ring-[#f05454] focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-zinc-950"
+              >
+                + Nueva Transacción
+              </button>
+            </div>
 
-          {/* Slice 9: chip del perfil activo (visible cuando hay perfil
-            activo y NO se está cambiando). */}
-          {perfilActivo !== null && !mostrarSelector ? (
-            <div
-              data-testid="perfil-activo-chip"
-              className="mb-4 flex items-center justify-between rounded-md border border-slate-200 bg-white p-3"
-            >
-              <span className="text-sm text-slate-600">
-                Perfil activo: <strong>{perfilActivoNombre}</strong>
-              </span>
-              <div className="flex items-center gap-3">
-                {/* REQ-V2-103: toggle modo mejorado */}
-                <button
-                  type="button"
-                  data-testid="boton-toggle-modo-mejorado"
-                  onClick={() => setModoMejorado((m) => !m)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    modoMejorado
-                      ? 'bg-emerald-700 text-white'
-                      : 'border border-slate-300 text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  {modoMejorado ? '✓ Modo mejorado' : 'Modo mejorado'}
-                </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      await exportarExcel(transacciones, estadoResultado)
-                      alert('Archivo Excel exportado correctamente.')
-                    } catch (e) {
-                      console.error('Error exportando Excel:', e)
-                      alert('Error exportando Excel. Revisa la consola.')
-                    }
-                  }}
-                  className="rounded-full border border-slate-300 px-3 py-1 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100"
-                >
-                  Exportar a Excel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCambiarPerfil}
-                  className="text-xs text-slate-700 underline"
-                >
-                  Cambiar perfil
-                </button>
+            {/* REQ-V2-103: aviso global cuando modo mejorado está activo
+                pero no hay simulaciones cargadas. */}
+            {modoMejorado && simulaciones.length === 0 ? (
+              <div
+                data-testid="aviso-modo-mejorado-sin-simulaciones"
+                className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+              >
+                Modo mejorado activo, pero no hay simulaciones guardadas. Andá al Simulador para
+                proponer mejoras.
               </div>
-            </div>
-          ) : null}
+            ) : null}
 
-          {/* REQ-V2-103: aviso global cuando modo mejorado está activo
-            pero no hay simulaciones cargadas. */}
-          {modoMejorado && simulaciones.length === 0 ? (
-            <div
-              data-testid="aviso-modo-mejorado-sin-simulaciones"
-              className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
-            >
-              Modo mejorado activo, pero no hay simulaciones guardadas. Andá al Simulador para
-              proponer mejoras.
-            </div>
-          ) : null}
-
-          <div className="rounded-lg bg-white p-6 shadow">
-            <h2 className="mb-4 text-xl font-semibold text-slate-800">
-              {transaccionEditando ? 'Editar transacción' : 'Nueva transacción'}
-            </h2>
+            {/* Slice 10: vistas centrales según tab activa (REQ-301, REQ-302).
+                Las tabs se renderizan en el shell de la app independientemente
+                de si hay perfil activo o no — el `SelectorPerfil` es un overlay
+                full-screen (`fixed inset-0 z-50`) que cubre visualmente el
+                contenido cuando el usuario aún no eligió perfil. Esto permite
+                que los tests del shell (`App.test.tsx`) puedan queryar las tabs
+                sin tener que simular primero la selección de perfil. */}
+            {tabActiva === 'transacciones' ? (
+              <ListaTransacciones
+                transacciones={transacciones}
+                cargando={cargandoTransacciones}
+                onEliminar={handleEliminar}
+                onEditar={handleEditar}
+              />
+            ) : null}
+            {tabActiva === 'presupuesto' ? (
+              <>
+                {/* REQ-V2-103: when modo mejorado is on and sims exist,
+                    show the improved matrix; otherwise base. */}
+                <MatrizPresupuesto
+                  matriz={modoMejorado && simulaciones.length > 0 ? matrizMejorada : matriz}
+                />
+                <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  <DistribucionChart
+                    distribucion={distribucionIngresos}
+                    titulo="Distribución de Ingresos"
+                  />
+                  <DistribucionChart
+                    distribucion={distribucionGastos}
+                    titulo="Distribución de Gastos"
+                  />
+                </div>
+              </>
+            ) : null}
+            {tabActiva === 'simulador' ? (
+              <SimuladorPanel
+                transacciones={transacciones}
+                categorias={categorias}
+                simulaciones={simulaciones}
+                cargando={cargandoSimulaciones}
+                onUpsert={handleUpsertSimulacion}
+                onEliminar={handleEliminarSimulacion}
+              />
+            ) : null}
+            {tabActiva === 'presupuesto-mejorado' && perfilActivo !== null ? (
+              <PresupuestoMejoradoPanel
+                transacciones={transacciones}
+                categorias={categorias}
+                simulaciones={simulaciones}
+                onIrATransacciones={() => setTabActiva('transacciones')}
+              />
+            ) : null}
+            {tabActiva === 'resultados' ? (
+              estadoResultado ? (
+                <EstadoResultadosPanel
+                  estado={estadoResultado}
+                  salarioObjetivoCentavos={salarioObjetivoCentavos}
+                  perfilActivoId={perfilActivo}
+                  onSalarioGuardado={async (centavos) => {
+                    if (perfilActivo === null) return
+                    await actualizarSalarioObjetivo({
+                      perfil_id: perfilActivo,
+                      salario_objetivo_centavos: centavos,
+                    })
+                    setSalarioObjetivoCentavos(centavos)
+                  }}
+                />
+              ) : (
+                <p className="p-4 text-sm text-slate-500">Cargando estado de resultados…</p>
+              )
+            ) : null}
+          </div>
+        }
+        drawer={
+          <RightDrawer
+            isOpen={drawerOpen}
+            onClose={handleCerrarDrawer}
+            titulo={transaccionEditando ? 'Editar transacción' : 'Nueva transacción'}
+          >
+            {/* Task 3.2: TransaccionForm dentro del slot drawer, preservando
+                formKey, submit handlers y status panel. */}
             <TransaccionForm
               key={formKey}
               categorias={categoriasParaForm}
@@ -643,188 +762,86 @@ function App(): JSX.Element {
               initialValue={transaccionEditando ?? undefined}
               onCancelar={transaccionEditando ? handleCancelarEdicion : undefined}
             />
-          </div>
 
-          {/* Status panel: feedback inmediato al usuario sobre el submit. */}
-          {estadoSubmit === 'guardando' ? (
-            <p className="mt-4 text-sm text-slate-500">Guardando en SQLite…</p>
-          ) : null}
-          {estadoSubmit === 'ok' && idInsertado !== null ? (
-            <p className="mt-4 text-sm text-green-700">Guardado OK · id={idInsertado}</p>
-          ) : null}
-          {estadoSubmit === 'error' && errorSubmit !== null ? (
-            <p className="mt-4 text-sm text-red-700">Error: {errorSubmit}</p>
-          ) : null}
-          {cargandoCategorias ? (
-            <p className="mt-2 text-xs text-slate-400">Cargando categorías desde la DB…</p>
-          ) : null}
-          {errorCategorias !== null ? (
-            <p className="mt-2 text-xs text-red-600">
-              Error cargando categorías: {errorCategorias}
+            {/* Status panel: feedback inmediato al usuario sobre el submit. */}
+            {estadoSubmit === 'guardando' ? (
+              <p className="mt-4 text-sm text-slate-400">Guardando en SQLite…</p>
+            ) : null}
+            {estadoSubmit === 'ok' && idInsertado !== null ? (
+              <p className="mt-4 text-sm text-green-400">Transacción guardada correctamente.</p>
+            ) : null}
+            {estadoSubmit === 'error' && errorSubmit !== null ? (
+              <p className="mt-4 text-sm text-red-400">Error: {errorSubmit}</p>
+            ) : null}
+            {cargandoCategorias ? (
+              <p className="mt-2 text-xs text-slate-500">Cargando categorías desde la DB…</p>
+            ) : null}
+            {errorCategorias !== null ? (
+              <p className="mt-2 text-xs text-red-400">
+                Error cargando categorías: {errorCategorias}
+              </p>
+            ) : null}
+          </RightDrawer>
+        }
+      />
+
+      {/* Task 3.4: SelectorPerfil se renderiza FUERA del DashboardLayout como
+          overlay global `fixed inset-0 z-50`. Sin cambios en su lógica ni props.
+          Slice 9: se muestra cuando NO hay perfil activo (primera vez) o cuando
+          el usuario clickea «Cambiar perfil» desde el chip de la Sidebar. */}
+      {perfilActivo === null || mostrarSelector ? (
+        <SelectorPerfil
+          perfiles={perfiles}
+          onSeleccionar={handleSeleccionarPerfil}
+          cargando={cargandoPerfiles}
+          onRenombrar={handleRenombrarPerfil}
+          onEliminar={handleEliminarPerfil}
+          onCrear={handleCrearPerfil}
+        />
+      ) : null}
+
+      {/* BF-delete: modal de confirmación de eliminación de transacción.
+          Reemplaza `window.confirm` que Tauri WebViews bloquean silenciosamente.
+          z-[100] para quedar por encima del SelectorPerfil (z-50). */}
+      {idAEliminar !== null && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 p-6 rounded-lg shadow-xl max-w-sm w-full">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">Confirmar eliminación</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
+              ¿Estás seguro de que querés eliminar esta transacción? Esta acción no se puede
+              deshacer.
             </p>
-          ) : null}
-
-          {/* Slice 10: shell de tabs (REQ-301, REQ-302).
-            Las tabs se renderizan en el shell de la app independientemente
-            de si hay perfil activo o no — el `SelectorPerfil` es un overlay
-            full-screen (`fixed inset-0 z-50`) que cubre visualmente las
-            tabs cuando el usuario aún no eligió perfil. Esto permite que
-            los tests del shell (`App.test.tsx`) puedan queryar las tabs
-            sin tener que simular primero la selección de perfil. */}
-          <div className="mt-8 rounded-lg bg-white p-6 shadow">
-            <nav
-              className="flex gap-1 border-b border-slate-200"
-              aria-label="Secciones principales"
-            >
+            <div className="flex justify-end gap-3">
               <button
                 type="button"
-                data-testid="tab-transacciones"
-                onClick={() => setTabActiva('transacciones')}
-                className={`px-4 py-2 text-sm font-medium ${
-                  tabActiva === 'transacciones'
-                    ? 'border-b-2 border-slate-900 text-slate-900'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
+                onClick={() => setIdAEliminar(null)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
               >
-                Transacciones
+                Cancelar
               </button>
               <button
                 type="button"
-                data-testid="tab-presupuesto"
-                onClick={() => setTabActiva('presupuesto')}
-                className={`px-4 py-2 text-sm font-medium ${
-                  tabActiva === 'presupuesto'
-                    ? 'border-b-2 border-slate-900 text-slate-900'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
+                onClick={async () => {
+                  const id = idAEliminar
+                  setIdAEliminar(null)
+                  try {
+                    await eliminarTransaccion(id)
+                    // eslint-disable-next-line no-console
+                    console.log('Transaccion eliminada:', id)
+                    await refetchTransacciones()
+                  } catch (e) {
+                    // eslint-disable-next-line no-console
+                    console.error('Error eliminando:', e)
+                  }
+                }}
+                className="px-4 py-2 text-sm font-medium bg-red-100 dark:bg-red-900/80 text-red-700 dark:text-red-100 hover:bg-red-200 dark:hover:bg-red-900 rounded-md"
               >
-                Presupuesto
+                Eliminar
               </button>
-              <button
-                type="button"
-                data-testid="tab-simulador"
-                onClick={() => setTabActiva('simulador')}
-                className={`px-4 py-2 text-sm font-medium ${
-                  tabActiva === 'simulador'
-                    ? 'border-b-2 border-slate-900 text-slate-900'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                Simulador
-              </button>
-              <button
-                type="button"
-                data-testid="tab-presupuesto-mejorado"
-                onClick={() => setTabActiva('presupuesto-mejorado')}
-                className={`px-4 py-2 text-sm font-medium ${
-                  tabActiva === 'presupuesto-mejorado'
-                    ? 'border-b-2 border-slate-900 text-slate-900'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                Presupuesto Mejorado
-              </button>
-              <button
-                type="button"
-                data-testid="tab-resultados"
-                onClick={() => setTabActiva('resultados')}
-                className={`px-4 py-2 text-sm font-medium ${
-                  tabActiva === 'resultados'
-                    ? 'border-b-2 border-slate-900 text-slate-900'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                Resultados
-              </button>
-            </nav>
-
-            <div className="pt-4">
-              {tabActiva === 'transacciones' ? (
-                <ListaTransacciones
-                  transacciones={transacciones}
-                  cargando={cargandoTransacciones}
-                  onEliminar={handleEliminar}
-                  onEditar={handleEditar}
-                />
-              ) : null}
-              {tabActiva === 'presupuesto' ? (
-                <>
-                  {/* REQ-V2-103: when modo mejorado is on and sims exist,
-                    show the improved matrix; otherwise base. */}
-                  <MatrizPresupuesto
-                    matriz={modoMejorado && simulaciones.length > 0 ? matrizMejorada : matriz}
-                  />
-                  <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <DistribucionChart
-                      distribucion={distribucionIngresos}
-                      titulo="Distribución de Ingresos"
-                    />
-                    <DistribucionChart
-                      distribucion={distribucionGastos}
-                      titulo="Distribución de Gastos"
-                    />
-                  </div>
-                </>
-              ) : null}
-              {tabActiva === 'simulador' ? (
-                <SimuladorPanel
-                  transacciones={transacciones}
-                  categorias={categorias}
-                  simulaciones={simulaciones}
-                  cargando={cargandoSimulaciones}
-                  onUpsert={handleUpsertSimulacion}
-                  onEliminar={handleEliminarSimulacion}
-                />
-              ) : null}
-              {tabActiva === 'presupuesto-mejorado' && perfilActivo !== null ? (
-                <PresupuestoMejoradoPanel
-                  transacciones={transacciones}
-                  categorias={categorias}
-                  simulaciones={simulaciones}
-                  onIrATransacciones={() => setTabActiva('transacciones')}
-                />
-              ) : null}
-              {tabActiva === 'resultados' ? (
-                estadoResultado ? (
-                  <EstadoResultadosPanel
-                    estado={estadoResultado}
-                    salarioObjetivoCentavos={salarioObjetivoCentavos}
-                    perfilActivoId={perfilActivo}
-                    onSalarioGuardado={async (centavos) => {
-                      if (perfilActivo === null) return
-                      await actualizarSalarioObjetivo({
-                        perfil_id: perfilActivo,
-                        salario_objetivo_centavos: centavos,
-                      })
-                      setSalarioObjetivoCentavos(centavos)
-                    }}
-                  />
-                ) : (
-                  <p className="p-4 text-sm text-slate-500">Cargando estado de resultados…</p>
-                )
-              ) : null}
             </div>
           </div>
-
-          <p className="mt-4 text-center text-sm text-slate-400">
-            Épica 1 + Slices 2–11 · Wire IPC activo contra SQLite local
-          </p>
-        </section>
-
-        {/* Slice 9: selector multi-perfil (REQ-501). Se muestra cuando NO
-          hay perfil activo (primera vez) o cuando el usuario clickea
-          "Cambiar perfil". */}
-        {perfilActivo === null || mostrarSelector ? (
-          <SelectorPerfil
-            perfiles={perfiles}
-            onSeleccionar={handleSeleccionarPerfil}
-            cargando={cargandoPerfiles}
-            onRenombrar={handleRenombrarPerfil}
-            onEliminar={handleEliminarPerfil}
-            onCrear={handleCrearPerfil}
-          />
-        ) : null}
-      </main>
+        </div>
+      )}
     </AppErrorBoundary>
   )
 }

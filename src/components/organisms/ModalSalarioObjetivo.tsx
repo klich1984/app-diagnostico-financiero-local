@@ -151,21 +151,21 @@ export function ModalSalarioObjetivo({
     <div
       data-testid="modal-salario-objetivo"
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-8"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-8"
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-salario-titulo"
     >
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 id="modal-salario-titulo" className="text-lg font-semibold text-slate-900">
+      <div className="w-full max-w-md rounded-lg bg-white dark:bg-zinc-900 p-6 shadow-xl border border-slate-200 dark:border-white/10">
+        <h2 id="modal-salario-titulo" className="text-lg font-semibold text-slate-900 dark:text-white">
           Editar salario personal objetivo
         </h2>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
           Este valor se descuenta del Flujo de Ahorro 2 en el Estado de Resultados Mejorado.
         </p>
 
         <div className="mt-4">
-          <label htmlFor="modal-salario-input" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="modal-salario-input" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
             Salario objetivo (pesos)
           </label>
           <input
@@ -177,12 +177,12 @@ export function ModalSalarioObjetivo({
             onChange={onChangeInput}
             disabled={guardando}
             placeholder="0"
-            className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 focus:border-slate-500 focus:outline-none disabled:bg-slate-100"
+            className="mt-1 w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-3 py-2 text-base text-slate-900 dark:text-slate-100 focus:border-slate-300 dark:focus:border-white/30 focus:outline-none disabled:bg-slate-100 dark:disabled:bg-zinc-700 disabled:text-slate-400 dark:disabled:text-slate-400"
           />
         </div>
 
         {mensajeErrorVisible !== null ? (
-          <p data-testid="modal-salario-error" className="mt-2 text-sm text-red-700" role="alert">
+          <p data-testid="modal-salario-error" className="mt-2 text-sm text-red-500 dark:text-red-400" role="alert">
             {mensajeErrorVisible}
           </p>
         ) : null}
@@ -193,7 +193,7 @@ export function ModalSalarioObjetivo({
             data-testid="modal-salario-cancelar"
             onClick={onCancelar}
             disabled={guardando}
-            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:border-slate-500 disabled:opacity-50"
+            className="rounded-md border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/30 disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -202,7 +202,7 @@ export function ModalSalarioObjetivo({
             data-testid="modal-salario-guardar"
             onClick={handleGuardar}
             disabled={guardarDisabled}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="rounded-md bg-[#f05454] px-4 py-2 text-sm font-medium text-white hover:bg-[#d94444] disabled:cursor-not-allowed disabled:bg-slate-200 dark:disabled:bg-zinc-700 disabled:text-slate-400 dark:disabled:text-slate-400"
           >
             {guardando ? 'Guardando…' : 'Guardar'}
           </button>

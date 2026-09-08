@@ -26,8 +26,10 @@
 //
 // ## Estilo
 //
-// Tailwind utility classes (mismo set que `TransaccionForm.tsx` y
-// `ListaTransacciones.tsx`). Texto de UI: español neutro, sin voseo.
+// V3 Dark Mode: bg-zinc-900 (overlay), bg-zinc-800 (cards/inputs),
+// text-slate-100/300/400, border-white/10. Salmon accent (#f05454)
+// for primary action buttons (Guardar rename, Crear confirm).
+// Mismo set que los otros organisms del dashboard V3.
 
 import { useState } from 'react'
 import type { UsuarioDto } from '../../data/tauri-commands'
@@ -66,9 +68,9 @@ export function SelectorPerfil({
     return (
       <div
         data-testid="selector-perfil-cargando"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-50"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-zinc-900"
       >
-        <p className="text-sm text-slate-500">Cargando perfiles…</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Cargando perfiles…</p>
       </div>
     )
   }
@@ -107,29 +109,29 @@ export function SelectorPerfil({
   return (
     <div
       data-testid="selector-perfil"
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-50 p-8"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-100 dark:bg-zinc-900 p-8"
     >
-      <h1 className="text-2xl font-bold text-slate-900">¿Quién eres?</h1>
-      <p className="mt-2 text-sm text-slate-600">Elegí un perfil existente o creá uno nuevo.</p>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">¿Quién eres?</h1>
+      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Elegí un perfil existente o creá uno nuevo.</p>
 
       <ul className="mt-8 w-full max-w-md space-y-2">
         {perfiles.map((p) => (
           <li key={p.id}>
             {renombrandoId === p.id ? (
               /* Inline rename mode */
-              <div className="flex items-center gap-2 rounded-md border border-slate-300 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-2 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 p-4 shadow-sm">
                 <input
                   type="text"
                   data-testid="input-renombrar-perfil"
                   value={renombrandoValor}
                   onInput={(e) => setRenombrandoValor((e.target as HTMLInputElement).value)}
-                  className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm focus:outline-none"
+                  className="flex-1 rounded border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 px-2 py-1 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-slate-300 dark:focus:border-white/30"
                 />
                 <button
                   type="button"
                   data-testid="boton-guardar-renombrar"
                   onClick={handleConfirmRename}
-                  className="rounded bg-slate-900 px-3 py-1 text-xs text-white hover:bg-slate-700"
+                  className="rounded bg-[#f05454] px-3 py-1 text-xs text-white hover:bg-[#d94444]"
                 >
                   Guardar
                 </button>
@@ -141,10 +143,10 @@ export function SelectorPerfil({
                   type="button"
                   data-testid="opcion-perfil"
                   onClick={() => onSeleccionar(p.id)}
-                  className="flex-1 rounded-md border border-slate-300 bg-white p-4 text-left shadow-sm hover:border-slate-500 focus:outline-none"
+                  className="flex-1 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 p-4 text-left shadow-sm hover:border-slate-300 dark:hover:border-white/30 hover:bg-slate-50 dark:hover:bg-zinc-700 focus:outline-none transition-colors duration-150"
                 >
-                  <div className="text-base font-medium text-slate-900">{p.nombre}</div>
-                  <div className="mt-1 text-xs text-slate-500">
+                  <div className="text-base font-medium text-slate-900 dark:text-slate-100">{p.nombre}</div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                     Salario objetivo: {formatCentavos(p.salario_personal_objetivo_centavos)}
                   </div>
                 </button>
@@ -154,7 +156,7 @@ export function SelectorPerfil({
                       type="button"
                       data-testid="boton-renombrar-perfil"
                       onClick={() => handleStartRename(p)}
-                      className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
+                      className="rounded border border-slate-200 dark:border-white/10 px-2 py-1 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors duration-150"
                     >
                       Renombrar
                     </button>
@@ -162,7 +164,7 @@ export function SelectorPerfil({
                       type="button"
                       data-testid="boton-eliminar-perfil"
                       onClick={() => onEliminar(p.id)}
-                      className="rounded border border-red-300 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                      className="rounded border border-red-200 dark:border-red-900/50 px-2 py-1 text-xs text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors duration-150"
                     >
                       Eliminar
                     </button>
@@ -182,14 +184,14 @@ export function SelectorPerfil({
             placeholder="Nombre del nuevo perfil"
             value={creandoValor}
             onInput={(e) => setCreandoValor((e.target as HTMLInputElement).value)}
-            className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:border-slate-500"
+            className="flex-1 rounded border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-slate-300 dark:focus:border-white/30"
           />
           <button
             type="button"
             data-testid="boton-confirmar-crear-perfil"
             onClick={handleConfirmCreate}
             disabled={creandoValor.trim() === ''}
-            className="rounded bg-slate-900 px-3 py-2 text-xs text-white hover:bg-slate-700 disabled:opacity-40"
+            className="rounded bg-[#f05454] px-3 py-2 text-xs text-white hover:bg-[#d94444] disabled:opacity-40"
           >
             Crear
           </button>
@@ -197,7 +199,7 @@ export function SelectorPerfil({
             type="button"
             data-testid="boton-cancelar-crear-perfil"
             onClick={handleCancelCreate}
-            className="rounded border border-slate-300 px-3 py-2 text-xs text-slate-600 hover:bg-slate-100"
+            className="rounded border border-slate-200 dark:border-white/10 px-3 py-2 text-xs text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors duration-150"
           >
             Cancelar
           </button>
@@ -207,7 +209,7 @@ export function SelectorPerfil({
           type="button"
           data-testid="boton-crear-perfil"
           onClick={onCrear !== undefined ? handleStartCreate : undefined}
-          className="mt-6 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:border-slate-500 disabled:opacity-40"
+          className="mt-6 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-slate-800 dark:text-slate-100 hover:border-slate-300 dark:hover:border-white/30 hover:bg-slate-50 dark:hover:bg-zinc-700 transition-colors duration-150 disabled:opacity-40"
         >
           Crear perfil nuevo
         </button>

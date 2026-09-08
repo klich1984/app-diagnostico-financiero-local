@@ -31,16 +31,16 @@ export function PresupuestoMejoradoPanel({
     return (
       <div
         data-testid="empty-state-mejorado"
-        className="flex flex-col items-center justify-center rounded-md border border-slate-200 bg-white p-8 text-center"
+        className="flex flex-col items-center justify-center rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-8 text-center"
       >
-        <p className="text-sm text-slate-500">
+        <p           className="text-sm text-slate-600 dark:text-slate-300">
           No hay transacciones registradas. Capturá al menos una transacción para ver el presupuesto
           mejorado.
         </p>
         <button
           data-testid="btn-ir-transacciones"
           onClick={onIrATransacciones}
-          className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="mt-4 rounded-md bg-[#f05454] px-4 py-2 text-sm font-medium text-white hover:bg-[#d94444] focus:outline-none focus:ring-2 focus:ring-[#f05454] focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-zinc-900"
         >
           Ir a Transacciones
         </button>
@@ -76,11 +76,11 @@ export function PresupuestoMejoradoPanel({
   return (
     <div data-testid="presupuesto-mejorado-panel" className="space-y-6 p-4">
       {simulaciones.length === 0 && (
-        <div data-testid="banner-sin-simulaciones" className="rounded-md bg-blue-50 p-4">
+        <div data-testid="banner-sin-simulaciones" className="rounded-md bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-500/20 p-4">
           <div className="flex">
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">Sin mejoras aplicadas</h3>
-              <div className="mt-2 text-sm text-blue-700">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300">Sin mejoras aplicadas</h3>
+              <div className="mt-2 text-sm text-blue-700 dark:text-blue-400">
                 <p>
                   Esta vista refleja qué pasaría si aplicás las mejoras del Simulador. Sin mejoras
                   aplicadas, la matriz es idéntica a la pestaña Presupuesto.
@@ -92,39 +92,39 @@ export function PresupuestoMejoradoPanel({
       )}
 
       {/* KPI Strip */}
-      <section className="rounded-md border border-slate-200 bg-white p-4">
-        <h2 className="text-base font-semibold text-slate-900">Resumen Mejorado</h2>
+      <section className="rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-4">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Resumen Mejorado</h2>
         <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-4">
           <div className="flex flex-col justify-between gap-1">
-            <dt className="text-xs uppercase text-slate-500">Total Gastos Actual</dt>
-            <dd className="font-mono text-base font-medium text-slate-600">
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-300">Total Gastos Actual</dt>
+            <dd className="font-mono text-base font-medium text-slate-600 dark:text-slate-300">
               {formatCentavosConDecimales(matrizInicial.totalGastos.toNumber())}
             </dd>
           </div>
           <div className="flex flex-col justify-between gap-1">
-            <dt className="text-xs uppercase text-slate-500">Total Gastos Mejorado</dt>
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-300">Total Gastos Mejorado</dt>
             <dd
               data-testid="kpi-total-gastos-mejorado"
-              className="font-mono text-base font-medium text-slate-900"
+              className="font-mono text-base font-medium text-slate-900 dark:text-slate-100"
             >
               {formatCentavosConDecimales(totalGastosMejorado.toNumber())}
             </dd>
           </div>
           <div className="flex flex-col justify-between gap-1">
-            <dt className="text-xs uppercase text-slate-500">Ahorro Estimado (Delta)</dt>
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-300">Ahorro Estimado (Delta)</dt>
             <dd
               className={`font-mono text-base font-medium ${
-                deltaAhorro.isPositive() ? 'text-green-600' : 'text-slate-600'
+                deltaAhorro.isPositive() ? 'text-green-600 dark:text-green-400' : 'text-slate-600 dark:text-slate-300'
               }`}
             >
               {formatCentavosConDecimales(deltaAhorro.toNumber())}
             </dd>
           </div>
           <div className="flex flex-col justify-between gap-1">
-            <dt className="text-xs uppercase text-slate-500">FCL Mejorado</dt>
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-300">FCL Mejorado</dt>
             <dd
               className={`font-mono text-base font-medium ${
-                matrizMejorada.flujoCajaLibre.isNegative() ? 'text-red-600' : 'text-green-600'
+                matrizMejorada.flujoCajaLibre.isNegative() ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
               }`}
             >
               {formatCentavosConDecimales(matrizMejorada.flujoCajaLibre.toNumber())}
@@ -134,7 +134,7 @@ export function PresupuestoMejoradoPanel({
       </section>
 
       {/* Matriz Completa */}
-      <div className="rounded-md border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 shadow-sm">
         <MatrizPresupuesto matriz={matrizMejorada} />
       </div>
     </div>

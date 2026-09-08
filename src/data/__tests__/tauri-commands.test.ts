@@ -119,6 +119,7 @@ describe('REQ-202 / Slice 7: tauri-commands wrappers (IPC bridge)', () => {
 
   it('slice7_insertar_transaccion_invokes_cmd_insert_transaccion_with_input', async () => {
     const input: TransaccionInputDto = {
+      usuario_id: 1,
       tipo_flujo: 'Gasto',
       categoria_id: 6,
       concepto: 'Internet',
@@ -637,6 +638,7 @@ describe('REQ-V2-101 / Slice 12: actualizarTransaccion IPC wrapper', () => {
   //        and `{ payload: { id, usuarioId, input } }`.
   it('actualizarTransaccion invokes cmd_update_transaccion with wrapped payload', async () => {
     const inputDto: TransaccionInputDto = {
+      usuario_id: 1,
       tipo_flujo: 'Gasto',
       categoria_id: 6,
       concepto: 'Internet actualizado',
@@ -691,6 +693,7 @@ describe('REQ-V2-101 / Slice 12: actualizarTransaccion IPC wrapper', () => {
       id: 7,
       usuarioId: 1,
       input: {
+        usuario_id: 1,
         tipo_flujo: 'Gasto',
         categoria_id: 6,
         concepto: 'Internet',

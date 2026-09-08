@@ -7,7 +7,7 @@ import type { EstadoResultados, LadoEstado } from '../domain/kpis'
 export async function exportarExcel(
   transacciones: TransaccionCompletaDto[],
   estadoResultados: EstadoResultados | null,
-): Promise<void> {
+): Promise<string | null> {
   // 1. Pedir al usuario que seleccione dónde guardar el archivo XLSX
   const pathDestino = await save({
     title: 'Guardar Reporte Financiero',
@@ -21,8 +21,8 @@ export async function exportarExcel(
   })
 
   if (!pathDestino) {
-    // El usuario canceló
-    return
+    // El usuario canceló — devolvemos null para que el caller no muestre éxito
+    return null
   }
 
   // 2. Crear un nuevo libro de Excel
@@ -121,4 +121,8 @@ export async function exportarExcel(
   // XLSX.write produce un array buffer o binario compatible con Uint8Array
   const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
   await writeFile(pathDestino, new Uint8Array(excelBuffer))
+
+  // Devolvemos el path para que el caller pueda confirmar el éxito sin
+  // que un cancel (que retorna null arriba) dispare la alerta.
+  return pathDestino
 }

@@ -297,8 +297,8 @@ export function SimuladorPanel({
   return (
     <div data-testid="simulador-panel" className="space-y-6 p-4">
       <section>
-        <h2 className="text-lg font-semibold text-slate-900">Simulá tus gastos no esenciales</h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Simulá tus gastos no esenciales</h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
           Cambiá los valores abajo para ver cómo mejora tu flujo de caja libre.
         </p>
 
@@ -314,13 +314,13 @@ export function SimuladorPanel({
               <li
                 key={id}
                 data-testid={`simulador-row-${id}`}
-                className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-3"
+                className="flex items-center justify-between rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 p-3"
               >
                 <div>
-                  <div className="text-sm font-medium text-slate-900">
+                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
                     {dto?.concepto ?? t.concepto}
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {dto?.categoria_nombre ?? '—'} ·{' '}
                     {t.frecuencia === 'Mensual' ? 'Mensual' : `Mensual (${t.frecuencia} orig.)`} ·{' '}
                     {dto?.naturaleza_necesidad ?? '—'}
@@ -331,29 +331,14 @@ export function SimuladorPanel({
                     type="text"
                     inputMode="decimal"
                     data-testid={`simulador-input-${id}`}
-                    // Slice 12 (REQ-402): el onChange SOLO actualiza el
-                    // state local — ya NO dispara el debounce. El commit
-                    // a SQLite queda en manos del botón "Aplicar" →
-                    // evitar escrituras sorprendentes mientras el
-                    // usuario edita.
                     value={valueFor(id, currentValue)}
                     onChange={(e) => {
                       const raw = e.target.value.replace(/[^0-9.,\-]/g, '')
                       setInputValues((prev) => ({ ...prev, [id]: raw }))
                     }}
                     aria-label={`Nuevo valor propuesto para ${dto?.concepto ?? t.concepto}`}
-                    className="w-32 rounded-md border border-slate-300 bg-white px-2 py-1 text-right text-sm font-mono"
+                    className="w-32 rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-2 py-1 text-right text-sm font-mono text-slate-900 dark:text-slate-100"
                   />
-                  {/*
-                    Botón "Aplicar" (REQ-402 manual commit). El handler
-                    re-lee el string del state local (no del input.value,
-                    que es exactamente lo mismo pero más frágil ante
-                    edge-cases del DOM), lo parsea PESOS→CENTAVOS, y
-                    dispara onUpsert. Tras el commit, limpiamos la entry
-                    de `inputValues` para esa fila: el padre re-renderiza
-                    con la nueva simulación persistida, el input cae al
-                    formato del valor base, y el botón se deshabilita.
-                  */}
                   <button
                     type="button"
                     data-testid={`aplicar-${id}`}
@@ -377,7 +362,7 @@ export function SimuladorPanel({
                     }}
                     disabled={!isDirty(id, currentValue)}
                     aria-label={`Aplicar nuevo valor propuesto para ${dto?.concepto ?? t.concepto}`}
-                    className="rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                    className="rounded-md bg-green-700 px-3 py-1 text-xs font-medium text-white hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-slate-200 dark:disabled:bg-zinc-700 disabled:text-slate-400 dark:disabled:text-slate-500"
                   >
                     Aplicar
                   </button>
@@ -387,7 +372,7 @@ export function SimuladorPanel({
                       data-testid={`simulador-eliminar-${id}`}
                       onClick={() => onEliminar(id)}
                       aria-label={`Eliminar propuesta de ${dto?.concepto ?? t.concepto}`}
-                      className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                      className="rounded-md px-2 py-1 text-xs text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
                     >
                       ×
                     </button>
@@ -401,41 +386,41 @@ export function SimuladorPanel({
 
       <section
         data-testid="simulador-resultados"
-        className="rounded-md border border-slate-200 bg-white p-4"
+        className="rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 p-4"
       >
-        <h2 className="text-base font-semibold text-slate-900">Resultados de la simulación</h2>
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">Resultados de la simulación</h2>
         <dl className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div>
-            <dt className="text-xs uppercase text-slate-500">Ahorro mensual</dt>
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-400">Ahorro mensual</dt>
             <dd
               className={`text-base font-mono font-medium ${
-                ahorroMensual > 0 ? 'text-green-700' : 'text-slate-700'
+                ahorroMensual > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-600 dark:text-slate-300'
               }`}
             >
               {formatCentavos(ahorroMensual)}
               {hasPendingChanges ? (
-                <span className="ml-1 text-xs text-slate-400">(preview)</span>
+                <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">(preview)</span>
               ) : null}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-500">Ahorro anual</dt>
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-400">Ahorro anual</dt>
             <dd
               className={`text-base font-mono font-medium ${
-                ahorroMensual > 0 ? 'text-green-700' : 'text-slate-700'
+                ahorroMensual > 0 ? 'text-green-600 dark:text-green-400' : 'text-slate-600 dark:text-slate-300'
               }`}
             >
               {formatCentavos(ahorroMensual * 12)}
               {hasPendingChanges ? (
-                <span className="ml-1 text-xs text-slate-400">(preview)</span>
+                <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">(preview)</span>
               ) : null}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-500">Nuevo FCL</dt>
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-400">Nuevo FCL</dt>
             <dd
               className={`text-base font-mono font-medium ${
-                matrizMejorada.flujoCajaLibre.isNegative() ? 'text-red-700' : 'text-green-700'
+                matrizMejorada.flujoCajaLibre.isNegative() ? 'text-red-500 dark:text-red-400' : 'text-green-600 dark:text-green-400'
               }`}
             >
               {formatCentavos(matrizMejorada.flujoCajaLibre.toNumber())}

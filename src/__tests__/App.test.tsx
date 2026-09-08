@@ -212,10 +212,10 @@ describe('App: form reset after successful submit', () => {
     expect(insertCall?.[1]).toHaveProperty('input')
     expect((insertCall?.[1] as { input: { concepto: string } }).input.concepto).toBe('Sueldo')
 
-    // 8) And the success feedback is rendered (the "Guardado OK · id=42"
-    //    line). This is a side-channel confirmation that we went through
-    //    the success branch (not the error branch).
-    expect(container.textContent ?? '').toMatch(/Guardado OK.*id=42/)
+    // 8) And the success feedback is rendered (the "Transacción guardada
+    //    correctamente" message). This is a side-channel confirmation that
+    //    we went through the success branch (not the error branch).
+    expect(container.textContent ?? '').toMatch(/Transacción guardada correctamente/)
   })
 
   // Regression guard for the OPPOSITE behavior: if the form were NOT

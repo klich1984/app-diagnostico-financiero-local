@@ -60,7 +60,6 @@ function transaccion(
     tipo_flujo: 'Ingreso',
     categoria_id: 1,
     frecuencia: 'Mensual',
-    valor_centavos: partial.valor_centavos,
     ...partial,
   } as TransaccionMin
 }
