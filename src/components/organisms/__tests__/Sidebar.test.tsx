@@ -9,6 +9,7 @@
 //         (SidebarProps) + §Nota crítica (data-testid preservados).
 // Tasks:  2.4 — verificar navegación de tabs, tab activa marcada, callbacks
 //         y renderizado del selectorPerfilSlot inyectado.
+//         Tech debt (v3-theme-toggle) — modoOscuro + onToggleTema props added.
 //
 // Patrón de renderizado: react-dom/client + createRoot + act() —
 // idéntico al resto de tests del proyecto (sin @testing-library/react).
@@ -45,6 +46,8 @@ interface RenderOptions {
   perfilActivoNombre?: string | null
   modoMejorado?: boolean
   onToggleModoMejorado?: () => void
+  modoOscuro?: boolean
+  onToggleTema?: () => void
   onExportarExcel?: () => void
   selectorPerfilSlot?: React.ReactNode
 }
@@ -56,6 +59,8 @@ function renderSidebar(opts: RenderOptions = {}): void {
     perfilActivoNombre = 'Usuario Test',
     modoMejorado = false,
     onToggleModoMejorado = vi.fn(),
+    modoOscuro = true,
+    onToggleTema = vi.fn(),
     onExportarExcel = vi.fn(),
     selectorPerfilSlot = null,
   } = opts
@@ -68,6 +73,8 @@ function renderSidebar(opts: RenderOptions = {}): void {
         perfilActivoNombre={perfilActivoNombre}
         modoMejorado={modoMejorado}
         onToggleModoMejorado={onToggleModoMejorado}
+        modoOscuro={modoOscuro}
+        onToggleTema={onToggleTema}
         onExportarExcel={onExportarExcel}
         selectorPerfilSlot={selectorPerfilSlot}
       />,
@@ -232,6 +239,39 @@ describe('Sidebar organism', () => {
     })
 
     expect(onToggleModoMejorado).toHaveBeenCalledOnce()
+  })
+
+  // -----------------------------------------------------------------------
+  // Toggle Light/Dark Mode (data-testid="boton-toggle-tema")
+  // -----------------------------------------------------------------------
+
+  it('renders boton-toggle-tema with correct data-testid', () => {
+    renderSidebar()
+    expect(container.querySelector('[data-testid="boton-toggle-tema"]')).not.toBeNull()
+  })
+
+  it('reflects modoOscuro=true with aria-pressed="true"', () => {
+    renderSidebar({ modoOscuro: true })
+    const btn = container.querySelector<HTMLElement>('[data-testid="boton-toggle-tema"]')
+    expect(btn?.getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('reflects modoOscuro=false with aria-pressed="false"', () => {
+    renderSidebar({ modoOscuro: false })
+    const btn = container.querySelector<HTMLElement>('[data-testid="boton-toggle-tema"]')
+    expect(btn?.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('calls onToggleTema when the tema toggle button is clicked', () => {
+    const onToggleTema = vi.fn()
+    renderSidebar({ onToggleTema })
+
+    const btn = container.querySelector<HTMLButtonElement>('[data-testid="boton-toggle-tema"]')
+    act(() => {
+      btn?.click()
+    })
+
+    expect(onToggleTema).toHaveBeenCalledOnce()
   })
 
   // -----------------------------------------------------------------------

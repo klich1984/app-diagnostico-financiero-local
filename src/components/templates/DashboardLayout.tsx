@@ -33,12 +33,12 @@ export function DashboardLayout({
   return (
     <div
       data-testid="dashboard-layout"
-      className="flex h-screen overflow-hidden bg-zinc-950"
+      className="flex h-screen overflow-hidden bg-slate-100 dark:bg-zinc-950"
     >
       {/* Columna izquierda: Sidebar fijo */}
       <aside
         data-testid="dashboard-sidebar"
-        className="w-64 flex-shrink-0 flex flex-col overflow-y-auto border-r border-white/10"
+        className="w-64 flex-shrink-0 flex flex-col overflow-y-auto border-r border-slate-200 dark:border-white/10"
       >
         {sidebar}
       </aside>
@@ -65,7 +65,7 @@ export function DashboardLayout({
         data-testid="dashboard-drawer"
         className={[
           // Base: transición suave
-          'w-80 flex-shrink-0 flex flex-col overflow-y-auto border-l border-white/10',
+          'w-80 flex-shrink-0 flex flex-col overflow-y-auto border-l border-slate-200 dark:border-white/10',
           'transition-transform duration-200',
           // Desktop lg+: posición relativa, siempre visible si drawerOpen
           'lg:relative lg:translate-x-0',

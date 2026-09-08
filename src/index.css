@@ -7,7 +7,7 @@
 @layer base {
   html,
   body {
-    @apply bg-zinc-950 text-slate-200 font-sans antialiased;
+    @apply bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-slate-200 font-sans antialiased;
   }
 
   /* Ensure numeric columns render with tabular (fixed-width) figures globally */

@@ -78,42 +78,42 @@ export function MatrizPresupuesto({
     <div data-testid="matriz-presupuesto" className="space-y-6 p-4">
       {/* Ingresos */}
       <section data-testid="matriz-ingresos">
-        <h2 className="text-lg font-semibold text-white">Ingresos</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Ingresos</h2>
         <div className="mt-2 overflow-x-auto">
-          <table className="min-w-full divide-y divide-white/10 text-sm">
-            <thead className="bg-zinc-800">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-sm">
+            <thead className="bg-slate-100 dark:bg-zinc-800">
               <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-left text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   Categoría
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   Fijo
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   Variable
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   Total
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   Anual
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10 bg-zinc-900">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10 bg-white dark:bg-zinc-900">
               {matriz.ingresos.map((row) => (
                 <tr key={row.categoria}>
-                  <td className="px-3 py-2 text-slate-100">{row.categoria}</td>
-                  <td className="px-3 py-2 text-right font-mono text-slate-300">
+                  <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{row.categoria}</td>
+                  <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-300">
                     {formatCentavos(row.fijo.toNumber())}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-slate-300">
+                  <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-300">
                     {formatCentavos(row.variable.toNumber())}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono font-medium text-white">
+                  <td className="px-3 py-2 text-right font-mono font-medium text-slate-900 dark:text-white">
                     {formatCentavos(row.total.toNumber())}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-slate-400">
+                  <td className="px-3 py-2 text-right font-mono text-slate-500 dark:text-slate-400">
                     {formatCentavos(row.totalAnual.toNumber())}
                   </td>
                 </tr>
@@ -125,48 +125,48 @@ export function MatrizPresupuesto({
 
       {/* Gastos */}
       <section data-testid="matriz-gastos">
-        <h2 className="text-lg font-semibold text-white">Gastos</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Gastos</h2>
         <div className="mt-2 overflow-x-auto">
-          <table className="min-w-full divide-y divide-white/10 text-sm">
-            <thead className="bg-zinc-800">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-sm">
+            <thead className="bg-slate-100 dark:bg-zinc-800">
               <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-left text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   Categoría
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   Necesario
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   No tan necesario
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   No necesario
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   Total
                 </th>
-                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-400">
+                <th className="px-3 py-2 text-right text-xs font-medium uppercase text-slate-500 dark:text-slate-400">
                   Anual
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10 bg-zinc-900">
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10 bg-white dark:bg-zinc-900">
               {matriz.gastos.map((row) => (
                 <tr key={row.categoria}>
-                  <td className="px-3 py-2 text-slate-100">{row.categoria}</td>
-                  <td className="px-3 py-2 text-right font-mono text-slate-300">
+                  <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{row.categoria}</td>
+                  <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-300">
                     {formatCentavos(row.necesario.toNumber())}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-slate-300">
+                  <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-300">
                     {formatCentavos(row.noTanNecesario.toNumber())}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-slate-300">
+                  <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-300">
                     {formatCentavos(row.noNecesario.toNumber())}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono font-medium text-white">
+                  <td className="px-3 py-2 text-right font-mono font-medium text-slate-900 dark:text-white">
                     {formatCentavos(row.total.toNumber())}
                   </td>
-                  <td className="px-3 py-2 text-right font-mono text-slate-400">
+                  <td className="px-3 py-2 text-right font-mono text-slate-500 dark:text-slate-400">
                     {formatCentavos(row.totalAnual.toNumber())}
                   </td>
                 </tr>
@@ -179,24 +179,24 @@ export function MatrizPresupuesto({
       {/* Totales */}
       <section
         data-testid="matriz-totales"
-        className="rounded-md border border-white/10 bg-zinc-900 p-4"
+        className="rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-zinc-900 p-4"
       >
-        <h2 className="text-base font-semibold text-white">Totales</h2>
+        <h2 className="text-base font-semibold text-slate-900 dark:text-white">Totales</h2>
         <dl className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <div>
-            <dt className="text-xs uppercase text-slate-400">Total ingresos</dt>
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-400">Total ingresos</dt>
             <dd className="text-base font-mono font-medium text-green-700">
               {formatCentavosConDecimales(matriz.totalIngresos.toNumber())}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Total gastos</dt>
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-400">Total gastos</dt>
             <dd className="text-base font-mono font-medium text-red-700">
               {formatCentavosConDecimales(matriz.totalGastos.toNumber())}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-slate-400">Flujo de caja libre</dt>
+            <dt className="text-xs uppercase text-slate-500 dark:text-slate-400">Flujo de caja libre</dt>
             <dd
               className={`text-base font-mono font-medium ${
                 matriz.flujoCajaLibre.isNegative() ? 'text-red-700' : 'text-green-700'
