@@ -21,9 +21,9 @@ Ver [`MVP-COMPLETE.md`](openspec/changes/mvp-financiero-local-first/MVP-COMPLETE
 | v2 Phase 2 | Tasks 2.1–2.4  | Gestión de perfiles (crear, renombrar, eliminar) | ✅ done |
 | v2 Phase 3 | Tasks 3.1–3.2  | Toggle modo mejorado                             | ✅ done |
 | v2 Gap Analysis | Tasks 1.1-2.1 | Cierre SDD, Exportación a Excel y refactorización final | ✅ done |
-| V3 Redesign | UX/UI        | Migración a Impeccable Design (Dark Mode, Sidebar, Raleway) | 🏗️ wip |
+| V3 Redesign | UX/UI        | Migración a Impeccable Design (Dark Mode + Tema Claro, Sidebar, Raleway) | ✅ done |
 
-**Tests:** 238 verde (169 frontend + 69 backend), 0 fallando.
+**Tests:** 291 verde (216 frontend + 75 backend), 0 fallando.
 
 ---
 
