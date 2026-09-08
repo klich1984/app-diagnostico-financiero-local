@@ -1,4 +1,4 @@
-# Diagnóstico Financiero Local-First
+# Balance Financiero
 
 Aplicación de escritorio para gestión financiera personal construida con **Tauri v2 + React 18 + TypeScript**, con persistencia **local-first** en SQLite y cálculos precisos con `decimal.js`.
 
@@ -179,7 +179,7 @@ sqlite3 "%APPDATA%\com.hetan.mvp-financiero\misfinanzas.db"
 SELECT * FROM Usuarios;
 ```
 
-> **⚠️ No modifiqués las tablas a mano** mientras la app está corriendo. Cerrala primero.
+> **⚠ No modifiqués las tablas a mano** mientras la app está corriendo. Cerrala primero.
 
 ---
 
