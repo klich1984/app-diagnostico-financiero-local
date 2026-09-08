@@ -142,9 +142,9 @@ export function EstadoResultadosPanel({
     <div data-testid="estado-resultados" className="space-y-4 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-white">Estado de Resultados</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Estado de Resultados</h2>
           {salarioObjetivoCentavos !== null && salarioObjetivoCentavos > 0 ? (
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Salario personal objetivo: {formatCentavos(salarioObjetivoCentavos)}
             </p>
           ) : null}
@@ -154,36 +154,36 @@ export function EstadoResultadosPanel({
             type="button"
             data-testid="btn-editar-salario"
             onClick={() => setModalAbierto(true)}
-            className="rounded-md border border-white/10 bg-zinc-800 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-white/30"
+            className="rounded-md border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/30"
           >
             Editar salario
           </button>
         ) : null}
       </div>
 
-      <table className="min-w-full divide-y divide-white/10 text-sm">
-        <thead className="bg-zinc-800">
+      <table className="min-w-full divide-y divide-slate-200 dark:divide-white/10 text-sm">
+        <thead className="bg-slate-100 dark:bg-zinc-800">
           <tr>
-            <th className="w-12 px-2 py-2 text-center text-xs font-semibold text-slate-400"></th>
-            <th className="px-3 py-2 text-left text-xs font-semibold text-slate-400">CONCEPTO</th>
-            <th className="px-3 py-2 text-right text-xs font-semibold text-slate-400">INICIAL</th>
-            <th className="px-3 py-2 text-right text-xs font-semibold text-slate-400">MEJORADO</th>
+            <th className="w-12 px-2 py-2 text-center text-xs font-semibold text-slate-500 dark:text-slate-400"></th>
+            <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 dark:text-slate-400">CONCEPTO</th>
+            <th className="px-3 py-2 text-right text-xs font-semibold text-slate-500 dark:text-slate-400">INICIAL</th>
+            <th className="px-3 py-2 text-right text-xs font-semibold text-slate-500 dark:text-slate-400">MEJORADO</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/10 bg-zinc-900">
+        <tbody className="divide-y divide-slate-200 dark:divide-white/10 bg-white dark:bg-zinc-900">
           {KPI_ROWS.map((row) => {
             const inicialCentavos = row.getValue(estado.inicial)
             const mejoradoCentavos = row.getValue(estado.mejorado)
 
             let rowStyle = ''
             if (row.isHeader) {
-              rowStyle = 'font-bold bg-zinc-800 text-white'
+              rowStyle = 'font-bold bg-slate-100 dark:bg-zinc-800 text-slate-900 dark:text-white'
             } else if (row.isTotal) {
-              rowStyle = 'font-bold bg-emerald-950/60 text-emerald-300 border-y border-emerald-900'
+              rowStyle = 'font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-y border-emerald-200 dark:border-emerald-900'
             } else if (row.isHighlight) {
-              rowStyle = 'font-bold bg-amber-950/60 text-amber-300 border-y border-amber-900'
+              rowStyle = 'font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-y border-amber-200 dark:border-amber-900'
             } else {
-              rowStyle = 'text-slate-300'
+              rowStyle = 'text-slate-600 dark:text-slate-300'
             }
 
             const getColorClass = (val: number, isSemaphore: boolean) => {
@@ -193,10 +193,10 @@ export function EstadoResultadosPanel({
 
             return (
               <tr key={row.label} className={rowStyle}>
-                <td className="px-2 py-1.5 text-center font-mono text-xs text-slate-400 font-semibold">
+                <td className="px-2 py-1.5 text-center font-mono text-xs text-slate-500 dark:text-slate-400 font-semibold">
                   {row.sign ?? ''}
                 </td>
-                <td className={`px-3 py-1.5 ${row.isIndent ? 'pl-8 italic text-slate-400' : ''}`}>
+                <td className={`px-3 py-1.5 ${row.isIndent ? 'pl-8 italic text-slate-500 dark:text-slate-400' : ''}`}>
                   {row.label}
                 </td>
                 <td

@@ -42,18 +42,18 @@ export function RightDrawer({
       data-testid="right-drawer"
       aria-label={titulo}
       aria-hidden={!isOpen}
-      className="flex h-full flex-col bg-zinc-900"
+      className="flex h-full flex-col bg-white dark:bg-zinc-900"
     >
       {/* Cabecera del panel */}
-      <div className="flex flex-shrink-0 items-center justify-between border-b border-white/10 px-4 py-3">
-        <h2 className="text-sm font-semibold text-slate-200">{titulo}</h2>
+      <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-200 dark:border-white/10 px-4 py-3">
+        <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{titulo}</h2>
 
         <button
           type="button"
           data-testid="right-drawer-close"
           aria-label="Cerrar panel"
           onClick={onClose}
-          className="rounded-md p-1 text-slate-400 transition-colors duration-150 hover:bg-white/10 hover:text-slate-200"
+          className="rounded-md p-1 text-slate-500 dark:text-slate-400 transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-slate-200"
         >
           {/* × icon — sin SVG externo, Unicode suficiente para MVP */}
           <span aria-hidden="true" className="text-lg leading-none">
