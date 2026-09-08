@@ -102,6 +102,7 @@ function render(
   transacciones: TransaccionCompletaDto[],
   cargando = false,
   onEliminar: (id: number) => void | Promise<void> = vi.fn(),
+  onEditar: (id: number) => void = vi.fn(),
 ) {
   act(() => {
     root.render(
@@ -109,6 +110,7 @@ function render(
         transacciones={transacciones}
         cargando={cargando}
         onEliminar={onEliminar}
+        onEditar={onEditar}
       />,
     )
   })

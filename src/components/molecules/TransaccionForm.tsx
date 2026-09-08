@@ -178,14 +178,14 @@ export function TransaccionForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto max-w-lg space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+      className="mx-auto max-w-lg space-y-4 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-900 p-6 shadow-sm"
       noValidate
     >
-      <h2 className="text-xl font-semibold text-slate-900">Nueva transacción</h2>
+      <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Nueva transacción</h2>
 
       {/* Tipo de flujo */}
       <div className="space-y-1">
-        <label htmlFor="tipo_flujo" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="tipo_flujo" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Tipo
         </label>
         <select
@@ -193,7 +193,7 @@ export function TransaccionForm({
           name="tipo_flujo"
           value={tipoFlujo}
           onChange={(e) => handleTipoFlujoChange(e.target.value as TipoFlujo)}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
+          className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-slate-300 dark:focus:border-white/30 focus:outline-none"
         >
           <option value="Gasto">Gasto</option>
           <option value="Ingreso">Ingreso</option>
@@ -202,7 +202,7 @@ export function TransaccionForm({
 
       {/* Categoría (filtrada por tipo) */}
       <div className="space-y-1">
-        <label htmlFor="categoria_id" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="categoria_id" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Categoría
         </label>
         <select
@@ -210,7 +210,7 @@ export function TransaccionForm({
           name="categoria_id"
           value={categoriaId}
           onChange={(e) => setCategoriaId(Number(e.target.value))}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
+          className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-slate-300 dark:focus:border-white/30 focus:outline-none"
         >
           {categoriasFiltradas.map((c) => (
             <option key={c.id} value={c.id}>
@@ -222,7 +222,7 @@ export function TransaccionForm({
 
       {/* Concepto */}
       <div className="space-y-1">
-        <label htmlFor="concepto" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="concepto" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Concepto
         </label>
         <input
@@ -231,12 +231,12 @@ export function TransaccionForm({
           type="text"
           value={concepto}
           onChange={(e) => setConcepto(e.target.value)}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
+          className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-slate-300 dark:focus:border-white/30 focus:outline-none"
           aria-invalid={Boolean(errors.concepto)}
           aria-describedby={errors.concepto ? 'concepto-error' : undefined}
         />
         {errors.concepto ? (
-          <p id="concepto-error" role="alert" className="text-sm text-red-600">
+          <p id="concepto-error" role="alert" className="text-sm text-red-500 dark:text-red-400">
             {errors.concepto}
           </p>
         ) : null}
@@ -244,7 +244,7 @@ export function TransaccionForm({
 
       {/* Frecuencia */}
       <div className="space-y-1">
-        <label htmlFor="frecuencia" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="frecuencia" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Frecuencia
         </label>
         <select
@@ -252,7 +252,7 @@ export function TransaccionForm({
           name="frecuencia"
           value={frecuencia}
           onChange={(e) => setFrecuencia(e.target.value as Frecuencia)}
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
+          className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-slate-300 dark:focus:border-white/30 focus:outline-none"
         >
           {FRECUENCIAS.map((f) => (
             <option key={f} value={f}>
@@ -268,7 +268,7 @@ export function TransaccionForm({
           requires it only on Gasto. */}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
-          <label htmlFor="comportamiento" className="block text-sm font-medium text-slate-700">
+          <label htmlFor="comportamiento" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
             Comportamiento
           </label>
           <select
@@ -276,7 +276,7 @@ export function TransaccionForm({
             name="comportamiento"
             value={comportamiento}
             onChange={(e) => setComportamiento(e.target.value as Comportamiento)}
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
+            className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-slate-300 dark:focus:border-white/30 focus:outline-none"
           >
             {COMPORTAMIENTOS.map((c) => (
               <option key={c} value={c}>
@@ -290,7 +290,7 @@ export function TransaccionForm({
           <div className="space-y-1">
             <label
               htmlFor="naturaleza_necesidad"
-              className="block text-sm font-medium text-slate-700"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
             >
               Naturaleza
             </label>
@@ -299,7 +299,7 @@ export function TransaccionForm({
               name="naturaleza_necesidad"
               value={naturaleza}
               onChange={(e) => setNaturaleza(e.target.value as NaturalezaNecesidad)}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
+              className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-slate-300 dark:focus:border-white/30 focus:outline-none"
             >
               {NATURALEZAS.map((n) => (
                 <option key={n} value={n}>
@@ -313,12 +313,12 @@ export function TransaccionForm({
 
       {/* Valor (input monetario localized) */}
       <div className="space-y-1">
-        <label htmlFor="valor" className="block text-sm font-medium text-slate-700">
+        <label htmlFor="valor" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
           Valor (en pesos)
         </label>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500 dark:text-slate-500">
           Usá punto como separador de miles y coma para decimales.{' '}
-          <span className="font-medium text-slate-500">Ej: 1.500.000 o 1.500.000,50</span>
+          <span className="font-medium text-slate-600 dark:text-slate-400">Ej: 1.500.000 o 1.500.000,50</span>
         </p>
         <input
           id="valor"
@@ -334,12 +334,12 @@ export function TransaccionForm({
             setValorRaw(sanitized)
           }}
           placeholder="1.500.000,50"
-          className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none"
+          className="w-full rounded-md border border-slate-200 dark:border-white/10 bg-white dark:bg-zinc-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:border-slate-300 dark:focus:border-white/30 focus:outline-none"
           aria-invalid={Boolean(errors.valor)}
           aria-describedby={errors.valor ? 'valor-error' : undefined}
         />
         {errors.valor ? (
-          <p id="valor-error" role="alert" className="text-sm text-red-600">
+          <p id="valor-error" role="alert" className="text-sm text-red-500 dark:text-red-400">
             {errors.valor}
           </p>
         ) : null}
@@ -347,7 +347,7 @@ export function TransaccionForm({
 
       <button
         type="submit"
-        className="w-full rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+        className="w-full rounded-md bg-[#f05454] px-4 py-2 text-sm font-medium text-white hover:bg-[#d94444] focus:outline-none focus:ring-2 focus:ring-[#f05454] focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-zinc-900"
       >
         {initialValue ? 'Guardar cambios' : 'Guardar'}
       </button>
@@ -357,7 +357,7 @@ export function TransaccionForm({
           type="button"
           data-testid="cancelar-edicion"
           onClick={onCancelar}
-          className="w-full rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2"
+          className="w-full rounded-md border border-slate-200 dark:border-white/10 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-zinc-900"
         >
           Cancelar
         </button>

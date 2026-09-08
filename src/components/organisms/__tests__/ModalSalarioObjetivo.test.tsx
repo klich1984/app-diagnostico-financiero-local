@@ -42,8 +42,6 @@ import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react-dom/test-utils'
 
 // El componente todavía no existe — este import fallará en RED.
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error — RED phase: ModalSalarioObjetivo does not exist yet
 import { ModalSalarioObjetivo } from '../ModalSalarioObjetivo'
 
 // ---------------------------------------------------------------------------
