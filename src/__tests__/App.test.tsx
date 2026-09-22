@@ -48,7 +48,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
-import { act } from 'react-dom/test-utils'
+import { act } from 'react'
 
 // Mock `@tauri-apps/api/core` BEFORE importing `App`. Vitest hoists
 // `vi.mock` calls to the top of the file regardless of source order,

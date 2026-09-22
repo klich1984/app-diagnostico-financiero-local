@@ -67,7 +67,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
-import { act } from 'react-dom/test-utils'
+import { act } from 'react'
 import { EstadoResultadosPanel } from '../EstadoResultadosPanel'
 import { Decimal } from '../../../domain/precision/money'
 import type { EstadoResultados, LadoEstado } from '../../../domain/kpis'

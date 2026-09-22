@@ -56,7 +56,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
-import { act } from 'react-dom/test-utils'
+import { act } from 'react'
 import { MatrizPresupuesto } from '../MatrizPresupuesto'
 import type {
   MatrizIngreso,

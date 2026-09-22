@@ -61,7 +61,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
-import { act } from 'react-dom/test-utils'
+import { act } from 'react'
 import { DistribucionChart } from '../DistribucionChart'
 import { Decimal } from '../../../domain/precision/money'
 import type { DistribucionPorcentual } from '../../../domain/agregaciones/graficos'
