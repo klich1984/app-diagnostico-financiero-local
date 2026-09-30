@@ -143,6 +143,11 @@ function App(): JSX.Element {
   const [perfiles, setPerfiles] = useState<UsuarioDto[]>([])
   const [cargandoPerfiles, setCargandoPerfiles] = useState(true)
   const [mostrarSelector, setMostrarSelector] = useState(false)
+  const [perfilAEliminar, setPerfilAEliminar] = useState<number | null>(null)
+  const [eliminandoPerfil, setEliminandoPerfil] = useState(false)
+  const [errorEliminarPerfil, setErrorEliminarPerfil] = useState<string | null>(null)
+  const eliminacionPerfilEnCurso = useRef(false)
+  const [avisoPerfilActivo, setAvisoPerfilActivo] = useState(false)
 
   // Slice 10/11: tab activa en el shell de la app (REQ-301, REQ-302,
   // REQ-602).
@@ -436,21 +441,34 @@ function App(): JSX.Element {
     }
   }
 
-  // Task 2.4 (REQ-V2-102): delete a profile.
-  // Guard: the active profile cannot be deleted — the user must switch
-  // first. A native confirm protects against accidental clicks.
-  const handleEliminarPerfil = async (id: number): Promise<void> => {
+  // Task 2.4 (REQ-V2-102): request confirmation before deleting an inactive profile.
+  const handleEliminarPerfil = (id: number): void => {
+    setErrorEliminarPerfil(null)
     if (id === perfilActivo) {
-      window.alert('No se puede eliminar el perfil activo. Cambiá de perfil primero.')
+      setAvisoPerfilActivo(true)
       return
     }
-    if (!window.confirm('¿Eliminar este perfil? Esta acción no se puede deshacer.')) return
+    setAvisoPerfilActivo(false)
+    setPerfilAEliminar(id)
+  }
+
+  const confirmarEliminarPerfil = async (): Promise<void> => {
+    if (perfilAEliminar === null || eliminacionPerfilEnCurso.current) return
+    eliminacionPerfilEnCurso.current = true
+    const id = perfilAEliminar
+    setEliminandoPerfil(true)
+    setErrorEliminarPerfil(null)
     try {
       await eliminarPerfil(id)
+      setPerfilAEliminar(null)
       await cargarPerfiles()
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('Error eliminando perfil:', e)
+      setErrorEliminarPerfil('No se pudo eliminar el perfil. Revisá la conexión e intentá nuevamente.')
+    } finally {
+      eliminacionPerfilEnCurso.current = false
+      setEliminandoPerfil(false)
     }
   }
 
@@ -799,6 +817,29 @@ function App(): JSX.Element {
           onCrear={handleCrearPerfil}
         />
       ) : null}
+
+      {avisoPerfilActivo && (
+        <div role="alertdialog" aria-modal="true" aria-labelledby="perfil-activo-titulo" className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-zinc-900">
+            <h2 id="perfil-activo-titulo" className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100">No se puede eliminar el perfil activo</h2>
+            <p className="mb-6 text-sm text-slate-600 dark:text-slate-300">Cambiá de perfil antes de eliminarlo.</p>
+            <div className="flex justify-end"><button type="button" onClick={() => setAvisoPerfilActivo(false)} className="rounded-md px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10">Entendido</button></div>
+          </div>
+        </div>
+      )}
+      {perfilAEliminar !== null && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div role="dialog" aria-modal="true" aria-labelledby="confirmar-eliminar-perfil-titulo" className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-zinc-900">
+            <h2 id="confirmar-eliminar-perfil-titulo" className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100">Eliminar perfil</h2>
+            <p className="mb-6 text-sm text-slate-600 dark:text-slate-300">¿Estás seguro de que querés eliminar este perfil? Esta acción no se puede deshacer.</p>
+            {errorEliminarPerfil !== null ? <p role="alert" className="mb-4 text-sm text-red-700 dark:text-red-300">{errorEliminarPerfil}</p> : null}
+            <div className="flex justify-end gap-3">
+              <button type="button" disabled={eliminandoPerfil} onClick={() => setPerfilAEliminar(null)} className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-white/10">Cancelar</button>
+              <button type="button" data-testid="confirmar-eliminar-perfil" disabled={eliminandoPerfil} onClick={() => void confirmarEliminarPerfil()} className="rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-50 dark:bg-red-800 dark:hover:bg-red-700">{eliminandoPerfil ? 'Eliminando…' : 'Eliminar perfil'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* BF-delete: modal de confirmación de eliminación de transacción.
           Reemplaza `window.confirm` que Tauri WebViews bloquean silenciosamente.
