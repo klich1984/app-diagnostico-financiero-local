@@ -91,6 +91,9 @@ pub fn abrir_conexion_en_path(db_file: &Path) -> Result<Connection, String> {
     let conn = Connection::open(db_file)
         .map_err(|e| format!("opening db at {}: {e}", db_file.display()))?;
 
+    conn.execute_batch("PRAGMA foreign_keys = ON;")
+        .map_err(|e| format!("enabling foreign keys: {e}"))?;
+
     migrations::apply_all(&conn).map_err(|e| format!("applying migrations: {e}"))?;
 
     Ok(conn)

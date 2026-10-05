@@ -39,7 +39,7 @@ Ver [`MVP-COMPLETE.md`](openspec/changes/mvp-financiero-local-first/MVP-COMPLETE
 
 ## Requisitos previos
 
-- **Node.js 18+** y **pnpm 11+**
+- **Node.js 24+** y **pnpm 11+**
 - **Rust** (stable, instalado vía [rustup](https://rustup.rs))
 - **Windows**: WebView2 Runtime (preinstalado en Windows 11) y MSVC Build Tools
 

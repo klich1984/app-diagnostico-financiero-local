@@ -131,6 +131,104 @@ afterEach(() => {
   localStorage.clear()
 })
 
+describe('App: profile deletion confirmation', () => {
+  const profiles = [
+    { id: 1, nombre: 'Principal', salario_personal_objetivo_centavos: 0 },
+    { id: 2, nombre: 'Secundario', salario_personal_objetivo_centavos: 0 },
+  ]
+
+  async function mountWithProfiles(): Promise<void> {
+    invokeMock.mockResolvedValueOnce([]) // obtenerCategorias
+    invokeMock.mockResolvedValueOnce([]) // listarTransacciones
+    invokeMock.mockResolvedValueOnce([]) // obtenerSimulaciones
+    invokeMock.mockResolvedValueOnce(profiles) // obtenerPerfiles
+    await act(async () => { root.render(<App />) })
+    await act(async () => {
+      Array.from(container.querySelectorAll<HTMLButtonElement>('button'))
+        .find((button) => button.textContent?.includes('Cambiar perfil'))?.click()
+    })
+  }
+
+  it('requires a distinct visible confirmation before deleting an inactive profile', async () => {
+    await mountWithProfiles()
+    const deleteButton = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-testid="boton-eliminar-perfil"]'))
+      .find((button) => button.parentElement?.textContent?.includes('Secundario'))
+    expect(deleteButton).toBeDefined()
+    await act(async () => { deleteButton?.click() })
+    expect(container.querySelector('[role="dialog"][aria-modal="true"]')).not.toBeNull()
+    expect(container.textContent).toMatch(/eliminar.*perfil/i)
+    expect(invokeMock.mock.calls.filter(([command]) => command === 'cmd_eliminar_perfil')).toHaveLength(0)
+  })
+
+  it('cancels profile deletion without invoking delete IPC', async () => {
+    await mountWithProfiles()
+    const deleteButton = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-testid="boton-eliminar-perfil"]'))
+      .find((button) => button.parentElement?.textContent?.includes('Secundario'))
+    await act(async () => { deleteButton?.click() })
+    await act(async () => { Array.from(container.querySelectorAll('button')).find((button) => button.textContent === 'Cancelar')?.click() })
+    expect(container.querySelector('[role="dialog"]')).toBeNull()
+    expect(container.textContent).toContain('Secundario')
+    expect(invokeMock.mock.calls.filter(([command]) => command === 'cmd_eliminar_perfil')).toHaveLength(0)
+  })
+
+  it('confirms deletion once with the selected id and refreshes profiles', async () => {
+    await mountWithProfiles()
+    const deleteButton = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-testid="boton-eliminar-perfil"]'))
+      .find((button) => button.parentElement?.textContent?.includes('Secundario'))
+    await act(async () => { deleteButton?.click() })
+    invokeMock.mockResolvedValueOnce(undefined)
+    invokeMock.mockResolvedValueOnce([profiles[0]])
+    await act(async () => { container.querySelector<HTMLButtonElement>('[data-testid="confirmar-eliminar-perfil"]')?.click() })
+    const calls = invokeMock.mock.calls.filter(([command]) => command === 'cmd_eliminar_perfil')
+    expect(calls).toHaveLength(1)
+    expect(calls[0][1]).toMatchObject({ id: 2 })
+    expect(container.textContent).not.toContain('Secundario')
+  })
+
+  it('shows a visible error and preserves the selected id for retry after rejection', async () => {
+    await mountWithProfiles()
+    const deleteButton = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-testid="boton-eliminar-perfil"]'))
+      .find((button) => button.parentElement?.textContent?.includes('Secundario'))
+    await act(async () => { deleteButton?.click() })
+    invokeMock.mockRejectedValueOnce(new Error('database unavailable'))
+    await act(async () => { container.querySelector<HTMLButtonElement>('[data-testid="confirmar-eliminar-perfil"]')?.click() })
+    expect(container.querySelector('[role="dialog"]')?.textContent).toMatch(/no se pudo eliminar el perfil/i)
+    invokeMock.mockResolvedValueOnce(undefined)
+    invokeMock.mockResolvedValueOnce([profiles[0]])
+    await act(async () => { container.querySelector<HTMLButtonElement>('[data-testid="confirmar-eliminar-perfil"]')?.click() })
+    expect(invokeMock.mock.calls.filter(([command]) => command === 'cmd_eliminar_perfil')).toHaveLength(2)
+    expect(invokeMock.mock.calls.filter(([command]) => command === 'cmd_eliminar_perfil')[1][1]).toMatchObject({ id: 2 })
+  })
+
+  it('does not submit duplicate deletes while the delete IPC is pending', async () => {
+    await mountWithProfiles()
+    const deleteButton = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-testid="boton-eliminar-perfil"]'))
+      .find((button) => button.parentElement?.textContent?.includes('Secundario'))
+    await act(async () => { deleteButton?.click() })
+    let resolveDelete!: (value: unknown) => void
+    invokeMock.mockReturnValueOnce(new Promise((resolve) => { resolveDelete = resolve }))
+    await act(async () => {
+      const confirm = container.querySelector<HTMLButtonElement>('[data-testid="confirmar-eliminar-perfil"]')
+      confirm?.click()
+      confirm?.click()
+    })
+    expect(invokeMock.mock.calls.filter(([command]) => command === 'cmd_eliminar_perfil')).toHaveLength(1)
+    resolveDelete(undefined)
+    invokeMock.mockResolvedValueOnce([profiles[0]])
+    await act(async () => { await Promise.resolve() })
+  })
+
+  it('keeps the active profile protected and shows visible feedback without window.confirm', async () => {
+    await mountWithProfiles()
+    const activeDelete = Array.from(container.querySelectorAll<HTMLButtonElement>('[data-testid="boton-eliminar-perfil"]'))
+      .find((button) => button.parentElement?.textContent?.includes('Principal'))
+    await act(async () => { activeDelete?.click() })
+    expect(container.textContent).toMatch(/no se puede eliminar el perfil activo/i)
+    expect(invokeMock.mock.calls.filter(([command]) => command === 'cmd_eliminar_perfil')).toHaveLength(0)
+    expect(window.confirm).not.toHaveBeenCalled()
+  })
+})
+
 describe('App: form reset after successful submit', () => {
   // Behavior contract: after a successful insert + refetch, the form's
   // user-visible state goes back to its initial values, so the next
