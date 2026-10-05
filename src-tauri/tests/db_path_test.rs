@@ -90,3 +90,103 @@ fn tempdir_inside(tag: &str) -> PathBuf {
     std::fs::create_dir_all(&dir).expect("failed to create temp dir for REQ-106 test");
     dir
 }
+
+#[test]
+fn abrir_conexion_en_path_enables_foreign_keys() {
+    let dir = tempfile::tempdir().expect("create tempdir");
+    let db_file = dir.path().join("misfinanzas.db");
+
+    let conn = app_diagnostico_financiero_local_lib::db::abrir_conexion_en_path(&db_file)
+        .expect("open database");
+    let foreign_keys: i64 = conn
+        .query_row("PRAGMA foreign_keys", [], |row| row.get(0))
+        .expect("query foreign_keys pragma");
+
+    assert_eq!(foreign_keys, 1);
+}
+
+#[test]
+fn abrir_conexion_en_path_rejects_invalid_foreign_key_insertions() {
+    let dir = tempfile::tempdir().expect("create tempdir");
+    let db_file = dir.path().join("misfinanzas.db");
+
+    let conn = app_diagnostico_financiero_local_lib::db::abrir_conexion_en_path(&db_file)
+        .expect("open database");
+    let category_id: i64 = conn
+        .query_row(
+            "SELECT id FROM Categorias WHERE tipo_flujo = 'Gasto' LIMIT 1",
+            [],
+            |row| row.get(0),
+        )
+        .expect("find seeded expense category");
+
+    let result = conn.execute(
+        "INSERT INTO Transacciones
+         (usuario_id, tipo_flujo, categoria_id, concepto, frecuencia,
+          comportamiento, naturaleza_necesidad, valor_centavos)
+         VALUES (999999, 'Gasto', ?1, 'Invalid owner', 'Mensual',
+                 'Fijo', 'Necesario', 100)",
+        [category_id],
+    );
+
+    assert!(result.is_err(), "invalid usuario_id must be rejected");
+}
+
+#[test]
+fn deleting_profile_cascades_transactions_and_simulator_rows() {
+    let dir = tempfile::tempdir().expect("create tempdir");
+    let db_file = dir.path().join("misfinanzas.db");
+
+    let conn = app_diagnostico_financiero_local_lib::db::abrir_conexion_en_path(&db_file)
+        .expect("open database");
+    conn.execute(
+        "INSERT INTO Usuarios (nombre) VALUES ('Cascade test profile')",
+        [],
+    )
+    .expect("insert profile");
+    let user_id = conn.last_insert_rowid();
+    let category_id: i64 = conn
+        .query_row(
+            "SELECT id FROM Categorias WHERE tipo_flujo = 'Gasto' LIMIT 1",
+            [],
+            |row| row.get(0),
+        )
+        .expect("find seeded expense category");
+    conn.execute(
+        "INSERT INTO Transacciones
+         (usuario_id, tipo_flujo, categoria_id, concepto, frecuencia,
+          comportamiento, naturaleza_necesidad, valor_centavos)
+         VALUES (?1, 'Gasto', ?2, 'Cascade test', 'Mensual',
+                 'Fijo', 'Necesario', 100)",
+        rusqlite::params![user_id, category_id],
+    )
+    .expect("insert transaction");
+    let transaction_id = conn.last_insert_rowid();
+    conn.execute(
+        "INSERT INTO Simulador (usuario_id, transaccion_id, nuevo_valor_centavos)
+         VALUES (?1, ?2, 50)",
+        rusqlite::params![user_id, transaction_id],
+    )
+    .expect("insert simulator row");
+
+    conn.execute("DELETE FROM Usuarios WHERE id = ?1", [user_id])
+        .expect("delete profile");
+
+    let transactions: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM Transacciones WHERE id = ?1",
+            [transaction_id],
+            |row| row.get(0),
+        )
+        .expect("count cascaded transactions");
+    let simulations: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM Simulador WHERE transaccion_id = ?1",
+            [transaction_id],
+            |row| row.get(0),
+        )
+        .expect("count cascaded simulator rows");
+
+    assert_eq!(transactions, 0);
+    assert_eq!(simulations, 0);
+}
