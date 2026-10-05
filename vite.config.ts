@@ -8,6 +8,17 @@ const host = process.env.TAURI_DEV_HOST
 export default defineConfig(async () => ({
   plugins: [react()],
 
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-charts': ['recharts'],
+          'vendor-xlsx': ['xlsx'],
+        },
+      },
+    },
+  },
+
   // Vite options tailored for Tauri development
   clearScreen: false,
   server: {
