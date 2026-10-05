@@ -23,7 +23,7 @@ Ver [`MVP-COMPLETE.md`](openspec/changes/mvp-financiero-local-first/MVP-COMPLETE
 | v2 Gap Analysis | Tasks 1.1-2.1 | Cierre SDD, Exportación a Excel y refactorización final | ✅ done |
 | V3 Redesign | UX/UI        | Migración a Impeccable Design (Dark Mode + Tema Claro, Sidebar, Raleway) | ✅ done |
 
-**Tests:** 291 verde (216 frontend + 75 backend), 0 fallando.
+**Tests:** 308 verdes (226 frontend + 82 backend), 0 fallando.
 
 ---
 
