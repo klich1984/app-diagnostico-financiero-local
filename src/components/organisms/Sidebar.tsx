@@ -37,6 +37,8 @@ export interface SidebarProps {
   modoOscuro: boolean
   onToggleTema: () => void
   onExportarExcel: () => void
+  onCrearBackup?: () => void
+  onRestaurarBackup?: () => void
   selectorPerfilSlot: ReactNode
 }
 
@@ -63,6 +65,8 @@ export function Sidebar({
   modoOscuro,
   onToggleTema,
   onExportarExcel,
+  onCrearBackup,
+  onRestaurarBackup,
   selectorPerfilSlot,
 }: SidebarProps): JSX.Element {
   return (
@@ -145,10 +149,34 @@ export function Sidebar({
           type="button"
           data-testid="boton-exportar-excel"
           onClick={onExportarExcel}
-          className="w-full rounded-md px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-500 transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-slate-300"
+          className="w-full rounded-md px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-slate-300"
         >
           Exportar Excel
         </button>
+      </div>
+
+      {/* Botones Backup y Restore */}
+      <div className="px-1 pb-2 flex flex-col gap-1">
+        {onCrearBackup && (
+          <button
+            type="button"
+            data-testid="boton-crear-backup"
+            onClick={onCrearBackup}
+            className="w-full rounded-md px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-slate-300"
+          >
+            Crear Respaldo
+          </button>
+        )}
+        {onRestaurarBackup && (
+          <button
+            type="button"
+            data-testid="boton-restaurar-backup"
+            onClick={onRestaurarBackup}
+            className="w-full rounded-md px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 transition-colors duration-150 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-slate-300"
+          >
+            Restaurar Respaldo
+          </button>
+        )}
       </div>
 
       {/* Chip de perfil activo + slot para SelectorPerfil overlay */}

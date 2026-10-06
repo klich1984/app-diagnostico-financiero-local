@@ -49,6 +49,8 @@ interface RenderOptions {
   modoOscuro?: boolean
   onToggleTema?: () => void
   onExportarExcel?: () => void
+  onCrearBackup?: () => void
+  onRestaurarBackup?: () => void
   selectorPerfilSlot?: React.ReactNode
 }
 
@@ -62,6 +64,8 @@ function renderSidebar(opts: RenderOptions = {}): void {
     modoOscuro = true,
     onToggleTema = vi.fn(),
     onExportarExcel = vi.fn(),
+    onCrearBackup,
+    onRestaurarBackup,
     selectorPerfilSlot = null,
   } = opts
 
@@ -76,6 +80,8 @@ function renderSidebar(opts: RenderOptions = {}): void {
         modoOscuro={modoOscuro}
         onToggleTema={onToggleTema}
         onExportarExcel={onExportarExcel}
+        onCrearBackup={onCrearBackup}
+        onRestaurarBackup={onRestaurarBackup}
         selectorPerfilSlot={selectorPerfilSlot}
       />,
     )
@@ -294,6 +300,32 @@ describe('Sidebar organism', () => {
     // Verificamos que el chip de perfil sigue ahí — el slot null no rompe el render
     const chip = container.querySelector('[data-testid="perfil-activo-chip"]')
     expect(chip).not.toBeNull()
+  })
+
+  // -----------------------------------------------------------------------
+  // Botones Backup y Restore
+  // -----------------------------------------------------------------------
+
+  it('renders backup and restore buttons when callbacks provided', () => {
+    const onCrearBackup = vi.fn()
+    const onRestaurarBackup = vi.fn()
+    renderSidebar({ onCrearBackup, onRestaurarBackup })
+
+    const btnBackup = container.querySelector<HTMLButtonElement>('[data-testid="boton-crear-backup"]')
+    const btnRestore = container.querySelector<HTMLButtonElement>('[data-testid="boton-restaurar-backup"]')
+
+    expect(btnBackup).not.toBeNull()
+    expect(btnRestore).not.toBeNull()
+
+    act(() => {
+      btnBackup?.click()
+    })
+    expect(onCrearBackup).toHaveBeenCalledOnce()
+
+    act(() => {
+      btnRestore?.click()
+    })
+    expect(onRestaurarBackup).toHaveBeenCalledOnce()
   })
 
   // -----------------------------------------------------------------------
