@@ -62,12 +62,14 @@ import {
   crearPerfil,
   eliminarSimulacion,
   eliminarTransaccion,
+  exportarBackup,
   insertarTransaccion,
   listarTransacciones,
   obtenerCategorias,
   obtenerPerfil,
   obtenerPerfiles,
   obtenerSimulaciones,
+  restaurarBackup,
   upsertSimulacion,
   type ActualizarSalarioObjetivoInput,
   type ActualizarTransaccionInput,
@@ -707,5 +709,42 @@ describe('REQ-V2-101 / Slice 12: actualizarTransaccion IPC wrapper', () => {
     await expect(actualizarTransaccion(payload)).rejects.toBe(boom)
     expect(invokeMock).toHaveBeenCalledTimes(1)
     expect(invokeMock).toHaveBeenCalledWith('cmd_update_transaccion', { payload })
+  })
+})
+
+// ===========================================================================
+// Backup & Restore: exportarBackup y restaurarBackup IPC wrappers
+// ===========================================================================
+
+describe('Backup & Restore IPC wrappers', () => {
+  it('exportarBackup invokes cmd_exportar_backup with destinoPath', async () => {
+    invokeMock.mockResolvedValueOnce('Respaldo exportado exitosamente a /path/backup.db')
+
+    const res = await exportarBackup('/path/backup.db')
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_exportar_backup', {
+      destinoPath: '/path/backup.db',
+    })
+    expect(res).toBe('Respaldo exportado exitosamente a /path/backup.db')
+  })
+
+  it('restaurarBackup invokes cmd_restaurar_backup with origenPath', async () => {
+    invokeMock.mockResolvedValueOnce('Respaldo restaurado exitosamente')
+
+    const res = await restaurarBackup('/path/backup.db')
+
+    expect(invokeMock).toHaveBeenCalledTimes(1)
+    expect(invokeMock).toHaveBeenCalledWith('cmd_restaurar_backup', {
+      origenPath: '/path/backup.db',
+    })
+    expect(res).toBe('Respaldo restaurado exitosamente')
+  })
+
+  it('restaurarBackup propagates backend validation errors', async () => {
+    const errorMsg = new Error('El archivo no contiene la tabla requerida Usuarios')
+    invokeMock.mockRejectedValueOnce(errorMsg)
+
+    await expect(restaurarBackup('/path/invalid.db')).rejects.toBe(errorMsg)
   })
 })

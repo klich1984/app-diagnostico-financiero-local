@@ -410,3 +410,25 @@ export async function actualizarTransaccion(
 ): Promise<TransaccionCompletaDto> {
   return invoke<TransaccionCompletaDto>('cmd_update_transaccion', { payload })
 }
+
+// ===========================================================================
+// Backup & Restore: Exportación e importación atómica de base de datos.
+// ===========================================================================
+
+/**
+ * Exporta el respaldo de la base de datos SQLite hacia la ruta seleccionada.
+ *
+ * Contrato IPC: `invoke('cmd_exportar_backup', { destinoPath })`
+ */
+export async function exportarBackup(destinoPath: string): Promise<string> {
+  return invoke<string>('cmd_exportar_backup', { destinoPath })
+}
+
+/**
+ * Valida y restaura la base de datos SQLite desde la ruta provista.
+ *
+ * Contrato IPC: `invoke('cmd_restaurar_backup', { origenPath })`
+ */
+export async function restaurarBackup(origenPath: string): Promise<string> {
+  return invoke<string>('cmd_restaurar_backup', { origenPath })
+}

@@ -112,7 +112,7 @@
 //! golden values above.
 
 use app_diagnostico_financiero_local_lib::kpis::{
-    calcular_estado_resultados, EstadoResultados, LadoEstado,
+    calcular_estado_resultados, EstadoResultados,
 };
 use app_diagnostico_financiero_local_lib::migrations::apply_all;
 use app_diagnostico_financiero_local_lib::simulador::repo::{

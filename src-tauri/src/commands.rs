@@ -40,6 +40,7 @@ use crate::db;
 use crate::simulador::repo::SimulacionInput;
 use crate::transacciones::repo::{self, Transaccion, TransaccionInput};
 use rusqlite::Connection;
+use tauri::Manager;
 
 /// DTO que ve la capa React para cada `Categoria` del catálogo.
 ///
@@ -688,4 +689,37 @@ pub async fn cmd_update_transaccion(
 ) -> Result<repo::Transaccion, String> {
     let conn = db::abrir_conexion(&app)?;
     cmd_update_transaccion_impl(&conn, payload.id, payload.usuario_id, &payload.input)
+}
+
+// ===========================================================================
+// Backup & Restore: Exportación e importación atómica de base de datos.
+// ===========================================================================
+
+/// Exporta el respaldo de la base de datos hacia `destino_path`.
+#[tauri::command]
+pub async fn cmd_exportar_backup(
+    app: tauri::AppHandle,
+    destino_path: String,
+) -> Result<String, String> {
+    let conn = db::abrir_conexion(&app)?;
+    let path = std::path::PathBuf::from(&destino_path);
+    crate::backup::exportar_backup_impl(&conn, &path)?;
+    Ok(format!("Respaldo exportado exitosamente a {}", destino_path))
+}
+
+/// Valida y restaura la base de datos desde `origen_path`.
+#[tauri::command]
+pub async fn cmd_restaurar_backup(
+    app: tauri::AppHandle,
+    origen_path: String,
+) -> Result<String, String> {
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("resolviendo app_data_dir: {e}"))?;
+    let db_activa = crate::path::db_path(&dir);
+    let path_origen = std::path::PathBuf::from(&origen_path);
+
+    crate::backup::restaurar_backup_impl(&path_origen, &db_activa)?;
+    Ok("Respaldo restaurado exitosamente".into())
 }

@@ -62,7 +62,6 @@ use app_diagnostico_financiero_local_lib::commands::{
     cmd_insert_transaccion_impl, cmd_listar_simulaciones_impl, cmd_listar_transacciones_impl,
     cmd_obtener_categorias_impl, cmd_obtener_perfil_impl, cmd_obtener_perfiles_impl,
     cmd_update_transaccion_impl, cmd_upsert_simulacion_impl, CategoriaDto, SimulacionCompletaDto,
-    UsuarioDto,
 };
 use app_diagnostico_financiero_local_lib::migrations::apply_all;
 use app_diagnostico_financiero_local_lib::transacciones::repo::{

@@ -1,4 +1,4 @@
-# Diagnóstico Financiero Local
+# Balance Financiero
 
 ## Propósito Principal (Core Purpose)
 Una aplicación de escritorio "offline-first" y 100% local (construida con Tauri + React) diseñada para proveer a los usuarios un entorno seguro, privado y rápido para diagnosticar, analizar y simular sus finanzas personales o profesionales.

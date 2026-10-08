@@ -6,6 +6,7 @@
 // Rust de este crate (`db`, `path`, `plugin`, `migrations`, `seeds`, y
 // los repositorios `transacciones/`, `simulador/`).
 
+pub mod backup;
 pub mod commands;
 pub mod db;
 pub mod kpis;
@@ -38,6 +39,8 @@ pub fn run() {
             commands::cmd_update_transaccion,
             commands::cmd_update_perfil,
             commands::cmd_eliminar_perfil,
+            commands::cmd_exportar_backup,
+            commands::cmd_restaurar_backup,
         ])
         .run(tauri::generate_context!())
         .expect("error al iniciar MVP Financiero");

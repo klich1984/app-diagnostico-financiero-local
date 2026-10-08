@@ -70,7 +70,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createRoot, type Root } from 'react-dom/client'
-import { act } from 'react-dom/test-utils'
+import { act } from 'react'
 import { SimuladorPanel } from '../SimuladorPanel'
 import type {
   CategoriaDto,

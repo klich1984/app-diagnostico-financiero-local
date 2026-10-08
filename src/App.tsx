@@ -70,6 +70,7 @@ import {
   distribucionIngresosPorCategoria,
 } from './domain/agregaciones/graficos'
 import { exportarExcel } from './data/export-excel'
+import { realizarBackup, seleccionarYRestaurarBackup } from './data/backup-service'
 import { DashboardLayout } from './components/templates/DashboardLayout'
 import { Sidebar } from './components/organisms/Sidebar'
 import { RightDrawer } from './components/organisms/RightDrawer'
@@ -285,6 +286,10 @@ function App(): JSX.Element {
   // `window.confirm` porque Tauri WebViews bloquean los diálogos nativos del browser
   // y el confirm devuelve `true` instantáneamente sin mostrar nada al usuario.
   const [idAEliminar, setIdAEliminar] = useState<number | null>(null)
+
+  // Backup & Restore state
+  const [mostrarModalRestaurar, setMostrarModalRestaurar] = useState<boolean>(false)
+  const [restaurandoBackup, setRestaurandoBackup] = useState<boolean>(false)
 
   // Slice 8: refetch helper. Reutilizado en mount + post-insert + post-delete.
   // El flag `cancelado` evita `setState` si el componente se desmonta
@@ -657,6 +662,20 @@ function App(): JSX.Element {
                 Cambiar perfil
               </button>
             }
+            onCrearBackup={async () => {
+              try {
+                const msg = await realizarBackup()
+                if (msg) {
+                  alert(msg)
+                }
+              } catch (e) {
+                console.error('Error al crear respaldo:', e)
+                alert(`Error al crear respaldo: ${String(e)}`)
+              }
+            }}
+            onRestaurarBackup={() => {
+              setMostrarModalRestaurar(true)
+            }}
           />
         }
         main={
@@ -836,6 +855,66 @@ function App(): JSX.Element {
             <div className="flex justify-end gap-3">
               <button type="button" disabled={eliminandoPerfil} onClick={() => setPerfilAEliminar(null)} className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-white/10">Cancelar</button>
               <button type="button" data-testid="confirmar-eliminar-perfil" disabled={eliminandoPerfil} onClick={() => void confirmarEliminarPerfil()} className="rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 disabled:opacity-50 dark:bg-red-800 dark:hover:bg-red-700">{eliminandoPerfil ? 'Eliminando…' : 'Eliminar perfil'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmación para restaurar respaldo */}
+      {mostrarModalRestaurar && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="confirmar-restaurar-titulo"
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+        >
+          <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-zinc-900">
+            <h2
+              id="confirmar-restaurar-titulo"
+              className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100"
+            >
+              Restaurar Respaldo
+            </h2>
+            <p className="mb-6 text-sm text-slate-600 dark:text-slate-300">
+              ¿Estás seguro de que querés restaurar un respaldo? Esta acción{' '}
+              <strong>reemplazará todos tus datos actuales</strong> por los del archivo seleccionado.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={restaurandoBackup}
+                onClick={() => setMostrarModalRestaurar(false)}
+                className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-white/10"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                data-testid="btn-confirmar-restaurar-backup"
+                disabled={restaurandoBackup}
+                onClick={async () => {
+                  setRestaurandoBackup(true)
+                  try {
+                    const msg = await seleccionarYRestaurarBackup()
+                    if (msg) {
+                      alert(msg)
+                      // Recargar perfiles y transacciones
+                      await cargarPerfiles()
+                      await refetchTransacciones()
+                      await refetchSimulaciones()
+                    }
+                  } catch (e) {
+                    console.error('Error restaurando respaldo:', e)
+                    alert(`Error restaurando respaldo: ${String(e)}`)
+                  } finally {
+                    setRestaurandoBackup(false)
+                    setMostrarModalRestaurar(false)
+                  }
+                }}
+                className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50 dark:bg-amber-700 dark:hover:bg-amber-600"
+              >
+                {restaurandoBackup ? 'Restaurando…' : 'Seleccionar y Restaurar'}
+              </button>
             </div>
           </div>
         </div>
